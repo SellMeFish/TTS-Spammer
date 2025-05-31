@@ -12,7 +12,7 @@ TTS Spammer is a modern, interactive console tool for sending Discord Webhook me
 ## Installation
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/USERNAME/tts-spammer.git
+   git clone https://github.com/SellMeFish/TTS-spammer.git
    cd tts-spammer
    ```
 2. **Run the installer:**
