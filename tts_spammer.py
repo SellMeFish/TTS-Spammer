@@ -8,18 +8,15 @@ from discord_webhook import DiscordWebhook
 import inquirer
 import shutil
 
-# --- Color helpers ---
 RESET = '\033[0m'
 
-# A nice red gradient for the banner
 RED_GRADIENT = [
     (64, 0, 0), (96, 0, 0), (128, 0, 0), (160, 0, 0), (192, 0, 0),
     (224, 0, 0), (255, 0, 0), (224, 0, 0), (192, 0, 0), (160, 0, 0),
     (128, 0, 0), (96, 0, 0),
 ]
 
-# --- Update Check ---
-GITHUB_REPO = "USERNAME/tts-spammer"  # <--- Passe das auf deinen GitHub-Namen an!
+GITHUB_REPO = "SellMeFish/TTS-spammer"
 RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.txt"
 LOCAL_VERSION_FILE = "version.txt"
 
@@ -76,7 +73,6 @@ def center(text):
     padding = (width - len(text)) // 2
     return " " * max(0, padding) + text
 
-# --- Banner & UI ---
 BANNER = [
     "_______________________________   ___________________  _____      _____      _____  _____________________ ",
     "\\__    ___/\\__    ___/   _____/  /   _____/\\______   \\/  _  \\    /     \\    /     \\ \\_   _____/\\______   \\",
