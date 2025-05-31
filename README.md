@@ -45,7 +45,7 @@ Pull requests and suggestions are welcome! Please open an issue first to discuss
 ---
 
 
-## 🚀 Installation
+## Installation
 
 1. Make sure Python 3.7+ is installed
 2. Clone this repository
@@ -54,7 +54,7 @@ Pull requests and suggestions are welcome! Please open an issue first to discuss
 pip install -r requirements.txt
 ```
 
-## 🎮 Usage
+## Usage
 
 Start the program with:
 ```bash
@@ -67,9 +67,9 @@ Follow the on-screen instructions:
 3. Choose whether to enable TTS
 4. Send more messages or exit the program
 
-## ⚠️ Note
+##  Note
 
 Use this tool responsibly and respect Discord's community guidelines.
 
-## 🎨 Created by
+## Created by
 cyberseall 
