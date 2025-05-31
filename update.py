@@ -6,7 +6,7 @@ import io
 import shutil
 
 # === Konfiguration ===
-GITHUB_REPO = "USERNAME/tts-spammer"  # <--- Passe das auf deinen GitHub-Namen an!
+GITHUB_REPO = "SellMeFish/TTS-Spammer"
 RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.txt"
 ZIP_URL = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/main.zip"
 LOCAL_VERSION_FILE = "version.txt"
