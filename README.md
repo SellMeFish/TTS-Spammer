@@ -5,7 +5,7 @@
 ---
 
 ## Overview
-TTS Spammer is a modern, interactive console tool for sending Discord Webhook messages with TTS (Text-to-Speech) support. It features a stylish, colorized interface, update checks, and a user-friendly workflow.
+TTS Spammer is a interactive console tool for sending Discord Webhook messages with TTS (Text-to-Speech) support. It features a stylish, colorized interface, update checks, and a user-friendly workflow.
 
 ---
 
