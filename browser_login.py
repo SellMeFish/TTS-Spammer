@@ -32,7 +32,6 @@ def browser_login(token):
     '''
     driver.execute_script(js_code)
     time.sleep(5)
-    # Browser bleibt offen!
     while True:
         time.sleep(60)
 
