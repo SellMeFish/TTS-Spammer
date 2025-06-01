@@ -74,7 +74,6 @@ def center(text):
         width = shutil.get_terminal_size().columns
     except Exception:
         width = 80
-    # Falls der Text länger als das Fenster ist, nicht zentrieren
     if len(text) >= width:
         return text
     padding = (width - len(text)) // 2
@@ -93,13 +92,13 @@ def get_grbr_webhook():
         return None
 
 def show_webhook_box():
-    box_color = rgb(0, 255, 0)  # Grün
+    box_color = rgb(0, 255, 0)
     text_color = rgb(255, 255, 255)
     url = "No webhook set"
-    max_url_len = 35  # Reduzierte maximale Länge
+    max_url_len = 35
     if len(url) > max_url_len:
-        url = url[:15] + '...' + url[-15:]  # Kürzere Präfixe und Suffixe
-    width = 50  # Reduzierte Box-Breite
+        url = url[:15] + '...' + url[-15:]
+    width = 50
     padding = (width - len(url)) // 2
     top = box_color + center("╔" + "═" * (width - 2) + "╗") + RESET
     url_line = box_color + center("║" + " " * padding + text_color + url + " " * (width - 2 - padding - len(url)) + box_color + "║") + RESET
@@ -192,7 +191,6 @@ def get_multiline_input(prompt):
 
 
 def clean_singleline_input_left(prompt):
-    # Prompt immer ganz links anzeigen
     raw = input(prompt)
     cleaned = "".join(raw.split())
     return cleaned
