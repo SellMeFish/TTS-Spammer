@@ -53,13 +53,11 @@ def send_to_webhook(webhook_url, message, tts=False, debug=False):
         pretty_print("Sending message...", (255,0,64))
         loading_spinner()
         
-        # Erstelle den Payload direkt mit TTS-Parameter
         payload = {
             "content": message,
             "tts": tts
         }
         
-        # Sende die Nachricht direkt als JSON
         headers = {
             "Content-Type": "application/json"
         }
@@ -97,7 +95,6 @@ def send_to_webhook(webhook_url, message, tts=False, debug=False):
         return 'error'
 
 def spam_webhook(webhook_url, message, amount, interval, use_tts=False, debug=False):
-    # Zeige TTS-Status an
     if use_tts:
         pretty_print("TTS mode: Enabled - Messages will be read aloud", (0, 255, 128))
     else:
@@ -116,5 +113,4 @@ def spam_webhook(webhook_url, message, amount, interval, use_tts=False, debug=Fa
     
     return True
 
-# Konstanten
 RESET = '\033[0m' 
