@@ -76,7 +76,7 @@ pip install -r requirements.txt
 
 1. Start the tool:
 ```bash
-python main.py
+python tts_spammer.py
 ```
 
 2. Choose your desired function from the main menu
