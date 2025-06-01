@@ -41,7 +41,6 @@ def get_user_friends(token: str) -> List[Dict]:
         
         if response.status_code == 200:
             relationships = response.json()
-            # Filter only accepted friends (type 1)
             friends = [
                 r for r in relationships 
                 if r.get('type') == 1 
@@ -131,7 +130,6 @@ def dm_all_friends(token: str, message: str, delay: float = 1.0) -> tuple[int, i
         
         print(f"Sending DM to: {username}...")
         
-        # Create DM channel
         channel_id = create_dm_channel(token, user_id)
         if not channel_id:
             print(f"✗ Could not create DM channel for {username}")
@@ -144,7 +142,7 @@ def dm_all_friends(token: str, message: str, delay: float = 1.0) -> tuple[int, i
         else:
             print(f"✗ Error sending message to {username}")
             
-        time.sleep(delay)  # Delay to avoid rate limits
+        time.sleep(delay)
         
     return success, total
 
