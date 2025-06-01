@@ -5,9 +5,7 @@ from typing import Tuple
 from discord_utils import get_headers, validate_token
 from colorama import Fore, Style, init
 
-# Initialisiere Colorama
 init()
-
 def close_all_dms(token: str, delay: float = 0.5) -> Tuple[int, int]:
     """
     Schließt alle DM-Kanäle eines Discord-Accounts
@@ -21,7 +19,6 @@ def close_all_dms(token: str, delay: float = 0.5) -> Tuple[int, int]:
     failed = 0
 
     try:
-        # Hole alle DM-Kanäle
         response = requests.get(
             "https://discord.com/api/v9/users/@me/channels",
             headers=headers
@@ -35,8 +32,6 @@ def close_all_dms(token: str, delay: float = 0.5) -> Tuple[int, int]:
         total = len(channels)
 
         print(f"\n{Fore.CYAN}Gefundene DM-Kanäle: {total}{Style.RESET_ALL}\n")
-
-        # Schließe jeden Kanal
         for channel in channels:
             channel_id = channel['id']
             recipients = channel.get('recipients', [])
@@ -57,7 +52,7 @@ def close_all_dms(token: str, delay: float = 0.5) -> Tuple[int, int]:
                     failed += 1
                     print(f"{Fore.RED}✗{Style.RESET_ALL}")
 
-                time.sleep(delay)  # Verzögerung um Rate Limits zu vermeiden
+                time.sleep(delay)
 
             except Exception as e:
                 failed += 1
