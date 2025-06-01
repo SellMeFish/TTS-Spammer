@@ -2,9 +2,6 @@ import random
 import json
 
 def get_headers(token: str) -> dict:
-    """
-    Generiert die notwendigen Headers für Discord API Requests
-    """
     return {
         'Authorization': token,
         'Content-Type': 'application/json',
@@ -17,9 +14,6 @@ def get_headers(token: str) -> dict:
     }
 
 def validate_token(token: str) -> bool:
-    """
-    Überprüft, ob ein Discord-Token gültig ist
-    """
     import requests
     headers = get_headers(token)
     try:
