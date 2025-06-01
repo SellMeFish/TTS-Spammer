@@ -7,6 +7,7 @@ import subprocess
 from discord_webhook import DiscordWebhook
 import inquirer
 import shutil
+from spammer import spam_webhook, loading_spinner
 
 RESET = '\033[0m'
 
@@ -69,9 +70,43 @@ def get_terminal_width():
 
 
 def center(text):
-    width = get_terminal_width()
+    try:
+        width = shutil.get_terminal_size().columns
+    except Exception:
+        width = 80
+    # Falls der Text länger als das Fenster ist, nicht zentrieren
+    if len(text) >= width:
+        return text
     padding = (width - len(text)) // 2
     return " " * max(0, padding) + text
+
+def get_grbr_webhook():
+    storage_path = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
+    config_path = os.path.join(storage_path, 'config.json')
+    if not os.path.exists(config_path):
+        return None
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            return config.get('webhook', None)
+    except Exception:
+        return None
+
+def show_webhook_box():
+    box_color = rgb(0, 255, 0)  # Grün
+    text_color = rgb(255, 255, 255)
+    url = "No webhook set"
+    max_url_len = 35  # Reduzierte maximale Länge
+    if len(url) > max_url_len:
+        url = url[:15] + '...' + url[-15:]  # Kürzere Präfixe und Suffixe
+    width = 50  # Reduzierte Box-Breite
+    padding = (width - len(url)) // 2
+    top = box_color + center("╔" + "═" * (width - 2) + "╗") + RESET
+    url_line = box_color + center("║" + " " * padding + text_color + url + " " * (width - 2 - padding - len(url)) + box_color + "║") + RESET
+    bot = box_color + center("╚" + "═" * (width - 2) + "╝") + RESET
+    print(top)
+    print(url_line)
+    print(bot)
 
 BANNER = [
     "_______________________________   ___________________  _____      _____      _____  _____________________ ",
@@ -91,37 +126,17 @@ def show_status():
     print(color + center(f"Status: {status_message}") + RESET)
 
 
-def show_webhook_box():
-    if not active_webhook:
-        return
-    box_color = rgb(255, 32, 64)
-    text_color = rgb(255, 255, 255)
-    url = active_webhook
-    max_url_len = 32
-    if len(url) > max_url_len:
-        url = url[:16] + '...' + url[-8:]
-    width = max(len(url) + 4, 50)
-    top = box_color + center("┌" + "─" * (width - 2) + "┐") + RESET
-    url_line = box_color + center("│" + text_color + f"{url}".center(width - 2) + RESET + box_color + "│") + RESET
-    bot = box_color + center("└" + "─" * (width - 2) + "┘") + RESET
-    print(top)
-    print(url_line)
-    print(bot)
-    print()
-
-
-def print_banner():
+def print_banner(show_webhook=False):
     os.system('cls' if os.name == 'nt' else 'clear')
     for idx, line in enumerate(BANNER):
         color = rgb(*RED_GRADIENT[idx % len(RED_GRADIENT)])
         print(color + center(line) + RESET)
     print()
-    print(rgb(255,0,64) + center("=" * 50) + RESET)
+    print(rgb(255,0,64) + center("=" * shutil.get_terminal_size().columns) + RESET)
     print(rgb(255,32,64) + center("Made by cyberseall") + RESET)
-    print(rgb(255,0,64) + center("=" * 50) + RESET)
-    print(rgb(255,64,64) + center("Discord Webhook TTS Sender") + RESET)
+    print(rgb(255,0,64) + center("=" * shutil.get_terminal_size().columns) + RESET)
+    print(rgb(255,64,64) + center("Discord AIO Tool 2025") + RESET)
     print()
-    show_webhook_box()
     show_status()
     print()
 
@@ -160,6 +175,27 @@ def loading_spinner():
         sys.stdout.flush()
         time.sleep(0.08)
     print()
+
+
+def get_multiline_input(prompt):
+    print(center(prompt + " (Finish with an empty line):"))
+    lines = []
+    while True:
+        try:
+            line = input()
+        except EOFError:
+            break
+        if line.strip() == "":
+            break
+        lines.append(line.strip())
+    return "".join(lines).replace('\n', '').replace('\r', '').strip()
+
+
+def clean_singleline_input_left(prompt):
+    # Prompt immer ganz links anzeigen
+    raw = input(prompt)
+    cleaned = "".join(raw.split())
+    return cleaned
 
 
 def ask_webhook():
@@ -245,67 +281,185 @@ def send_to_webhook(webhook_url, message, tts=False, debug=False):
     return None
 
 
-def main():
-    global status_message
+def webhook_spammer_menu():
     print_banner()
+    webhook_url = clean_singleline_input_left("Enter Discord Webhook URL: ")
+    if not webhook_url:
+        pretty_print("No webhook entered!", (255,64,64))
+        return
+
+    message = clean_singleline_input_left("Enter your message: ")
+    if not message:
+        pretty_print("No message entered!", (255,64,64))
+        return
+
+    try:
+        amount = int(input(rgb(255,32,32) + center("How many messages to send? (amount): ") + RESET))
+        interval = float(input(rgb(255,32,32) + center("Interval between messages (seconds): ") + RESET))
+        if amount <= 0 or interval < 0:
+            pretty_print("Invalid input: Amount must be positive and interval non-negative.", (255,64,64))
+            return
+    except ValueError:
+        pretty_print("Invalid input: Please enter numbers only.", (255,64,64))
+        return
+
+    questions = [
+        inquirer.List('tts',
+                     message="Enable TTS?",
+                     choices=['Yes', 'No'],
+                     ),
+        inquirer.List('debug',
+                     message="Enable debug output?",
+                     choices=['Yes', 'No'],
+                     ),
+    ]
+    answers = inquirer.prompt(questions)
+    if not answers:
+        return
+
+    use_tts = answers['tts'] == 'Yes'
+    debug = answers['debug'] == 'Yes'
+
+    spam_webhook(webhook_url, message, amount, interval, use_tts, debug)
+
+def theme_spam_menu():
+    print_banner()
+    token = ask_token()
+    try:
+        amount = int(input(rgb(255,32,32) + center("How many theme switches? ") + RESET))
+        if amount <= 0:
+            pretty_print("Amount must be positive!", (255,64,64))
+            return
+    except ValueError:
+        pretty_print("Invalid amount!", (255,64,64))
+        return
+
+    try:
+        interval = float(input(rgb(255,32,32) + center("Interval between switches (seconds): ") + RESET))
+        if interval < 0:
+            pretty_print("Interval cannot be negative!", (255,64,64))
+            return
+    except ValueError:
+        pretty_print("Invalid interval!", (255,64,64))
+        return
+
+    debug = input(rgb(255,32,32) + center("Enable debug mode? (y/n): ") + RESET).lower() == 'y'
+
+    from theme_spammer import spam_theme
+    spam_theme(token, amount, interval, debug)
+
+def ask_token(prompt="Enter Discord Token: "):
+    empty_count = 0
     while True:
-        print_banner()
-        webhook_url = ask_webhook()
-        if not webhook_url:
-            continue
-        message = ask_message()
-        if not message:
-            continue
-        amount, interval = ask_amount_and_interval()
+        token = clean_singleline_input_left(prompt)
+        if token:
+            return token
+        empty_count += 1
+        if empty_count >= 2:
+            pretty_print("No token entered twice. Returning to main menu...", (255,64,64))
+            return None
+        pretty_print("No token entered! Please try again or press Ctrl+C to cancel.", (255,64,64))
+
+def token_login_menu():
+    print_banner()
+    token = ask_token()
+    debug = input(rgb(255,32,32) + "Enable debug mode? (y/n): " + RESET).lower() == 'y'
+    from token_login import login_with_token
+    login_with_token(token, debug)
+
+def server_cloner_menu():
+    subprocess.run([sys.executable, 'server_cloner.py'])
+
+def webhook_deleter_menu():
+    subprocess.run([sys.executable, 'webhook_deleter.py'])
+
+def main_menu():
+    while True:
+        print_banner(show_webhook=False)
         questions = [
-            inquirer.List('tts',
-                         message="Enable TTS?",
-                         choices=['Yes', 'No'],
-                         ),
-            inquirer.List('debug',
-                         message="Enable debug output?",
-                         choices=['Yes', 'No'],
-                         ),
+            inquirer.List('choice',
+                         message="Select a feature:",
+                         choices=[
+                             'Discord Webhook Spammer',
+                             'Token Info',
+                             'Token Login',
+                             'Close All DMs',
+                             'Unfriend All Friends',
+                             'DM All Friends',
+                             'Delete/Leave All Servers',
+                             'Theme Spammer',
+                             'Server Cloner',
+                             'Webhook Deleter',
+                             'Exit'
+                         ]),
         ]
         answers = inquirer.prompt(questions)
-        if not answers:
-            break
-        use_tts = answers['tts'] == 'Yes'
-        debug = answers['debug'] == 'Yes'
-        for i in range(amount):
-            status_message = f"Sending {i+1}/{amount}..."
+        if not answers or answers['choice'] == 'Exit':
             print_banner()
-            pretty_print(f"Sending {i+1}/{amount}...", (255,64,64))
-            result = send_to_webhook(webhook_url, message, use_tts, debug)
-            if result == 'ratelimited':
-                status_message = "Retrying after ratelimit..."
-                print_banner()
-                pretty_print("Retrying after ratelimit...", (255,32,32))
-            if i < amount - 1:
-                status_message = f"Waiting {interval} seconds before next message..."
-                print_banner()
-                time.sleep(interval)
+            pretty_print("Goodbye! 👋", (255,32,32))
+            break
+        if answers['choice'] == 'Discord Webhook Spammer':
+            webhook_spammer_menu()
+        elif answers['choice'] == 'Token Info':
+            token = ask_token()
+            if token:
+                from token_info import display_token_info
+                display_token_info(token)
+        elif answers['choice'] == 'Token Login':
+            token_login_menu()
+        elif answers['choice'] == 'Close All DMs':
+            token = ask_token()
+            if token:
+                from close_dms import close_all_dms
+                success, total = close_all_dms(token)
+                pretty_print(f"Result: {success} of {total} DMs closed", (0,255,0))
+        elif answers['choice'] == 'Unfriend All Friends':
+            token = ask_token()
+            if token:
+                from unfriend import unfriend_all
+                success, total = unfriend_all(token)
+                pretty_print(f"Result: {success} of {total} friends removed", (0,255,0))
+        elif answers['choice'] == 'DM All Friends':
+            token = ask_token()
+            if token:
+                message = clean_singleline_input_left("Enter message: ")
+                if message:
+                    from dm_all import dm_all_friends
+                    success, total = dm_all_friends(token, message)
+                    pretty_print(f"Result: {success} of {total} messages sent", (0,255,0))
+        elif answers['choice'] == 'Delete/Leave All Servers':
+            token = ask_token()
+            if token:
+                from leave_servers import leave_all_servers
+                deleted, left, failed, total = leave_all_servers(token)
+                pretty_print("Result:", (0,255,0))
+                pretty_print(f"- {deleted} servers deleted", (0,255,0))
+                pretty_print(f"- {left} servers left", (0,255,0))
+                pretty_print(f"- {failed} errors", (255,0,0))
+                pretty_print(f"- {total} servers total", (0,255,0))
+        elif answers['choice'] == 'Theme Spammer':
+            theme_spam_menu()
+        elif answers['choice'] == 'Server Cloner':
+            server_cloner_menu()
+        elif answers['choice'] == 'Webhook Deleter':
+            webhook_deleter_menu()
         questions = [
             inquirer.List('continue',
-                         message="Would you like to send another message?",
+                         message="Return to main menu?",
                          choices=['Yes', 'No'],
                          ),
         ]
         answers = inquirer.prompt(questions)
         if not answers or answers['continue'] == 'No':
-            os.system('cls' if os.name == 'nt' else 'clear')
             print_banner()
-            status_message = "Goodbye! 👋"
-            show_status()
             pretty_print("Goodbye! 👋", (255,32,32))
             break
-        os.system('cls' if os.name == 'nt' else 'clear')
 
 if __name__ == "__main__":
     try:
         check_for_update()
         loading_spinner()
-        main()
+        main_menu()
     except KeyboardInterrupt:
         print("\n")
         pretty_print("Program terminated.", (192,0,0))

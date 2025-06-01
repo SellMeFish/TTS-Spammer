@@ -5,6 +5,7 @@ import zipfile
 import io
 import shutil
 
+# === Konfiguration ===
 GITHUB_REPO = "SellMeFish/TTS-Spammer"
 RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.txt"
 ZIP_URL = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/main.zip"
@@ -37,12 +38,14 @@ def download_and_extract_zip():
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
     z.extractall(temp_dir)
+    # Finde den extrahierten Ordner
     extracted = [d for d in os.listdir(temp_dir) if os.path.isdir(os.path.join(temp_dir, d))][0]
     src_path = os.path.join(temp_dir, extracted)
+    # Kopiere alle Dateien (außer .git, _update_temp, __pycache__)
     for root, dirs, files in os.walk(src_path):
         rel_path = os.path.relpath(root, src_path)
         for file in files:
-            if file == "update.py": continue
+            if file == "update.py": continue  # update.py nicht überschreiben
             src_file = os.path.join(root, file)
             dst_file = os.path.join(os.getcwd(), rel_path, file) if rel_path != "." else os.path.join(os.getcwd(), file)
             os.makedirs(os.path.dirname(dst_file), exist_ok=True)

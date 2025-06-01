@@ -1,4 +1,4 @@
-discord-webhook==1.1.0
+requests==2.31.0
 colorama==0.4.6
 pyttsx3==2.90
 art==5.9
