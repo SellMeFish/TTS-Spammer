@@ -75,8 +75,6 @@ def setup_chrome_driver():
     """
     try:
         pretty_print("Setting up Chrome...", (255, 64, 64))
-        
-        # Chrome options
         chrome_options = Options()
         chrome_options.add_argument("--incognito")
         chrome_options.add_argument("--start-maximized")
@@ -87,15 +85,10 @@ def setup_chrome_driver():
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
-        
-        # Add user agent
         chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-        
-        # Download and setup ChromeDriver
         pretty_print("Downloading ChromeDriver...", (255, 64, 64))
         service = Service(ChromeDriverManager().install())
         
-        # Create driver
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
         
@@ -129,7 +122,6 @@ def login_with_token(token, debug=False):
         pretty_print("\nDo you want to login with this token?", (255, 64, 64))
         choice = input(rgb(255, 32, 32) + center("Proceed? (y/n): ") + RESET).lower()
         if choice == 'y':
-            # Starte browser_login.py in neuem Terminal
             if platform.system() == "Windows":
                 subprocess.Popen(
                     ['start', 'cmd', '/k', sys.executable, 'browser_login.py', token],
@@ -155,17 +147,12 @@ def main():
     pretty_print("Discord Token Login", (255, 64, 64))
     print("="*50 + "\n")
     
-    # Get token
     token = input(rgb(255, 32, 32) + center("Enter Discord Token: ") + RESET).strip()
-    print(f"[DEBUG] Token entered: '{token}'")  # Debug-Ausgabe
+    print(f"[DEBUG] Token entered: '{token}'")
     if not token:
         pretty_print("✗ No token provided!", (255, 0, 0))
         return
-    
-    # Debug mode
     debug = input(rgb(255, 32, 32) + center("Enable debug mode? (y/n): ") + RESET).lower() == 'y'
-    
-    # Start login process
     print("\n")
     login_with_token(token, debug)
 
