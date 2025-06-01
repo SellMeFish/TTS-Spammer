@@ -41,7 +41,6 @@ def switch_theme(token, theme="dark", debug=False):
     theme: "dark" or "light"
     """
     try:
-        # Base64 encoded theme settings
         theme_settings = {
             "dark": "agYIAhABGgA=",  # Dark Mode
             "light": "agYIARABGgA="  # Light Mode
@@ -93,16 +92,14 @@ def spam_theme(token, amount, interval, debug=False):
     pretty_print(f"Interval: {interval} seconds", (255, 64, 64))
     
     success_count = 0
-    current_theme = "dark"  # Start with Dark theme
+    current_theme = "dark"
     
     for i in range(amount):
         pretty_print(f"Switch {i+1}/{amount}...", (255, 64, 64))
         
-        # Switch theme
         if switch_theme(token, current_theme, debug):
             success_count += 1
             
-        # Toggle theme for next iteration
         current_theme = "light" if current_theme == "dark" else "dark"
         
         if i < amount - 1:
@@ -117,13 +114,11 @@ def main():
     pretty_print("Discord Theme Spammer", (255, 64, 64))
     print("="*50 + "\n")
     
-    # Get token
     token = input(rgb(255, 32, 32) + center("Enter Discord Token: ") + RESET).strip()
     if not token:
         pretty_print("✗ No token provided!", (255, 0, 0))
         return
         
-    # Get amount of switches
     try:
         amount = int(input(rgb(255, 32, 32) + center("How many theme switches? ") + RESET))
         if amount <= 0:
@@ -133,7 +128,6 @@ def main():
         pretty_print("✗ Invalid amount!", (255, 0, 0))
         return
         
-    # Get interval
     try:
         interval = float(input(rgb(255, 32, 32) + center("Interval between switches (seconds): ") + RESET))
         if interval < 0:
@@ -143,10 +137,8 @@ def main():
         pretty_print("✗ Invalid interval!", (255, 0, 0))
         return
     
-    # Debug mode
     debug = input(rgb(255, 32, 32) + center("Enable debug mode? (y/n): ") + RESET).lower() == 'y'
     
-    # Start spam
     print("\n")
     spam_theme(token, amount, interval, debug)
 
