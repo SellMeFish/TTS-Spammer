@@ -4,7 +4,6 @@ from typing import Dict, Optional
 from datetime import datetime, timezone
 from colorama import Fore, Style, init
 
-# Initialize Colorama
 init()
 
 def get_headers(token: str) -> dict:
@@ -21,7 +20,6 @@ def validate_token(token: str) -> bool:
 
 def get_creation_date(user_id: str) -> str:
     try:
-        # Convert user_id to integer safely
         if isinstance(user_id, str):
             if not user_id.isdigit():
                 print(f"{Fore.YELLOW}Warning: User ID contains non-digit characters: {user_id}{Style.RESET_ALL}")
@@ -30,7 +28,6 @@ def get_creation_date(user_id: str) -> str:
         else:
             user_id_int = int(str(user_id))
             
-        # Discord snowflake calculation
         timestamp = (user_id_int >> 22) + 1420070400000
         dt = datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc)
         return dt.strftime('%Y-%m-%d %H:%M:%S UTC')
@@ -78,22 +75,17 @@ def get_token_info(token: str) -> Optional[Dict]:
             
         data = user_resp.json()
         
-        # Validate and process user ID
         user_id = data.get('id')
         if not user_id:
             print(f"{Fore.RED}Error: No user ID found in response!{Style.RESET_ALL}")
             return None
             
-        # Convert user_id to string for consistent handling
         user_id_str = str(user_id)
         if not user_id_str.isdigit():
             print(f"{Fore.RED}Error: User ID contains non-digit characters: {user_id_str}{Style.RESET_ALL}")
             return None
             
-        # Calculate creation date
         creation_date = get_creation_date(user_id_str)
-        
-        # Nitro
         nitro = False
         nitro_days = None
         try:
@@ -111,21 +103,17 @@ def get_token_info(token: str) -> Optional[Dict]:
                         except (ValueError, TypeError):
                             nitro_days = None
         except Exception:
-            pass  # Silently handle Nitro fetch errors
-            
-        # Payment
+            pass
         payment_sources = []
         try:
             billing_resp = requests.get('https://discord.com/api/v9/users/@me/billing/payment-sources', headers=headers)
             if billing_resp.status_code == 200:
                 payment_sources = billing_resp.json()
         except Exception:
-            pass  # Silently handle payment fetch errors
+            pass
             
-        # Badges
         badges = get_badges(data.get('public_flags', 0))
         
-        # Avatar
         avatar_url = f"https://cdn.discordapp.com/avatars/{user_id_str}/{data['avatar']}.png" if data.get('avatar') else 'None'
         
         return {
@@ -173,21 +161,19 @@ def display_token_info(token: str) -> None:
 {Fore.CYAN}║{Style.RESET_ALL} Nitro Days Left : {Fore.GREEN}{str(info['nitro_days']) if info['nitro_days'] is not None else 'N/A'}{Style.RESET_ALL}
 {Fore.CYAN}╠══════════════════════════════════════════════════════════════╣{Style.RESET_ALL}""")
 
-        # Payment Methods
         if info['payment_methods']:
             for idx, pm in enumerate(info['payment_methods'], 1):
                 print(f"{Fore.CYAN}║{Style.RESET_ALL} Payment Method {idx}:")
                 print(f"{Fore.CYAN}║{Style.RESET_ALL}   Type         : {Fore.GREEN}{pm.get('type', 'N/A')}{Style.RESET_ALL}")
                 print(f"{Fore.CYAN}║{Style.RESET_ALL}   Valid        : {Fore.GREEN}{pm.get('valid', 'N/A')}{Style.RESET_ALL}")
                 print(f"{Fore.CYAN}║{Style.RESET_ALL}   Default      : {Fore.GREEN}{pm.get('default', 'N/A')}{Style.RESET_ALL}")
-                if pm.get('type') == 1:  # Credit Card
+                if pm.get('type') == 1:
                     print(f"{Fore.CYAN}║{Style.RESET_ALL}   Brand        : {Fore.GREEN}{pm.get('brand', 'N/A')}{Style.RESET_ALL}")
                     print(f"{Fore.CYAN}║{Style.RESET_ALL}   Last 4       : {Fore.GREEN}{pm.get('last_4', 'N/A')}{Style.RESET_ALL}")
                     print(f"{Fore.CYAN}║{Style.RESET_ALL}   Expires      : {Fore.GREEN}{pm.get('expires_month', 'N/A')}/{pm.get('expires_year', 'N/A')}{Style.RESET_ALL}")
                     print(f"{Fore.CYAN}║{Style.RESET_ALL}   Holder Name  : {Fore.GREEN}{pm.get('billing_address', {}).get('name', 'N/A')}{Style.RESET_ALL}")
-                elif pm.get('type') == 2:  # Paypal
+                elif pm.get('type') == 2:
                     print(f"{Fore.CYAN}║{Style.RESET_ALL}   Paypal Email : {Fore.GREEN}{pm.get('email', 'N/A')}{Style.RESET_ALL}")
-                # Address
                 addr = pm.get('billing_address', {})
                 print(f"{Fore.CYAN}║{Style.RESET_ALL}   Address 1    : {Fore.GREEN}{addr.get('line_1', 'N/A')}{Style.RESET_ALL}")
                 print(f"{Fore.CYAN}║{Style.RESET_ALL}   Address 2    : {Fore.GREEN}{addr.get('line_2', 'N/A')}{Style.RESET_ALL}")
@@ -212,13 +198,11 @@ def prompt_token_input() -> Optional[str]:
                 attempts += 1
                 continue
                 
-            # Basic token format validation
             if not token.count('.') == 2:
                 print(f"{Fore.RED}Invalid token format! Token should contain two dots.{Style.RESET_ALL}")
                 attempts += 1
                 continue
                 
-            # Debug information
             print(f"{Fore.CYAN}Debug: Token format validation passed{Style.RESET_ALL}")
             return token
             
