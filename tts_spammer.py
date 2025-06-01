@@ -7,7 +7,14 @@ import subprocess
 from discord_webhook import DiscordWebhook
 import inquirer
 import shutil
-from spammer import spam_webhook, loading_spinner
+from utils.spammer import spam_webhook, loading_spinner
+from colorama import Fore, Style, init
+from utils.update import main as run_updater
+from utils.nitro_generator import run_nitro_generator
+from utils.token_generator import run_token_generator
+
+# Initialize colorama
+init()
 
 RESET = '\033[0m'
 
@@ -366,10 +373,10 @@ def token_login_menu():
     login_with_token(token, debug)
 
 def server_cloner_menu():
-    subprocess.run([sys.executable, 'server_cloner.py'])
+    subprocess.run([sys.executable, 'utils/server_cloner.py'])
 
 def webhook_deleter_menu():
-    subprocess.run([sys.executable, 'webhook_deleter.py'])
+    subprocess.run([sys.executable, 'utils/webhook_deleter.py'])
 
 def main_menu():
     while True:
@@ -379,6 +386,8 @@ def main_menu():
                          message="Select a feature:",
                          choices=[
                              'Discord Webhook Spammer',
+                             'Nitro Generator & Checker',
+                             'Token Generator',
                              'Token Info',
                              'Token Login',
                              'Close All DMs',
@@ -398,23 +407,27 @@ def main_menu():
             break
         if answers['choice'] == 'Discord Webhook Spammer':
             webhook_spammer_menu()
+        elif answers['choice'] == 'Nitro Generator & Checker':
+            run_nitro_generator()
+        elif answers['choice'] == 'Token Generator':
+            run_token_generator()
         elif answers['choice'] == 'Token Info':
             token = ask_token()
             if token:
-                from token_info import display_token_info
+                from utils.token_info import display_token_info
                 display_token_info(token)
         elif answers['choice'] == 'Token Login':
             token_login_menu()
         elif answers['choice'] == 'Close All DMs':
             token = ask_token()
             if token:
-                from close_dms import close_all_dms
+                from utils.close_dms import close_all_dms
                 success, total = close_all_dms(token)
                 pretty_print(f"Result: {success} of {total} DMs closed", (0,255,0))
         elif answers['choice'] == 'Unfriend All Friends':
             token = ask_token()
             if token:
-                from unfriend import unfriend_all
+                from utils.unfriend import unfriend_all
                 success, total = unfriend_all(token)
                 pretty_print(f"Result: {success} of {total} friends removed", (0,255,0))
         elif answers['choice'] == 'DM All Friends':
@@ -422,13 +435,13 @@ def main_menu():
             if token:
                 message = clean_singleline_input_left("Enter message: ")
                 if message:
-                    from dm_all import dm_all_friends
+                    from utils.dm_all import dm_all_friends
                     success, total = dm_all_friends(token, message)
                     pretty_print(f"Result: {success} of {total} messages sent", (0,255,0))
         elif answers['choice'] == 'Delete/Leave All Servers':
             token = ask_token()
             if token:
-                from leave_servers import leave_all_servers
+                from utils.leave_servers import leave_all_servers
                 deleted, left, failed, total = leave_all_servers(token)
                 pretty_print("Result:", (0,255,0))
                 pretty_print(f"- {deleted} servers deleted", (0,255,0))
@@ -455,10 +468,10 @@ def main_menu():
 
 if __name__ == "__main__":
     try:
-        check_for_update()
-        loading_spinner()
         main_menu()
     except KeyboardInterrupt:
-        print("\n")
-        pretty_print("Program terminated.", (192,0,0))
+        print(f"\n\n{Fore.YELLOW}Goodbye!{Style.RESET_ALL}")
+    except Exception as e:
+        print(f"\n{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
+    finally:
         sys.exit(0) 
