@@ -8,10 +8,8 @@ import time
 from colorama import Fore, Style, init
 from tqdm import tqdm
 
-# Initialize colorama
 init()
 
-# === Configuration ===
 GITHUB_REPO = "SellMeFish/TTS-Spammer"
 RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.txt"
 ZIP_URL = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/main.zip"
@@ -71,7 +69,6 @@ def download_and_extract_zip():
     temp_zip = "_update.zip"
     
     try:
-        # Download with progress bar
         download_with_progress(ZIP_URL, temp_zip)
         
         print(f"\n{Fore.CYAN}Extracting update...{Style.RESET_ALL}")
@@ -82,7 +79,6 @@ def download_and_extract_zip():
                     z.extract(file, "_update_temp")
                     pbar.update(1)
         
-        # Find extracted folder
         extracted = [d for d in os.listdir("_update_temp") if os.path.isdir(os.path.join("_update_temp", d))][0]
         src_path = os.path.join("_update_temp", extracted)
         
