@@ -9,7 +9,7 @@ def get_user_friends(token: str) -> List[Dict]:
     try:
         response = requests.get('https://discord.com/api/v9/users/@me/relationships', headers=headers)
         if response.status_code == 200:
-            return [r for r in response.json() if r.get('type') == 1]  # Nur bestätigte Freunde
+            return [r for r in response.json() if r.get('type') == 1]
         return []
     except Exception as e:
         print(f"Fehler beim Abrufen der Freundesliste: {str(e)}")
@@ -46,7 +46,7 @@ def unfriend_all(token: str, delay: float = 1.0) -> tuple[int, int]:
         else:
             print(f"✗ Fehler beim Entfernen von: {username}")
             
-        time.sleep(delay)  # Verzögerung um Rate Limits zu vermeiden
+        time.sleep(delay)
         
     return success, total
 
