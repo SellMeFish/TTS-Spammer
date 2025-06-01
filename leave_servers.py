@@ -68,7 +68,7 @@ def leave_all_servers(token: str, delay: float = 1.0) -> Tuple[int, int, int, in
                 failed += 1
                 print(f"✗ Fehler beim Verlassen von: {guild_name}")
             
-        time.sleep(delay)  # Verzögerung um Rate Limits zu vermeiden
+        time.sleep(delay)
         
     return deleted, left, failed, total
 
