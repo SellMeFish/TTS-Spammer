@@ -4,9 +4,9 @@
 
 A modern, versatile Discord tool packed with powerful features.
 
-## ✨ Features
+##  Features
 
-### 🔑 Token Management
+###  Token Management
 - **Token Info**
   - Get detailed insights into any Discord token
   - View username, ID, creation date, language, and badges
@@ -19,7 +19,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Quick and easy token-based login
   - Smart token validation
 
-### 🎮 Server Management
+###  Server Management
 - **Server Cloner**
   - Clone entire server structures with ease
   - Copy roles, channels (including categories)
@@ -31,7 +31,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Leave or delete all servers
   - Safety confirmation before execution
 
-### 👥 Friend Management
+###  Friend Management
 - **Unfriend All Friends**
   - Remove all friends
   - Confirmation prompt
@@ -40,7 +40,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Send messages to all friends
   - Support for mass messaging
 
-### 🔗 Webhook Tools
+###  Webhook Tools
 - **Webhook Spammer**
   - Send messages through webhooks
   - Support for various message formats
@@ -50,7 +50,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Delete webhooks via URL
   - Confirmation before deletion
 
-### 🛠️ Additional Features
+###  Additional Features
 - **Close All DMs**
   - Close all open DMs
 
@@ -58,7 +58,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Spam theme messages
   - Customizable settings
 
-## 🚀 Getting Started
+##  Getting Started
 
 1. Make sure you have Python 3.8 or higher installed
 2. Clone the repository:
@@ -72,7 +72,7 @@ cd TTS-Spammer
 pip install -r requirements.txt
 ```
 
-## 💻 Usage
+##  Usage
 
 1. Start the tool:
 ```bash
@@ -82,7 +82,7 @@ python tts_spammer.py
 2. Choose your desired function from the main menu
 3. Follow the on-screen instructions
 
-## 📦 Dependencies
+##  Dependencies
 
 - requests==2.31.0
 - colorama==0.4.6
@@ -90,13 +90,13 @@ python tts_spammer.py
 - art==5.9
 - inquirer==3.1.3
 
-## ⚠️ Important Notes
+##  Important Notes
 
 - This tool is intended for educational purposes only
 - Please use responsibly and in accordance with Discord's Terms of Service
 - The author is not responsible for any misuse of this tool
 
-## 🔄 Latest Updates
+##  Latest Updates
 
 ### Recent Improvements
 - Enhanced token validation
@@ -106,7 +106,7 @@ python tts_spammer.py
 - New webhook deleter feature
 - Extended server cloner functionality
 
-## 🤝 Contributing
+##  Contributing
 
 Feel free to contribute! Whether it's bug reports, feature requests, or pull requests - every contribution is welcome. Just make sure to:
 1. Fork the repository
@@ -116,7 +116,7 @@ Feel free to contribute! Whether it's bug reports, feature requests, or pull req
 5. Open a pull request
 
 
-## 👨‍💻 Author
+##  Author
 
 Created by cyberseall
 
