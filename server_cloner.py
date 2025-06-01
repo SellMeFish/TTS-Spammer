@@ -5,7 +5,6 @@ import sys
 
 RESET = '\033[0m'
 
-# Farbige Ausgaben
 COLORS = {
     'HEADER': '\033[95m',
     'OKBLUE': '\033[94m',
@@ -138,7 +137,7 @@ def create_channel(token, guild_id, channel, parent_id=None):
         "position": channel['position'],
         "parent_id": parent_id
     }
-    if channel['type'] == 2:  # Voice
+    if channel['type'] == 2:
         data['bitrate'] = min(channel.get('bitrate', 64000), 96000)  # Discord API Limit
         data['user_limit'] = channel.get('user_limit', 0)
     resp = requests.post(url, headers=headers, json=data)
@@ -187,10 +186,8 @@ def set_guild_name(token, guild_id, name, description=None):
     else:
         pretty_print(f"Failed to set server name: {resp.status_code} {resp.text}", 'FAIL')
 
-# --- NEU: Zielserver leeren ---
 def clear_target_guild(token, guild_id):
     pretty_print("Clearing target server...", 'WARNING')
-    # Channels löschen
     channels = get_channels(token, guild_id)
     for ch in channels:
         url = f"https://discord.com/api/v10/channels/{ch['id']}"
@@ -199,7 +196,6 @@ def clear_target_guild(token, guild_id):
         if resp.status_code in (200, 204):
             pretty_print(f"Deleted channel: {ch['name']}", 'GRAY')
         time.sleep(0.3)
-    # Emojis löschen
     emojis = get_emojis(token, guild_id)
     for emoji in emojis:
         url = f"https://discord.com/api/v10/guilds/{guild_id}/emojis/{emoji['id']}"
@@ -208,7 +204,6 @@ def clear_target_guild(token, guild_id):
         if resp.status_code in (200, 204):
             pretty_print(f"Deleted emoji: {emoji['name']}", 'GRAY')
         time.sleep(0.3)
-    # Rollen löschen (außer @everyone)
     roles = get_roles(token, guild_id)
     for role in roles:
         if role['name'] == "@everyone":
@@ -237,14 +232,11 @@ def clone_server(token, source_id, target_id):
         return
     pretty_print(f"Target Server: {color(target_data['name'], 'BOLD')} ({target_id})", 'OKGREEN')
 
-    # Zielserver leeren
     clear_target_guild(token, target_id)
 
-    # Servername und Beschreibung setzen
     pretty_print("Cloning server name...", 'OKCYAN')
     set_guild_name(token, target_id, source_data['name'], source_data.get('description'))
 
-    # 1. Server-Icon klonen
     pretty_print("Cloning server icon...", 'OKCYAN')
     icon_bytes = get_guild_icon(token, source_data)
     if icon_bytes:
@@ -252,7 +244,6 @@ def clone_server(token, source_id, target_id):
     else:
         pretty_print("No icon to clone.", 'WARNING')
 
-    # 2. Rollen klonen
     pretty_print("Cloning roles...", 'OKCYAN')
     source_roles = get_roles(token, source_id)
     role_map = {}
@@ -264,7 +255,6 @@ def clone_server(token, source_id, target_id):
             role_map[role['id']] = new_role['id']
         time.sleep(0.5)
 
-    # 3. Kategorien und Channels klonen
     pretty_print("Cloning categories and channels...", 'OKCYAN')
     source_channels = get_channels(token, source_id)
     categories = [c for c in source_channels if c['type'] == 4]
@@ -280,7 +270,6 @@ def clone_server(token, source_id, target_id):
         create_channel(token, target_id, ch, parent_id)
         time.sleep(0.5)
 
-    # 4. Emojis klonen
     pretty_print("Cloning emojis...", 'OKCYAN')
     source_emojis = get_emojis(token, source_id)
     for emoji in source_emojis:
