@@ -1,75 +1,123 @@
-# TTS Spammer
+# Discord AIO Tool
 
-![TTS Spammer](spammer.png)
+![Preview](spammer.png)
 
----
+A modern, versatile Discord tool packed with powerful features.
 
-## Overview
-TTS Spammer is a modern, interactive console tool for sending Discord Webhook messages with TTS (Text-to-Speech) support. It features a stylish, colorized interface, update checks, and a user-friendly workflow.
+## ✨ Features
 
----
+### 🔑 Token Management
+- **Token Info**
+  - Get detailed insights into any Discord token
+  - View username, ID, creation date, language, and badges
+  - See avatar URL and token details
+  - Check 2FA status, email, phone, and verification status
+  - Monitor Nitro status with remaining days
+  - View all payment methods (credit card/PayPal) with full details
 
-## Installation
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/SellMeFish/TTS-spammer.git
-   cd tts-spammer
-   ```
-2. **Run the installer:**
-   ```bash
-   install_and_run.bat
-   ```
-   The script will check for Python, install all requirements, and guide you through the setup.
+- **Token Login**
+  - Quick and easy token-based login
+  - Smart token validation
 
----
+### 🎮 Server Management
+- **Server Cloner**
+  - Clone entire server structures with ease
+  - Copy roles, channels (including categories)
+  - Transfer server icon, name, and description
+  - Clone all emojis
+  - Clean target server before cloning
 
-## Usage
-- Start the tool via the batch file or directly with:
-  ```bash
-  python tts_spammer.py
-  ```
-- Follow the on-screen instructions to enter your Discord Webhook, message, amount, interval, and options.
-- The tool will handle rate limits and can be updated via the menu or automatically at startup.
+- **Delete/Leave All Servers**
+  - Leave or delete all servers
+  - Safety confirmation before execution
 
----
+### 👥 Friend Management
+- **Unfriend All Friends**
+  - Remove all friends
+  - Confirmation prompt
 
-## Updating
-- Use the menu option "Check for Updates" or let the tool auto-check at startup.
-- Updates are fetched directly from the official GitHub repository.
+- **DM All Friends**
+  - Send messages to all friends
+  - Support for mass messaging
 
----
+### 🔗 Webhook Tools
+- **Webhook Spammer**
+  - Send messages through webhooks
+  - Support for various message formats
+  - Customizable delays
 
-## Contributing
-Pull requests and suggestions are welcome! Please open an issue first to discuss any major changes.
+- **Webhook Deleter**
+  - Delete webhooks via URL
+  - Confirmation before deletion
 
----
+### 🛠️ Additional Features
+- **Close All DMs**
+  - Close all open DMs
 
+- **Theme Spammer**
+  - Spam theme messages
+  - Customizable settings
 
-## Installation
+## 🚀 Getting Started
 
-1. Make sure Python 3.7+ is installed
-2. Clone this repository
-3. Install dependencies:
+1. Make sure you have Python 3.8 or higher installed
+2. Clone the repository:
+```bash
+git clone https://github.com/SellMeFish/TTS-Spammer.git
+cd TTS-Spammer
+```
+
+3. Install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+## 💻 Usage
 
-Start the program with:
+1. Start the tool:
 ```bash
-python tts_spammer.py
+python main.py
 ```
 
-Follow the on-screen instructions:
-1. Enter the Discord Webhook URL
-2. Type your message
-3. Choose whether to enable TTS
-4. Send more messages or exit the program
+2. Choose your desired function from the main menu
+3. Follow the on-screen instructions
 
-##  Note
+## 📦 Dependencies
 
-Use this tool responsibly and respect Discord's community guidelines.
+- requests==2.31.0
+- colorama==0.4.6
+- pyttsx3==2.90
+- art==5.9
+- inquirer==3.1.3
 
-## Created by
-cyberseall 
+## ⚠️ Important Notes
+
+- This tool is intended for educational purposes only
+- Please use responsibly and in accordance with Discord's Terms of Service
+- The author is not responsible for any misuse of this tool
+
+## 🔄 Latest Updates
+
+### Recent Improvements
+- Enhanced token validation
+- Optimized Nitro days calculation
+- Modernized user interface
+- Improved error handling
+- New webhook deleter feature
+- Extended server cloner functionality
+
+## 🤝 Contributing
+
+Feel free to contribute! Whether it's bug reports, feature requests, or pull requests - every contribution is welcome. Just make sure to:
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+
+## 👨‍💻 Author
+
+Created by cyberseall
+
+---
