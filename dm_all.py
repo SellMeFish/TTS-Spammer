@@ -134,8 +134,6 @@ def dm_all_friends(token: str, message: str, delay: float = 1.0) -> tuple[int, i
         if not channel_id:
             print(f"✗ Could not create DM channel for {username}")
             continue
-            
-        # Send message
         if send_dm(token, channel_id, message):
             success += 1
             print(f"✓ Message successfully sent to {username}")
