@@ -16,14 +16,14 @@ ZIP_URL = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/main.zip"
 LOCAL_VERSION_FILE = "version.txt"
 
 def print_banner():
-    banner = f"""{Fore.CYAN}
+    banner = f"""{Fore.CYAN}{r'''
    __  __          __      __       __
   / / / /___  ____/ /___ _/ /____  / /
  / / / / __ \/ __  / __ `/ __/ _ \/ / 
 / /_/ / /_/ / /_/ / /_/ / /_/  __/_/  
 \____/ .___/\__,_/\__,_/\__/\___(_)   
     /_/                               
-{Style.RESET_ALL}"""
+'''}{Style.RESET_ALL}"""
     print(banner)
     print(f"{Fore.YELLOW}=== Discord Tool Updater ==={Style.RESET_ALL}\n")
 
