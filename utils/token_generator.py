@@ -10,7 +10,6 @@ from datetime import datetime
 from colorama import Fore, Style, init
 from tqdm import tqdm
 
-# Initialize colorama
 init()
 
 def generate_random_string(length):
@@ -19,18 +18,14 @@ def generate_random_string(length):
 
 def generate_token():
     """Generate a Discord-like token."""
-    # First part (user ID)
     user_id = str(random.randint(100000000000000000, 999999999999999999))
     
-    # Second part (timestamp)
     timestamp = int(datetime.now().timestamp())
     timestamp_bytes = timestamp.to_bytes(4, 'big')
     timestamp_b64 = base64.b64encode(timestamp_bytes).decode('utf-8').rstrip('=')
     
-    # Third part (random)
     random_part = generate_random_string(27)
     
-    # Combine parts
     token = f"{user_id}.{timestamp_b64}.{random_part}"
     return token
 
@@ -55,7 +50,6 @@ def run_token_generator():
     """Run the Token Generator."""
     print(f"\n{Fore.YELLOW}=== Discord Token Generator ==={Style.RESET_ALL}\n")
     
-    # Get user input
     try:
         amount = int(input(f"{Fore.CYAN}How many tokens to generate? {Style.RESET_ALL}"))
         if amount <= 0:
@@ -67,14 +61,11 @@ def run_token_generator():
     print(f"\n{Fore.YELLOW}Starting Token Generator...{Style.RESET_ALL}")
     print(f"{Fore.CYAN}Generated tokens will be saved to 'generated_tokens.txt'{Style.RESET_ALL}\n")
 
-    # Create stop event for animation
     stop_event = threading.Event()
     
-    # Start loading animation in separate thread
     anim_thread = threading.Thread(target=loading_animation, args=(stop_event,))
     anim_thread.start()
 
-    # Generate tokens with progress bar
     tokens = []
     with tqdm(total=amount, desc=f"{Fore.CYAN}Generating{Style.RESET_ALL}", 
              bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
@@ -83,14 +74,11 @@ def run_token_generator():
             tokens.append(token)
             pbar.update(1)
 
-    # Stop animation
     stop_event.set()
     anim_thread.join()
 
-    # Save tokens
     save_tokens(tokens)
 
-    # Print results
     print(f"\n{Fore.CYAN}=== Results ==={Style.RESET_ALL}")
     print(f"{Fore.GREEN}Successfully generated {amount} tokens!{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Tokens saved to 'generated_tokens.txt'{Style.RESET_ALL}")
