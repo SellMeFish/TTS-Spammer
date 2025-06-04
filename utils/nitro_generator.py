@@ -9,10 +9,8 @@ from colorama import Fore, Style, init
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 
-# Initialize colorama
 init()
 
-# Discord Nitro Gift URL
 NITRO_URL = "https://discord.com/api/v9/entitlements/gift-codes/{code}?with_application=false&with_subscription_plan=true"
 
 def generate_nitro_code():
@@ -50,7 +48,6 @@ def run_nitro_generator():
     """Run the Nitro Generator & Checker."""
     print(f"\n{Fore.YELLOW}=== Discord Nitro Generator & Checker ==={Style.RESET_ALL}\n")
     
-    # Get user input
     try:
         amount = int(input(f"{Fore.CYAN}How many codes to generate? {Style.RESET_ALL}"))
         threads = int(input(f"{Fore.CYAN}How many threads? (1-10) {Style.RESET_ALL}"))
@@ -62,22 +59,17 @@ def run_nitro_generator():
     print(f"\n{Fore.YELLOW}Starting Nitro Generator & Checker...{Style.RESET_ALL}")
     print(f"{Fore.CYAN}Generated codes will be saved to 'valid_nitro.txt'{Style.RESET_ALL}\n")
 
-    # Create stop event for animation
     stop_event = threading.Event()
     
-    # Start loading animation in separate thread
     anim_thread = threading.Thread(target=loading_animation, args=(stop_event,))
     anim_thread.start()
 
-    # Generate and check codes
     valid_codes = []
     total_checked = 0
     
     with ThreadPoolExecutor(max_workers=threads) as executor:
-        # Generate codes
         codes = [generate_nitro_code() for _ in range(amount)]
         
-        # Check codes with progress bar
         with tqdm(total=amount, desc=f"{Fore.CYAN}Checking{Style.RESET_ALL}", 
                  bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
             for is_valid, code in executor.map(check_nitro_code, codes):
@@ -88,11 +80,9 @@ def run_nitro_generator():
                     print(f"\n{Fore.GREEN}✓ Valid code found: {code}{Style.RESET_ALL}")
                 pbar.update(1)
 
-    # Stop animation
     stop_event.set()
     anim_thread.join()
 
-    # Print results
     print(f"\n{Fore.CYAN}=== Results ==={Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Total codes checked: {total_checked}{Style.RESET_ALL}")
     print(f"{Fore.GREEN}Valid codes found: {len(valid_codes)}{Style.RESET_ALL}")
