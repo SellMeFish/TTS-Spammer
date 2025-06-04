@@ -56,9 +56,9 @@ def check_for_update():
         if answer == "y":
             print("Starting updater...")
             if os.name == 'nt':
-                subprocess.call([sys.executable, 'update.py'])
+                subprocess.call([sys.executable, 'utils/update.py'])
             else:
-                os.system(f'{sys.executable} update.py')
+                os.system(f'{sys.executable} utils/update.py')
             print("Update finished. Please restart the tool.")
             sys.exit(0)
         else:
@@ -465,7 +465,6 @@ def compile_grabber_menu():
     pretty_print("Compiling token grabber to .exe...", (255,128,0))
     
     try:
-        # Check if PyInstaller is installed
         check_cmd = [sys.executable, '-m', 'pip', 'show', 'pyinstaller']
         result = subprocess.run(check_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         
@@ -645,7 +644,6 @@ def main_menu():
 
 if __name__ == "__main__":
     try:
-        # Überprüfe auf Updates, bevor das Hauptmenü angezeigt wird
         check_for_update()
         main_menu()
     except KeyboardInterrupt:
