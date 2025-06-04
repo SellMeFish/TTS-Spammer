@@ -12,4 +12,6 @@ pillow>=9.0.0
 ctypes-callable>=1.0.0; platform_system == "Windows"
 urllib3>=1.26.0
 pypiwin32>=223; platform_system == "Windows"
-tqdm>=4.60.0 
+tqdm>=4.60.0
+setuptools>=44.0.0
+distutils-extra>=2.38 
