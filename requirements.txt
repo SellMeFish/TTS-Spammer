@@ -1,17 +1,35 @@
 requests>=2.25.0
-colorama>=0.4.4
-pyttsx3>=2.90
-art>=5.6
-inquirer>=2.9.0
-discord-webhook>=1.0.0
-pyinstaller>=4.3
-pycryptodome>=3.10.1
-pywin32>=300; platform_system == "Windows"
-psutil>=5.8.0
-pillow>=9.0.0
-ctypes-callable>=1.0.0; platform_system == "Windows"
 urllib3>=1.26.0
-pypiwin32>=223; platform_system == "Windows"
+discord-webhook>=1.0.0
+
+colorama>=0.4.4
+inquirer>=2.9.0
+art>=5.6
 tqdm>=4.60.0
+
+pyttsx3>=2.90
+
+psutil>=5.8.0
 setuptools>=44.0.0
-distutils-extra>=2.38 
+setuptools-scm>=6.0.0
+wheel>=0.36.0
+
+pycryptodome>=3.10.1
+
+pillow>=9.0.0
+
+pywin32>=300; platform_system == "Windows"
+pypiwin32>=223; platform_system == "Windows"
+ctypes-callable>=1.0.0; platform_system == "Windows"
+
+selenium>=4.0.0
+webdriver-manager>=3.5.0
+
+pyinstaller>=4.3
+
+python-dateutil>=2.8.2
+
+futures>=3.1.1; python_version < "3.2"
+beautifulsoup4>=4.9.0 
+
+zipfile36>=0.1.0; python_version < "3.6" 
