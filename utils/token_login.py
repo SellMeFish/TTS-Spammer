@@ -124,12 +124,12 @@ def login_with_token(token, debug=False):
         if choice == 'y':
             if platform.system() == "Windows":
                 subprocess.Popen(
-                    ['start', 'cmd', '/k', sys.executable, 'browser_login.py', token],
+                    ['start', 'cmd', '/k', sys.executable, 'utils/browser_login.py', token],
                     shell=True
                 )
             else:
                 subprocess.Popen(
-                    ['x-terminal-emulator', '-e', f'{sys.executable} browser_login.py {token}']
+                    ['x-terminal-emulator', '-e', f'{sys.executable} utils/browser_login.py {token}']
                 )
             pretty_print("✓ Injection! Token Injection started...", (0, 255, 128))
             time.sleep(10)

