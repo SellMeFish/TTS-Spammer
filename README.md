@@ -1,6 +1,6 @@
 # Discord AIO Tool
 
-![Preview](spammer.png)
+![Preview](spammer1.png)
 
 A modern, versatile Discord tool packed with powerful features.
 
