@@ -2,7 +2,7 @@ import requests
 import json
 import time
 from typing import List, Dict, Tuple
-from discord_utils import get_headers, validate_token
+from utils.discord_utils import get_headers, validate_token
 
 def get_user_guilds(token: str) -> List[Dict]:
     headers = get_headers(token)

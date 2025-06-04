@@ -3,7 +3,7 @@ import json
 import time
 import random
 from typing import List, Dict
-from discord_utils import get_headers, validate_token
+from utils.discord_utils import get_headers, validate_token
 
 def get_user_friends(token: str) -> List[Dict]:
     """

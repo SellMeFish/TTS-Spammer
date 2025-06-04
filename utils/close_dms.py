@@ -2,7 +2,7 @@ import requests
 import json
 import time
 from typing import Tuple
-from discord_utils import get_headers, validate_token
+from utils.discord_utils import get_headers, validate_token
 from colorama import Fore, Style, init
 
 init()
