@@ -11,6 +11,5 @@ psutil>=5.8.0
 pillow>=9.0.0
 ctypes-callable>=1.0.0; platform_system == "Windows"
 urllib3>=1.26.0
-shutil-which>=1.0.0
 pypiwin32>=223; platform_system == "Windows"
 tqdm>=4.60.0 
