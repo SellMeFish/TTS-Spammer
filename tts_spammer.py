@@ -159,6 +159,7 @@ def print_banner(show_webhook=False):
     print(rgb(255,32,64) + center("Made by cyberseall") + RESET)
     print(rgb(255,0,64) + center("=" * shutil.get_terminal_size().columns) + RESET)
     print(rgb(255,64,64) + center("Discord AIO Tool 2025") + RESET)
+    print(rgb(255,128,128) + center("Discord Server: soon | Discord/Dev: cyberseall") + RESET)
     print()
     show_status()
     if show_webhook:
@@ -644,6 +645,8 @@ def main_menu():
 
 if __name__ == "__main__":
     try:
+        # Überprüfe auf Updates, bevor das Hauptmenü angezeigt wird
+        check_for_update()
         main_menu()
     except KeyboardInterrupt:
         print(f"\n\n{Fore.YELLOW}Goodbye!{Style.RESET_ALL}")
