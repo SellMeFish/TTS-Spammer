@@ -21,11 +21,26 @@ def generate_nitro_code():
 def check_nitro_code(code):
     """Check if a Nitro code is valid."""
     try:
-        response = requests.get(NITRO_URL.format(code=code.split('/')[-1]))
+        code_part = code.split('/')[-1]
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+        response = requests.get(NITRO_URL.format(code=code_part), headers=headers, timeout=10)
+        
+        # valid codes usually return 200 so, invalid ones return 404 or 400
         if response.status_code == 200:
             return True, code
+        elif response.status_code == 429:
+            print(f"\n{Fore.YELLOW}⚠ Rate limited. Pausing...{Style.RESET_ALL}")
+            time.sleep(2)
+            return False, code
+        else:
+            return False, code
+    except requests.exceptions.RequestException as e:
+        print(f"\n{Fore.RED}Network error: {str(e)}{Style.RESET_ALL}")
         return False, code
-    except:
+    except Exception as e:
+        print(f"\n{Fore.RED}Unexpected error: {str(e)}{Style.RESET_ALL}")
         return False, code
 
 def save_valid_code(code):
@@ -47,11 +62,11 @@ def loading_animation(stop_event):
 def run_nitro_generator():
     """Run the Nitro Generator & Checker."""
     print(f"\n{Fore.YELLOW}=== Discord Nitro Generator & Checker ==={Style.RESET_ALL}\n")
-    
+
     try:
         amount = int(input(f"{Fore.CYAN}How many codes to generate? {Style.RESET_ALL}"))
         threads = int(input(f"{Fore.CYAN}How many threads? (1-10) {Style.RESET_ALL}"))
-        threads = min(max(1, threads), 10)  # Limit threads between 1 and 10
+        threads = min(max(1, threads), 10)
     except ValueError:
         print(f"{Fore.RED}Please enter valid numbers!{Style.RESET_ALL}")
         return
@@ -60,16 +75,16 @@ def run_nitro_generator():
     print(f"{Fore.CYAN}Generated codes will be saved to 'valid_nitro.txt'{Style.RESET_ALL}\n")
 
     stop_event = threading.Event()
-    
+
     anim_thread = threading.Thread(target=loading_animation, args=(stop_event,))
     anim_thread.start()
 
     valid_codes = []
     total_checked = 0
-    
-    with ThreadPoolExecutor(max_workers=threads) as executor:
+
+    with ThreadPoolExecutor(max_workers=min(threads, 3)) as executor:  # limited to 3 to avoid rate limits
         codes = [generate_nitro_code() for _ in range(amount)]
-        
+
         with tqdm(total=amount, desc=f"{Fore.CYAN}Checking{Style.RESET_ALL}", 
                  bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
             for is_valid, code in executor.map(check_nitro_code, codes):
@@ -79,6 +94,8 @@ def run_nitro_generator():
                     save_valid_code(code)
                     print(f"\n{Fore.GREEN}✓ Valid code found: {code}{Style.RESET_ALL}")
                 pbar.update(1)
+                # added small delay to avoid overwhelming the API
+                time.sleep(0.1)
 
     stop_event.set()
     anim_thread.join()
@@ -100,4 +117,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
     finally:
-        input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}") 
+        input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}")
