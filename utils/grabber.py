@@ -14,17 +14,14 @@ import base64
 import shutil
 import sys
 import winreg
-# Robuster Import-Mechanismus für config.py - Globaler Scope
 config_loaded = False
 
-# Methode 1: Relativer Import (für normale Module)
 try:
     from .config import *
     config_loaded = True
 except ImportError:
     pass
 
-# Methode 2: Direkter Import (für gleichen Ordner)
 if not config_loaded:
     try:
         from config import *
@@ -32,7 +29,6 @@ if not config_loaded:
     except ImportError:
         pass
 
-# Methode 3: Pfad-basierter Import
 if not config_loaded:
     try:
         import sys
@@ -44,12 +40,10 @@ if not config_loaded:
     except ImportError:
         pass
 
-# Methode 4: PyInstaller Bundle
 if not config_loaded:
     try:
         if getattr(sys, 'frozen', False):
             import importlib.util
-            # Versuche verschiedene Pfade im PyInstaller Bundle
             possible_paths = [
                 os.path.join(sys._MEIPASS, 'config.py'),
                 os.path.join(sys._MEIPASS, 'utils', 'config.py'),
@@ -62,7 +56,6 @@ if not config_loaded:
                     config_module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(config_module)
                     
-                    # Alle Konstanten in den globalen Namespace laden
                     for name in dir(config_module):
                         if not name.startswith('_'):
                             globals()[name] = getattr(config_module, name)
@@ -71,11 +64,9 @@ if not config_loaded:
     except Exception as e:
         print(f"PyInstaller config load error: {e}")
 
-# Methode 5: Inline Fallback-Konfiguration
 if not config_loaded:
     print("Warning: config.py not found, using fallback configuration")
     
-    # Vollständige Fallback-Konfiguration
     BROWSER_PATHS = {
         "Chrome": {
             "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
