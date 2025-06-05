@@ -99,4 +99,4 @@ if __name__ == "__main__":
     from token_info import prompt_token_input
     token = prompt_token_input()
     if token:
-        groupchat_spammer(token) 
+        groupchat_spammer(token)

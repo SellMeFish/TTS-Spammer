@@ -34,23 +34,23 @@ def unfriend_all(token: str, delay: float = 1.0) -> tuple[int, int]:
     success = 0
 
     print(f"\nGefundene Freunde: {total}")
-    
+
     for friend in friends:
         user_id = friend['id']
         username = friend.get('user', {}).get('username', 'Unbekannt')
-        
+
         print(f"Entferne Freund: {username}...")
         if remove_friend(token, user_id):
             success += 1
             print(f"✓ Erfolgreich entfernt: {username}")
         else:
             print(f"✗ Fehler beim Entfernen von: {username}")
-            
+
         time.sleep(delay)
-        
+
     return success, total
 
 if __name__ == "__main__":
     token = input("Discord Token eingeben: ")
     success, total = unfriend_all(token)
-    print(f"\nErgebnis: {success} von {total} Freunden wurden entfernt.") 
+    print(f"\nErgebnis: {success} von {total} Freunden wurden entfernt.")

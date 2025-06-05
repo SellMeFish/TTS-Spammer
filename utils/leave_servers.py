@@ -45,12 +45,12 @@ def leave_all_servers(token: str, delay: float = 1.0) -> Tuple[int, int, int, in
     failed = 0
 
     print(f"\nGefundene Server: {total}")
-    
+
     for guild in guilds:
         guild_id = guild['id']
         guild_name = guild.get('name', 'Unbekannt')
         is_owner = guild.get('owner', False)
-        
+
         if is_owner:
             print(f"Lösche eigenen Server: {guild_name}...")
             if delete_owned_guild(token, guild_id):
@@ -67,9 +67,9 @@ def leave_all_servers(token: str, delay: float = 1.0) -> Tuple[int, int, int, in
             else:
                 failed += 1
                 print(f"✗ Fehler beim Verlassen von: {guild_name}")
-            
+
         time.sleep(delay)
-        
+
     return deleted, left, failed, total
 
 if __name__ == "__main__":
@@ -79,4 +79,4 @@ if __name__ == "__main__":
     print(f"- {deleted} Server gelöscht")
     print(f"- {left} Server verlassen")
     print(f"- {failed} Fehler")
-    print(f"- {total} Server insgesamt") 
+    print(f"- {total} Server insgesamt")

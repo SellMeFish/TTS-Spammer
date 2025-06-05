@@ -27,7 +27,7 @@ def get_creation_date(user_id: str) -> str:
             user_id_int = int(user_id)
         else:
             user_id_int = int(str(user_id))
-            
+
         timestamp = (user_id_int >> 22) + 1420070400000
         dt = datetime.fromtimestamp(timestamp / 1000, tz=timezone.utc)
         return dt.strftime('%Y-%m-%d %H:%M:%S UTC')
@@ -61,30 +61,30 @@ def get_token_info(token: str) -> Optional[Dict]:
     if not token or not isinstance(token, str):
         print(f"{Fore.RED}❌ Invalid token format!{Style.RESET_ALL}")
         return None
-        
+
     if not validate_token(token):
         print(f"{Fore.RED}❌ Invalid Discord token!{Style.RESET_ALL}")
         return None
-        
+
     headers = get_headers(token)
     try:
         user_resp = requests.get('https://discord.com/api/v9/users/@me', headers=headers)
         if user_resp.status_code != 200:
             print(f"{Fore.RED}Error fetching user data! Status code: {user_resp.status_code}{Style.RESET_ALL}")
             return None
-            
+
         data = user_resp.json()
-        
+
         user_id = data.get('id')
         if not user_id:
             print(f"{Fore.RED}Error: No user ID found in response!{Style.RESET_ALL}")
             return None
-            
+
         user_id_str = str(user_id)
         if not user_id_str.isdigit():
             print(f"{Fore.RED}Error: User ID contains non-digit characters: {user_id_str}{Style.RESET_ALL}")
             return None
-            
+
         creation_date = get_creation_date(user_id_str)
         nitro = False
         nitro_days = None
@@ -111,11 +111,11 @@ def get_token_info(token: str) -> Optional[Dict]:
                 payment_sources = billing_resp.json()
         except Exception:
             pass
-            
+
         badges = get_badges(data.get('public_flags', 0))
-        
+
         avatar_url = f"https://cdn.discordapp.com/avatars/{user_id_str}/{data['avatar']}.png" if data.get('avatar') else 'None'
-        
+
         return {
             'username': f"{data['username']}#{data['discriminator']}",
             'id': user_id_str,
@@ -141,7 +141,7 @@ def display_token_info(token: str) -> None:
         info = get_token_info(token)
         if not info:
             return
-            
+
         print(f"""
 {Fore.CYAN}╔══════════════════════════════════════════════════════════════╗{Style.RESET_ALL}
 {Fore.CYAN}║{Style.RESET_ALL}                     Token Information                      {Fore.CYAN}║{Style.RESET_ALL}
@@ -197,22 +197,22 @@ def prompt_token_input() -> Optional[str]:
                 print(f"{Fore.YELLOW}No token entered! Please try again or press Ctrl+C to cancel.{Style.RESET_ALL}")
                 attempts += 1
                 continue
-                
+
             if not token.count('.') == 2:
                 print(f"{Fore.RED}Invalid token format! Token should contain two dots.{Style.RESET_ALL}")
                 attempts += 1
                 continue
-                
+
             print(f"{Fore.CYAN}Debug: Token format validation passed{Style.RESET_ALL}")
             return token
-            
+
         except KeyboardInterrupt:
             print(f"\n{Fore.YELLOW}Operation cancelled by user.{Style.RESET_ALL}")
             return None
         except Exception as e:
             print(f"{Fore.RED}Unexpected error during token input: {str(e)}{Style.RESET_ALL}")
             attempts += 1
-            
+
     print(f"{Fore.YELLOW}Returning to main menu...{Style.RESET_ALL}")
     return None
 
@@ -225,4 +225,4 @@ if __name__ == "__main__":
         print(f"\n{Fore.YELLOW}Operation cancelled by user.{Style.RESET_ALL}")
     except Exception as e:
         print(f"{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}Returning to main menu...{Style.RESET_ALL}") 
+        print(f"{Fore.YELLOW}Returning to main menu...{Style.RESET_ALL}")

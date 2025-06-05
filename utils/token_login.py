@@ -46,33 +46,29 @@ def loading_spinner():
     print()
 
 def validate_token(token):
-    """
-    Validates Discord token and returns user info
-    """
+
     try:
         headers = {
             "Authorization": token,
             "Content-Type": "application/json",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         }
-        
+
         response = requests.get(
             "https://discord.com/api/v9/users/@me",
             headers=headers
         )
-        
+
         if response.status_code == 200:
             return response.json()
         else:
             return None
-            
+
     except Exception:
         return None
 
 def setup_chrome_driver():
-    """
-    Sets up ChromeDriver with incognito mode
-    """
+
     try:
         pretty_print("Setting up Chrome...", (255, 64, 64))
         chrome_options = Options()
@@ -88,18 +84,16 @@ def setup_chrome_driver():
         chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
         pretty_print("Downloading ChromeDriver...", (255, 64, 64))
         service = Service(ChromeDriverManager().install())
-        
+
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
-        
+
     except Exception as e:
         pretty_print(f"✗ Error setting up Chrome: {str(e)}", (255, 0, 0))
         return None
 
 def login_with_token(token, debug=False):
-    """
-    Validates token, shows user info, and starts browser_login.py in a new terminal.
-    """
+
     try:
         user_info = validate_token(token)
         if not user_info:
@@ -146,7 +140,7 @@ def main():
     print("\n" + "="*50)
     pretty_print("Discord Token Login", (255, 64, 64))
     print("="*50 + "\n")
-    
+
     token = input(rgb(255, 32, 32) + center("Enter Discord Token: ") + RESET).strip()
     print(f"[DEBUG] Token entered: '{token}'")
     if not token:
@@ -162,4 +156,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n")
         pretty_print("Program terminated.", (192, 0, 0))
-        sys.exit(0) 
+        sys.exit(0)

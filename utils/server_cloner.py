@@ -138,7 +138,7 @@ def create_channel(token, guild_id, channel, parent_id=None):
         "parent_id": parent_id
     }
     if channel['type'] == 2:
-        data['bitrate'] = min(channel.get('bitrate', 64000), 96000)  # Discord API Limit
+        data['bitrate'] = min(channel.get('bitrate', 64000), 96000)
         data['user_limit'] = channel.get('user_limit', 0)
     resp = requests.post(url, headers=headers, json=data)
     if resp.status_code in (200, 201):
@@ -216,7 +216,6 @@ def clear_target_guild(token, guild_id):
         time.sleep(0.3)
     pretty_print("Target server cleared!", 'OKGREEN')
 
-
 def clone_server(token, source_id, target_id):
     pretty_print("\n" + "="*60, 'HEADER')
     pretty_print("        Discord Server Cloner", 'HEADER')
@@ -278,7 +277,6 @@ def clone_server(token, source_id, target_id):
 
     pretty_print("\nClone complete!", 'OKGREEN')
 
-
 def main():
     print("\n=== Discord Server Cloner ===\n")
     token = ask_token()
@@ -287,4 +285,4 @@ def main():
     clone_server(token, source_id, target_id)
 
 if __name__ == "__main__":
-    main() 
+    main()

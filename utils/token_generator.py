@@ -13,30 +13,30 @@ from tqdm import tqdm
 init()
 
 def generate_random_string(length):
-    """Generate a random string of specified length."""
+
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 def generate_token():
-    """Generate a Discord-like token."""
+
     user_id = str(random.randint(100000000000000000, 999999999999999999))
-    
+
     timestamp = int(datetime.now().timestamp())
     timestamp_bytes = timestamp.to_bytes(4, 'big')
     timestamp_b64 = base64.b64encode(timestamp_bytes).decode('utf-8').rstrip('=')
-    
+
     random_part = generate_random_string(27)
-    
+
     token = f"{user_id}.{timestamp_b64}.{random_part}"
     return token
 
 def save_tokens(tokens, filename="generated_tokens.txt"):
-    """Save generated tokens to a file."""
+
     with open(filename, "a") as f:
         for token in tokens:
             f.write(f"{token}\n")
 
 def loading_animation(stop_event):
-    """Show loading animation while generating tokens."""
+
     chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
     i = 0
     while not stop_event.is_set():
@@ -47,9 +47,9 @@ def loading_animation(stop_event):
     print("\r" + " " * 30 + "\r", end="")
 
 def run_token_generator():
-    """Run the Token Generator."""
+
     print(f"\n{Fore.YELLOW}=== Discord Token Generator ==={Style.RESET_ALL}\n")
-    
+
     try:
         amount = int(input(f"{Fore.CYAN}How many tokens to generate? {Style.RESET_ALL}"))
         if amount <= 0:
@@ -62,12 +62,12 @@ def run_token_generator():
     print(f"{Fore.CYAN}Generated tokens will be saved to 'generated_tokens.txt'{Style.RESET_ALL}\n")
 
     stop_event = threading.Event()
-    
+
     anim_thread = threading.Thread(target=loading_animation, args=(stop_event,))
     anim_thread.start()
 
     tokens = []
-    with tqdm(total=amount, desc=f"{Fore.CYAN}Generating{Style.RESET_ALL}", 
+    with tqdm(total=amount, desc=f"{Fore.CYAN}Generating{Style.RESET_ALL}",
              bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
         for _ in range(amount):
             token = generate_token()
@@ -82,8 +82,7 @@ def run_token_generator():
     print(f"\n{Fore.CYAN}=== Results ==={Style.RESET_ALL}")
     print(f"{Fore.GREEN}Successfully generated {amount} tokens!{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Tokens saved to 'generated_tokens.txt'{Style.RESET_ALL}")
-    
-    # Show sample tokens
+
     print(f"\n{Fore.CYAN}Sample tokens:{Style.RESET_ALL}")
     for i, token in enumerate(tokens[:3], 1):
         print(f"{Fore.GREEN}{i}. {token}{Style.RESET_ALL}")
@@ -98,4 +97,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
     finally:
-        input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}") 
+        input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}")

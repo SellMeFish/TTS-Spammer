@@ -7,9 +7,7 @@ from colorama import Fore, Style, init
 
 init()
 def close_all_dms(token: str, delay: float = 0.5) -> Tuple[int, int]:
-    """
-    Schließt alle DM-Kanäle eines Discord-Accounts
-    """
+
     if not validate_token(token):
         print(f"{Fore.RED}❌ Ungültiger Discord Token!{Style.RESET_ALL}")
         return 0, 0
@@ -67,4 +65,4 @@ def close_all_dms(token: str, delay: float = 0.5) -> Tuple[int, int]:
 if __name__ == "__main__":
     token = input(f"{Fore.CYAN}Discord Token eingeben: {Style.RESET_ALL}")
     success, total = close_all_dms(token)
-    print(f"\n{Fore.CYAN}Ergebnis: {Fore.GREEN}{success}{Fore.CYAN} von {total} DMs geschlossen{Style.RESET_ALL}") 
+    print(f"\n{Fore.CYAN}Ergebnis: {Fore.GREEN}{success}{Fore.CYAN} von {total} DMs geschlossen{Style.RESET_ALL}")

@@ -19,10 +19,10 @@ def print_banner():
     banner = f"""{Fore.CYAN}{r'''
    __  __          __      __       __
   / / / /___  ____/ /___ _/ /____  / /
- / / / / __ \/ __  / __ `/ __/ _ \/ / 
-/ /_/ / /_/ / /_/ / /_/ / /_/  __/_/  
-\____/ .___/\__,_/\__,_/\__/\___(_)   
-    /_/                               
+ / / / / __ \/ __  / __ `/ __/ _ \/ /
+/ /_/ / /_/ / /_/ / /_/ / /_/  __/_/
+\____/ .___/\__,_/\__,_/\__/\___(_)
+    /_/
 '''}{Style.RESET_ALL}"""
     print(banner)
     print(f"{Fore.YELLOW}=== Discord Tool Updater ==={Style.RESET_ALL}\n")
@@ -55,10 +55,10 @@ def download_with_progress(url, filename):
     response = requests.get(url, stream=True)
     total_size = int(response.headers.get('content-length', 0))
     block_size = 1024
-    progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True, 
-                       desc=f"{Fore.CYAN}Downloading{Style.RESET_ALL}", 
+    progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True,
+                       desc=f"{Fore.CYAN}Downloading{Style.RESET_ALL}",
                        bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]')
-    
+
     with open(filename, 'wb') as f:
         for data in response.iter_content(block_size):
             progress_bar.update(len(data))
@@ -68,10 +68,10 @@ def download_with_progress(url, filename):
 def download_and_extract_zip():
     print(f"\n{Fore.CYAN}Downloading latest version...{Style.RESET_ALL}")
     temp_zip = "_update.zip"
-    
+
     try:
         download_with_progress(ZIP_URL, temp_zip)
-        
+
         print(f"\n{Fore.CYAN}Extracting update...{Style.RESET_ALL}")
         with zipfile.ZipFile(temp_zip, 'r') as z:
             total_files = len(z.namelist())
@@ -79,10 +79,10 @@ def download_and_extract_zip():
                 for file in z.namelist():
                     z.extract(file, "_update_temp")
                     pbar.update(1)
-        
+
         extracted = [d for d in os.listdir("_update_temp") if os.path.isdir(os.path.join("_update_temp", d))][0]
         src_path = os.path.join("_update_temp", extracted)
-        
+
         print(f"\n{Fore.CYAN}Copying files...{Style.RESET_ALL}")
         files_copied = 0
         for root, dirs, files in os.walk(src_path):
@@ -96,12 +96,12 @@ def download_and_extract_zip():
                 files_copied += 1
                 sys.stdout.write(f"\r{Fore.GREEN}Files copied: {files_copied}{Style.RESET_ALL}")
                 sys.stdout.flush()
-        
+
         print("\n")
         shutil.rmtree("_update_temp")
         os.remove(temp_zip)
         return True
-        
+
     except Exception as e:
         print(f"\n{Fore.RED}Error during update: {str(e)}{Style.RESET_ALL}")
         if os.path.exists(temp_zip):
@@ -113,29 +113,29 @@ def download_and_extract_zip():
 def main():
     print_banner()
     loading_animation()
-    
+
     local_version = get_local_version()
     remote_version = get_remote_version()
-    
+
     print(f"\n{Fore.CYAN}Versions:{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Local:  {local_version or 'Not installed'}{Style.RESET_ALL}")
     print(f"{Fore.YELLOW}Remote: {remote_version or 'Not available'}{Style.RESET_ALL}\n")
-    
+
     if not remote_version:
         print(f"{Fore.RED}[ERROR] Could not fetch remote version. Please check your internet connection.{Style.RESET_ALL}")
         return
-        
+
     if local_version == remote_version:
         print(f"{Fore.GREEN}You already have the latest version!{Style.RESET_ALL}")
         return
-        
+
     print(f"{Fore.YELLOW}A new version is available!{Style.RESET_ALL}")
     choice = input(f"{Fore.CYAN}Do you want to update now? (y/n): {Style.RESET_ALL}").lower()
-    
+
     if choice != 'y':
         print(f"{Fore.YELLOW}Update cancelled.{Style.RESET_ALL}")
         return
-        
+
     if download_and_extract_zip():
         print(f"\n{Fore.GREEN}✓ Update successful!{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}Please restart the tool.{Style.RESET_ALL}")
@@ -150,4 +150,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
     finally:
-        input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}") 
+        input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}")

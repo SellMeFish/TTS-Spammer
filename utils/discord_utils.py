@@ -20,4 +20,4 @@ def validate_token(token: str) -> bool:
         response = requests.get('https://discord.com/api/v9/users/@me', headers=headers)
         return response.status_code == 200
     except:
-        return False 
+        return False

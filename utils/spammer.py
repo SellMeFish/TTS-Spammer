@@ -52,23 +52,23 @@ def send_to_webhook(webhook_url, message, tts=False, debug=False):
     try:
         pretty_print("Sending message...", (255,0,64))
         loading_spinner()
-        
+
         payload = {
             "content": message,
             "tts": tts
         }
-        
+
         headers = {
             "Content-Type": "application/json"
         }
         response = requests.post(webhook_url, json=payload, headers=headers)
-        
+
         if debug:
             debug_info(f"Status: {response.status_code}")
             if response.text:
                 debug_info("Response:")
                 debug_json(response.text)
-                
+
         if response.status_code in (200, 204):
             status = "TTS" if tts else "Text"
             pretty_print(f"✓ {status} message sent successfully!", (0, 255, 128))
@@ -99,18 +99,18 @@ def spam_webhook(webhook_url, message, amount, interval, use_tts=False, debug=Fa
         pretty_print("TTS mode: Enabled - Messages will be read aloud", (0, 255, 128))
     else:
         pretty_print("TTS mode: Disabled - Messages will be sent as text only", (255, 64, 64))
-    
+
     for i in range(amount):
         pretty_print(f"Sending {i+1}/{amount}...", (255,64,64))
         result = send_to_webhook(webhook_url, message, use_tts, debug)
-        
+
         if result == 'ratelimited':
             pretty_print("Retrying after ratelimit...", (255,32,32))
-            
+
         if i < amount - 1:
             pretty_print(f"Waiting {interval} seconds before next message...")
             time.sleep(interval)
-    
+
     return True
 
-RESET = '\033[0m' 
+RESET = '\033[0m'

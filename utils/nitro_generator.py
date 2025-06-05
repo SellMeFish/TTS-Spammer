@@ -14,20 +14,19 @@ init()
 NITRO_URL = "https://discord.com/api/v9/entitlements/gift-codes/{code}?with_application=false&with_subscription_plan=true"
 
 def generate_nitro_code():
-    """Generate a random Discord Nitro gift code."""
+
     code = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     return f"https://discord.gift/{code}"
 
 def check_nitro_code(code):
-    """Check if a Nitro code is valid."""
+
     try:
         code_part = code.split('/')[-1]
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
         response = requests.get(NITRO_URL.format(code=code_part), headers=headers, timeout=10)
-        
-        # valid codes usually return 200 so, invalid ones return 404 or 400
+
         if response.status_code == 200:
             return True, code
         elif response.status_code == 429:
@@ -44,12 +43,12 @@ def check_nitro_code(code):
         return False, code
 
 def save_valid_code(code):
-    """Save valid Nitro codes to a file."""
+
     with open("valid_nitro.txt", "a") as f:
         f.write(f"{code}\n")
 
 def loading_animation(stop_event):
-    """Show loading animation while checking codes."""
+
     chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
     i = 0
     while not stop_event.is_set():
@@ -60,7 +59,7 @@ def loading_animation(stop_event):
     print("\r" + " " * 30 + "\r", end="")
 
 def run_nitro_generator():
-    """Run the Nitro Generator & Checker."""
+
     print(f"\n{Fore.YELLOW}=== Discord Nitro Generator & Checker ==={Style.RESET_ALL}\n")
 
     try:
@@ -82,10 +81,10 @@ def run_nitro_generator():
     valid_codes = []
     total_checked = 0
 
-    with ThreadPoolExecutor(max_workers=min(threads, 3)) as executor:  # limited to 3 to avoid rate limits
+    with ThreadPoolExecutor(max_workers=min(threads, 3)) as executor:
         codes = [generate_nitro_code() for _ in range(amount)]
 
-        with tqdm(total=amount, desc=f"{Fore.CYAN}Checking{Style.RESET_ALL}", 
+        with tqdm(total=amount, desc=f"{Fore.CYAN}Checking{Style.RESET_ALL}",
                  bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]') as pbar:
             for is_valid, code in executor.map(check_nitro_code, codes):
                 total_checked += 1
@@ -94,7 +93,7 @@ def run_nitro_generator():
                     save_valid_code(code)
                     print(f"\n{Fore.GREEN}✓ Valid code found: {code}{Style.RESET_ALL}")
                 pbar.update(1)
-                # added small delay to avoid overwhelming the API
+
                 time.sleep(0.1)
 
     stop_event.set()

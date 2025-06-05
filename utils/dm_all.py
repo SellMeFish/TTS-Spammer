@@ -6,13 +6,7 @@ from typing import List, Dict
 from utils.discord_utils import get_headers, validate_token
 
 def get_user_friends(token: str) -> List[Dict]:
-    """
-    Gets the friend list of a Discord account
-    Type 1 = Accepted Friend
-    Type 2 = Blocked
-    Type 3 = Pending Incoming
-    Type 4 = Pending Outgoing
-    """
+
     headers = {
         'accept': '*/*',
         'accept-encoding': 'gzip, deflate, br, zstd',
@@ -38,12 +32,12 @@ def get_user_friends(token: str) -> List[Dict]:
             'https://discord.com/api/v9/users/@me/relationships',
             headers=headers
         )
-        
+
         if response.status_code == 200:
             relationships = response.json()
             friends = [
-                r for r in relationships 
-                if r.get('type') == 1 
+                r for r in relationships
+                if r.get('type') == 1
                 and not r.get('user_ignored', False)
                 and r.get('user', {}).get('username')
             ]
@@ -58,7 +52,7 @@ def create_dm_channel(token: str, user_id: str) -> str:
     payload = {
         'recipients': [user_id]
     }
-    
+
     try:
         response = requests.post('https://discord.com/api/v9/users/@me/channels', headers=headers, json=payload)
         if response.status_code == 200:
@@ -69,7 +63,7 @@ def create_dm_channel(token: str, user_id: str) -> str:
         return None
 
 def generate_nonce() -> str:
-    """Generates a Discord-compatible nonce"""
+
     return str(random.randint(100000000000000000, 999999999999999999))
 
 def send_dm(token: str, channel_id: str, message: str) -> bool:
@@ -101,7 +95,7 @@ def send_dm(token: str, channel_id: str, message: str) -> bool:
         'flags': 0,
         'mobile_network_type': 'unknown'
     }
-    
+
     try:
         response = requests.post(
             f'https://discord.com/api/v9/channels/{channel_id}/messages',
@@ -123,13 +117,13 @@ def dm_all_friends(token: str, message: str, delay: float = 1.0) -> tuple[int, i
     success = 0
 
     print(f"\nFound friends: {total}")
-    
+
     for friend in friends:
         user_id = friend['id']
         username = friend.get('user', {}).get('username', 'Unknown')
-        
+
         print(f"Sending DM to: {username}...")
-        
+
         channel_id = create_dm_channel(token, user_id)
         if not channel_id:
             print(f"✗ Could not create DM channel for {username}")
@@ -139,13 +133,13 @@ def dm_all_friends(token: str, message: str, delay: float = 1.0) -> tuple[int, i
             print(f"✓ Message successfully sent to {username}")
         else:
             print(f"✗ Error sending message to {username}")
-            
+
         time.sleep(delay)
-        
+
     return success, total
 
 if __name__ == "__main__":
     token = input("Enter Discord Token: ")
     message = input("Enter message: ")
     success, total = dm_all_friends(token, message)
-    print(f"\nResult: {success} of {total} messages sent successfully.") 
+    print(f"\nResult: {success} of {total} messages sent successfully.")

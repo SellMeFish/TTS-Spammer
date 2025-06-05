@@ -36,4 +36,4 @@ def browser_login(token):
         time.sleep(60)
 
 if __name__ == "__main__":
-    browser_login(sys.argv[1]) 
+    browser_login(sys.argv[1])
