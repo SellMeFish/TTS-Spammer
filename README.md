@@ -1,12 +1,12 @@
-# Discord AIO Tool
+# Discord AIO Tool 2025
 
 ![Preview](spammer1.png)
 
-A modern, versatile Discord tool packed with powerful features.
+A modern, versatile Discord tool packed with powerful features for 2025.
 
 ##  Features
 
-### Token Management
+###  Token Management
 - **Token Info**
   - Get detailed insights into any Discord token
   - View username, ID, creation date, language, and badges
@@ -27,26 +27,58 @@ A modern, versatile Discord tool packed with powerful features.
   - Generate and check Discord Nitro codes
   - Configurable thread count and speed
 
-### Token Grabber
-- **Advanced Token Grabber**
-  - Collect Discord tokens from multiple browsers and profiles
-  - Extract browser passwords from 35+ different browsers (Chrome, Edge, Brave, Opera, Vivaldi, Yandex, Firefox)
+###  Promotions Claimer
+- **Automatic Promotion Detection**
+  - Scans all Discord servers for available promotions
+  - Detects Epic Games, Steam, and other gaming promotions
+  - Extracts promotion codes and redemption links
+  - Smart filtering for valid promotions only
+
+- **Multi-Platform Support**
+  - Epic Games Store integration
+  - Steam key detection
+  - General promotion code extraction
+  - Custom promotion pattern recognition
+
+- **Advanced Features**
+  - Rate limit handling for Discord API
+  - Automatic retry mechanism
+  - Detailed promotion information display
+  - Success/failure tracking
+
+###  Advanced Token Grabber & Discord Injection
+- **Ultra-Universal Discord Injection**
+  - **NEW**: Automatically downloads latest injection script from GitHub
+  - **NEW**: Ultra-universal injection that works with ALL Discord versions
+  - Supports Discord Stable, Canary, PTB, Development
+  - Works with portable, custom, and store installations
+  - Multiple injection methods: Standard, ASAR, Direct, Alternative
+  - Automatic backup system for all modified files
+  - Real-time token capture with live monitoring
+  - Password change detection and logging
+  - Credit card addition monitoring
+  - Email change tracking
+  - QR code disabling for stealth mode
+
+- **Comprehensive Data Collection**
+  - Extract browser passwords from 35+ different browsers
   - Capture browser history from all major browsers
   - Extract autofill data (profiles, form data, addresses)
   - Capture screenshots of user's screens
   - Gather detailed system information and geolocation
-  - Collect cookies from important domains (Discord, Google, PayPal, etc.)
+  - Collect cookies from important domains
   - Extract Discord login credentials from local storage
   - Automatic startup persistence
-  - **NEW: GoFile Integration**
-    - Creates organized local data folders in AppData
-    - Packages all captured data into ZIP archives
-    - Uploads to GoFile for easy download
-    - Clean, formatted text files without failed decryptions
-    - Simple Discord webhook notifications with download links
+
+- **Advanced Cloud Integration**
+  - **GoFile Integration**: Automatic cloud upload
+  - Creates organized local data folders in AppData
+  - Packages all captured data into ZIP archives
+  - Clean, formatted text files without failed decryptions
+  - Simple Discord webhook notifications with download links
   - Compile as standalone executable
 
-### Server Management
+###  Server Management
 - **Server Cloner**
   - Clone entire server structures
   - Copy roles, channels (including categories)
@@ -58,7 +90,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Leave or delete all servers
   - Safety confirmation before execution
 
-### Friend Management
+###  Friend Management
 - **Unfriend All Friends**
   - Remove all friends
   - Confirmation prompt
@@ -67,7 +99,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Send messages to all friends
   - Support for mass messaging
 
-### Webhook Tools
+###  Webhook Tools
 - **Webhook Spammer**
   - Send messages through webhooks
   - Support for various message formats
@@ -78,7 +110,7 @@ A modern, versatile Discord tool packed with powerful features.
   - Delete webhooks via URL
   - Confirmation before deletion
 
-### Additional Features
+###  Additional Features
 - **Close All DMs**
   - Close all open DMs
 
@@ -110,6 +142,22 @@ python tts_spammer.py
 2. Choose your desired function from the main menu
 3. Follow the on-screen instructions
 
+### 🎯 Grabber Setup
+1. Select "Grabber" from the main menu
+2. Set your Discord webhook URL
+3. Compile to EXE or run directly
+4. The grabber will automatically:
+   - Download the latest injection script
+   - Inject into all Discord installations
+   - Capture tokens and data
+   - Upload to cloud storage
+
+###  Using Promotions Claimer
+1. Select "Promotions Claimer" from the main menu
+2. Enter your Discord token
+3. Choose to claim specific promotions or scan all available
+4. The tool will automatically find and claim promotions
+
 ##  Dependencies
 
 The tool requires the following key dependencies:
@@ -137,27 +185,29 @@ For a complete list, see the requirements.txt file.
 - **Privacy**: Ensure you have proper authorization before using the grabber functionality
 - **Compatibility**: Optimized for Windows systems with support for major browsers
 
-##  Latest Updates
+##Latest Updates (2025)
 
-### Recent Improvements
+###  Major New Features
+- ** Promotions Claimer**: Automatically find and claim Discord promotions
+- ** Ultra-Universal Discord Injection**: Works with ALL Discord versions and patches
+- ** GitHub Integration**: Automatically downloads latest injection scripts
+- ** Advanced Stealth**: QR code disabling, password monitoring, credit card tracking
+- ** Enhanced Cloud Storage**: Improved GoFile integration with better organization
+
+###  Recent Improvements
 - **Major Token Grabber Overhaul**
-  - Added browser history and autofill data extraction
-  - Implemented GoFile cloud storage integration
-  - Organized data collection into structured ZIP archives
-  - Enhanced data filtering (only valid passwords, no failed decryptions)
-  - Improved local file management with AppData storage
-  - Streamlined Discord notifications with single download links
-- Added advanced Token Grabber with browser password extraction
-- Added Token Generator and Nitro Generator & Checker
-- Added TTS (Text-to-Speech) message support for webhook spammer
-- Enhanced token validation and Firefox password support
-- Optimized Nitro days calculation
-- Modernized user interface with comment-free codebase
-- Improved error handling and startup persistence
-- New webhook deleter feature
-- Extended server cloner functionality
-- Support for multiple screen captures
-- More browser support (35+ browsers including Firefox variants)
+  - Ultra-universal Discord injection system
+  - Real-time token monitoring and capture
+  - Advanced browser data extraction (35+ browsers)
+  - Improved cloud storage with organized ZIP archives
+  - Enhanced data filtering and validation
+  - Automatic startup persistence
+- Added Promotions Claimer with multi-platform support
+- Enhanced Discord injection with multiple methods
+- Improved error handling and logging
+- Modernized user interface with detailed progress tracking
+- Extended browser support including Firefox variants
+- Better webhook notifications and status reporting
 
 ##  Contributing
 
@@ -168,8 +218,12 @@ Feel free to contribute! Whether it's bug reports, feature requests, or pull req
 4. Push to the branch
 5. Open a pull request
 
-##  Author
+## Author
 
-Created by cyberseall
+Created by **cyberseall**
+
+Discord Server: **soon** | Discord/Dev: **cyberseall**
 
 ---
+
+**Made with ❤️ for the Discord community**
