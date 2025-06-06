@@ -2,228 +2,173 @@
 
 ![Preview](spammer1.png)
 
-A modern, versatile Discord tool packed with powerful features for 2025.
+<div align="center">
 
-##  Features
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Discord](https://img.shields.io/badge/Discord-API-7289da.svg)](https://discord.com)
+[![License](https://img.shields.io/badge/License-Educational-green.svg)](#)
+[![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
 
-###  Token Management
-- **Token Info**
-  - Get detailed insights into any Discord token
-  - View username, ID, creation date, language, and badges
-  - See avatar URL and token details
-  - Check 2FA status, email, phone, and verification status
-  - Monitor Nitro status with remaining days
-  - View all payment methods (credit card/PayPal) with full details
+**A comprehensive Discord automation toolkit designed for educational purposes**
 
-- **Token Login**
-  - Quick and easy token-based login
-  - Smart token validation
+*Features 27+ tools for Discord automation, token management, and server utilities*
 
-- **Token Generator**
-  - Generate and validate Discord tokens
-  - Multi-threaded validation for speed
+</div>
 
-- **Nitro Generator & Checker**
-  - Generate and check Discord Nitro codes
-  - Configurable thread count and speed
+---
 
-###  Promotions Claimer
-- **Automatic Promotion Detection**
-  - Scans all Discord servers for available promotions
-  - Detects Epic Games, Steam, and other gaming promotions
-  - Extracts promotion codes and redemption links
-  - Smart filtering for valid promotions only
+## Complete Feature List
 
-- **Multi-Platform Support**
-  - Epic Games Store integration
-  - Steam key detection
-  - General promotion code extraction
-  - Custom promotion pattern recognition
+This tool provides a wide range of Discord automation features organized into logical categories. Each feature has been carefully designed with proper error handling, rate limiting, and user safety in mind.
 
-- **Advanced Features**
-  - Rate limit handling for Discord API
-  - Automatic retry mechanism
-  - Detailed promotion information display
-  - Success/failure tracking
+| Category | Feature | Description | Key Capabilities |
+|----------|---------|-------------|------------------|
+| **Spam Tools** | Webhook Spammer | Send messages through Discord webhooks | TTS support, custom delays, multiple message formats |
+| | Theme Spammer | Spam Discord theme changes | Automated theme switching with configurable intervals |
+| | Ping Spam | Mass ping functionality | @everyone spam, specific user targeting, server member pings |
+| | Channel Spam | Flood channels with messages | Single message spam, multiple message rotation, random text |
+| | DM Spam | Direct message automation | Target single/multiple users, random messages, server members |
+| | Friend Request Spam | Mass friend request sending | Username targeting, user ID lists, server member requests |
+| | Email Spam | Email verification flooding | Remove/add email cycles, verification requests, multiple changes |
+| **Discord Tools** | Close All DMs | Bulk DM management | Close all open direct messages at once |
+| | Unfriend All Friends | Friend list cleanup | Remove all friends with confirmation prompts |
+| | DM All Friends | Broadcast messaging | Send messages to all friends simultaneously |
+| | Delete/Leave All Servers | Server cleanup | Leave all servers or delete owned servers |
+| | Mass Join/Leave | Bulk server operations | Join servers via invite codes, leave specific servers |
+| | Mass React | Reaction automation | Add reactions to specific messages or recent messages |
+| | Verification Bypass | Bot verification circumvention | Bypass captcha bots, button verification, slash commands, roles |
+| **Token Tools** | Token Info | Comprehensive token analysis | User details, Nitro status, payment methods, 2FA status |
+| | Token Login | Browser automation login | Selenium-based automatic Discord login |
+| | Token Checker | Bulk token validation | Validate single/multiple tokens, file loading support |
+| **Server Tools** | Server Cloner | Complete server duplication | Copy roles, channels, emojis, settings, and structure |
+| | Webhook Deleter | Bulk webhook removal | Delete webhooks with confirmation prompts |
+| | Server Management | Complete server control | Delete owned servers, leave all servers, create to limit |
+| **User Tools** | Custom Status Changer | Profile status automation | Custom status spam, activity changes, presence updates |
+| | Nickname Changer | Mass nickname updates | Change nicknames in single/all servers, random names |
+| | Avatar Changer | Profile picture automation | Upload from files/URLs, random avatars, spam cycles |
+| **Settings Tools** | Language & Theme Spam | Discord settings flooding | Language cycling, light/dark mode spam, mixed settings |
+| **Generators** | Nitro Generator | Discord Nitro code generation | Generate and validate Nitro codes with multi-threading |
+| | Token Generator | Discord token creation | Create and test Discord tokens with validation |
+| **Advanced** | Token Grabber | Advanced data extraction | Universal Discord injection, browser data, cloud uploads |
 
-###  Advanced Token Grabber & Discord Injection (INJECTION CURRENTLY NOT WORKING)
-- **Ultra-Universal Discord Injection**
-  - **NEW**: Automatically downloads latest injection script from GitHub
-  - **NEW**: Ultra-universal injection that works with ALL Discord versions
-  - Supports Discord Stable, Canary, PTB, Development
-  - Works with portable, custom, and store installations
-  - Multiple injection methods: Standard, ASAR, Direct, Alternative
-  - Automatic backup system for all modified files
-  - Real-time token capture with live monitoring
-  - Password change detection and logging
-  - Credit card addition monitoring
-  - Email change tracking
-  - QR code disabling for stealth mode
+## How It Works
 
-- **Comprehensive Data Collection**
-  - Extract browser passwords from 35+ different browsers
-  - Capture browser history from all major browsers
-  - Extract autofill data (profiles, form data, addresses)
-  - Capture screenshots of user's screens
-  - Gather detailed system information and geolocation
-  - Collect cookies from important domains
-  - Extract Discord login credentials from local storage
-  - Automatic startup persistence
+This Discord automation tool is built with Python and provides a user-friendly interface for various Discord-related tasks. The tool is designed with safety and educational purposes in mind, featuring built-in rate limiting, error handling, and confirmation prompts for potentially destructive actions.
 
-- **Advanced Cloud Integration**
-  - **GoFile Integration**: Automatic cloud upload
-  - Creates organized local data folders in AppData
-  - Packages all captured data into ZIP archives
-  - Clean, formatted text files without failed decryptions
-  - Simple Discord webhook notifications with download links
-  - Compile as standalone executable
+### Key Technical Features
 
-###  Server Management
-- **Server Cloner**
-  - Clone entire server structures
-  - Copy roles, channels (including categories)
-  - Transfer server icon, name, and description
-  - Clone all emojis
-  - Clean target server before cloning
+**Multi-Token Support**: Most features support multiple Discord tokens simultaneously, allowing for efficient bulk operations across different accounts.
 
-- **Delete/Leave All Servers**
-  - Leave or delete all servers
-  - Safety confirmation before execution
+**Rate Limiting Protection**: All API interactions include proper rate limiting to prevent Discord API abuse and account restrictions.
 
-###  Friend Management
-- **Unfriend All Friends**
-  - Remove all friends
-  - Confirmation prompt
+**Error Handling**: Comprehensive error handling ensures the tool continues operating even when individual operations fail.
 
-- **DM All Friends**
-  - Send messages to all friends
-  - Support for mass messaging
+**Debug Modes**: Optional debug modes provide detailed logging for troubleshooting and understanding API interactions.
 
-###  Webhook Tools
-- **Webhook Spammer**
-  - Send messages through webhooks
-  - Support for various message formats
-  - Customizable delays
-  - TTS message support
+**Safety Confirmations**: Destructive operations require explicit user confirmation to prevent accidental data loss.
 
-- **Webhook Deleter**
-  - Delete webhooks via URL
-  - Confirmation before deletion
+## Installation and Setup
 
-###  Additional Features
-- **Close All DMs**
-  - Close all open DMs
+### Requirements
+- Python 3.8 or higher
+- Windows 10/11 (recommended for full compatibility)
+- Stable internet connection
+- Valid Discord tokens for most features
 
-- **Theme Spammer**
-  - Spam theme messages
-  - Customizable settings
+### Installation Steps
 
-##  Getting Started
-
-1. Make sure you have Python 3.8 or higher installed
-2. Clone the repository:
+1. **Clone the repository**
 ```bash
 git clone https://github.com/SellMeFish/TTS-Spammer.git
 cd TTS-Spammer
 ```
 
-3. Install the required dependencies:
+2. **Install dependencies**
 ```bash
 pip install -r requirements.txt
 ```
 
-##  Usage
-
-1. Start the tool:
+3. **Run the application**
 ```bash
 python tts_spammer.py
 ```
 
-2. Choose your desired function from the main menu
-3. Follow the on-screen instructions
+The tool will launch with an interactive menu system that guides you through each feature.
 
-### 🎯 Grabber Setup
-1. Select "Grabber" from the main menu
-2. Set your Discord webhook URL
-3. Compile to EXE or run directly
-4. The grabber will automatically:
-   - Download the latest injection script
-   - Inject into all Discord installations
-   - Capture tokens and data
-   - Upload to cloud storage
+## Configuration
 
-###  Using Promotions Claimer
-1. Select "Promotions Claimer" from the main menu
-2. Enter your Discord token
-3. Choose to claim specific promotions or scan all available
-4. The tool will automatically find and claim promotions
+### Token Management
+Most features require Discord tokens to function. The tool includes a Token Checker to validate tokens before use. You can input tokens manually or load them from text files for bulk operations.
 
-##  Dependencies
+### Safety Settings
+The tool includes several safety mechanisms:
+- Confirmation prompts for destructive actions
+- Rate limiting to prevent API abuse
+- Error handling to prevent crashes
+- Debug modes for troubleshooting
 
-The tool requires the following key dependencies:
-- **Core Libraries**: requests, urllib3, discord-webhook
-- **UI & Display**: colorama, inquirer, art, tqdm
-- **Audio**: pyttsx3
-- **System**: psutil, setuptools
-- **Cryptography**: pycryptodome
-- **Image Processing**: pillow
-- **Windows Support**: pywin32, pypiwin32 (Windows only)
-- **Browser Automation**: selenium, webdriver-manager
-- **Packaging**: pyinstaller
-- **Date/Time**: python-dateutil
-- **Web Parsing**: beautifulsoup4
-- **File Compression**: zipfile (built-in)
+### Customization
+Many features allow customization of:
+- Operation intervals and delays
+- Message content and formats
+- Target selection criteria
+- Output verbosity levels
 
-For a complete list, see the requirements.txt file.
+## Important Information
 
-##  Important Notes
+### Educational Purpose
+This tool is designed for educational and research purposes only. It demonstrates various Discord API interactions and automation techniques. Users should understand Discord's Terms of Service and use this tool responsibly.
 
-- This tool is intended for educational purposes only
-- Please use responsibly and in accordance with Discord's Terms of Service
-- The author is not responsible for any misuse of this tool
-- **Data Security**: All captured data is temporarily stored locally and uploaded to GoFile
-- **Privacy**: Ensure you have proper authorization before using the grabber functionality
-- **Compatibility**: Optimized for Windows systems with support for major browsers
+### Legal Disclaimer
+The author is not responsible for any misuse of this software. Users are expected to comply with all applicable laws and Discord's Terms of Service when using this tool.
 
-##Latest Updates (2025)
+### Safety Features
+The tool includes several built-in safety mechanisms:
+- Rate limiting to prevent API abuse
+- Comprehensive error handling
+- Debug modes for troubleshooting
+- Confirmation prompts for potentially destructive actions
+- Automatic retry mechanisms with backoff
 
-###  Major New Features
-- ** Promotions Claimer**: Automatically find and claim Discord promotions
-- ** Ultra-Universal Discord Injection**: Works with ALL Discord versions and patches
-- ** GitHub Integration**: Automatically downloads latest injection scripts
-- ** Advanced Stealth**: QR code disabling, password monitoring, credit card tracking
-- ** Enhanced Cloud Storage**: Improved GoFile integration with better organization
+## Recent Updates (2025)
 
-###  Recent Improvements
-- **Major Token Grabber Overhaul**
-  - Ultra-universal Discord injection system
-  - Real-time token monitoring and capture
-  - Advanced browser data extraction (35+ browsers)
-  - Improved cloud storage with organized ZIP archives
-  - Enhanced data filtering and validation
-  - Automatic startup persistence
-- Added Promotions Claimer with multi-platform support
-- Enhanced Discord injection with multiple methods
-- Improved error handling and logging
-- Modernized user interface with detailed progress tracking
-- Extended browser support including Firefox variants
-- Better webhook notifications and status reporting
+### New Features
+- **Verification Bypass**: Advanced methods to bypass Discord bot verification systems
+- **Server Management**: Complete server control including deletion, leaving, and creation
+- **Email Spam**: Email verification flooding with multiple strategies
+- **Settings Spam**: Automated Discord settings manipulation
+- **Enhanced Interface**: Improved categorized menu system
 
-##  Contributing
+### Improvements
+- Complete English translation of all interfaces
+- Modern menu categorization for better navigation
+- Performance optimizations across all features
+- Enhanced error handling and user feedback
+- Better user experience with clearer instructions
 
-Feel free to contribute! Whether it's bug reports, feature requests, or pull requests - every contribution is welcome. Just make sure to:
+## Contributing
+
+Contributions are welcome and appreciated. If you'd like to contribute:
+
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Make your changes with proper testing
+4. Commit your changes (`git commit -m 'Add new feature'`)
+5. Push to the branch (`git push origin feature/new-feature`)
+6. Open a Pull Request with a clear description
+
+Please ensure your code follows the existing style and includes appropriate error handling.
 
 ## Author
 
-Created by **cyberseall**
+**Created by cyberseall**
 
-Discord Server: **soon** | Discord/Dev: **cyberseall**
+- Discord: cyberseall
+- GitHub: [SellMeFish](https://github.com/SellMeFish)
+- Discord Server: Coming Soon
 
 ---
 
-**Made with ❤️ for the Discord community**
+*This project is maintained as an educational resource. Please use responsibly.*
+
+*Last updated: June 2025*
