@@ -1,32 +1,32 @@
 ---
 name: Bug Report
-about: Erstelle einen Bug Report um uns zu helfen das Problem zu beheben
+about: Create a bug report to help us improve
 title: '[BUG] '
 labels: bug
 assignees: ''
 
 ---
 
-**Beschreibung des Bugs**
-Eine klare und präzise Beschreibung des Problems.
+**Describe the bug**
+A clear and concise description of what the bug is.
 
-**Schritte zur Reproduktion**
-Schritte um das Verhalten zu reproduzieren:
-1. Gehe zu '...'
-2. Klicke auf '....'
-3. Scrolle nach unten zu '....'
-4. Siehe Fehler
+**To Reproduce**
+Steps to reproduce the behavior:
+1. Go to '...'
+2. Click on '....'
+3. Scroll down to '....'
+4. See error
 
-**Erwartetes Verhalten**
-Eine klare und präzise Beschreibung dessen, was Sie erwartet haben.
+**Expected behavior**
+A clear and concise description of what you expected to happen.
 
 **Screenshots**
-Falls zutreffend, fügen Sie Screenshots hinzu um das Problem zu erklären.
+If applicable, add screenshots to help explain your problem.
 
-**System-Informationen:**
- - OS: [z.B. Windows 10]
- - Python Version: [z.B. 3.9.0]
- - Tool Version: [z.B. 2025.1]
+**System Information:**
+ - OS: [e.g. Windows 10]
+ - Python Version: [e.g. 3.9.0]
+ - Tool Version: [e.g. 2025.1]
 
-**Zusätzlicher Kontext**
-Fügen Sie hier weitere Informationen über das Problem hinzu.
+**Additional context**
+Add any other context about the problem here.
