@@ -1,51 +1,51 @@
 # Contributing to Discord AIO Tool 2025
 
-Vielen Dank für Ihr Interesse, zu diesem Projekt beizutragen! Wir begrüßen Beiträge von der Gemeinschaft.
+Thank you for your interest in contributing to this project! We welcome contributions from the community.
 
-## Wie Sie beitragen können
+## How to Contribute
 
-### Fehler melden
-- Verwenden Sie GitHub Issues, um Fehler zu melden
-- Beschreiben Sie das Problem ausführlich
-- Fügen Sie Schritte zur Reproduktion hinzu
-- Geben Sie Ihre Systemkonfiguration an
+### Reporting Bugs
+- Use GitHub Issues to report bugs
+- Describe the problem in detail
+- Include steps to reproduce the issue
+- Provide your system configuration
 
-### Feature-Anfragen
-- Öffnen Sie ein Issue mit dem Label "enhancement"
-- Beschreiben Sie das gewünschte Feature ausführlich
-- Erklären Sie, warum es nützlich wäre
+### Feature Requests
+- Open an issue with the "enhancement" label
+- Describe the desired feature in detail
+- Explain why it would be useful
 
-### Code-Beiträge
-1. Forken Sie das Repository
-2. Erstellen Sie einen Feature-Branch (`git checkout -b feature/neues-feature`)
-3. Committen Sie Ihre Änderungen (`git commit -m 'Füge neues Feature hinzu'`)
-4. Pushen Sie zum Branch (`git push origin feature/neues-feature`)
-5. Öffnen Sie einen Pull Request
+### Code Contributions
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -m 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Open a Pull Request
 
-## Entwicklungsrichtlinien
+## Development Guidelines
 
-### Code-Stil
-- Verwenden Sie aussagekräftige Variablennamen
-- Kommentieren Sie komplexen Code
-- Befolgen Sie PEP 8 für Python-Code
-- Testen Sie Ihre Änderungen vor dem Commit
+### Code Style
+- Use meaningful variable names
+- Comment complex code
+- Follow PEP 8 for Python code
+- Test your changes before committing
 
-### Commit-Nachrichten
-- Verwenden Sie klare, beschreibende Commit-Nachrichten
-- Beginnen Sie mit einem Verb im Imperativ
-- Halten Sie die erste Zeile unter 50 Zeichen
-- Fügen Sie bei Bedarf weitere Details hinzu
+### Commit Messages
+- Use clear, descriptive commit messages
+- Start with a verb in imperative mood
+- Keep the first line under 50 characters
+- Add additional details if needed
 
-## Test-Guidelines
+## Testing Guidelines
 
-- Testen Sie alle neuen Features gründlich
-- Stellen Sie sicher, dass bestehende Tests weiterhin bestehen
-- Fügen Sie Tests für neue Funktionalität hinzu
+- Test all new features thoroughly
+- Ensure existing tests continue to pass
+- Add tests for new functionality
 
-## Fragen?
+## Questions?
 
-Bei Fragen können Sie uns gerne kontaktieren:
+If you have questions, feel free to contact us:
 - Discord: cyberseall
-- GitHub Issues für technische Fragen
+- GitHub Issues for technical questions
 
-Wir schätzen Ihre Beiträge!
+We appreciate your contributions!
