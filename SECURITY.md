@@ -1,38 +1,38 @@
-# Sicherheitsrichtlinie
+# Security Policy
 
-## Unterstützte Versionen
+## Supported Versions
 
-Wir unterstützen aktiv die folgenden Versionen:
+We actively support the following versions:
 
-| Version | Unterstützt          |
+| Version | Supported            |
 | ------- | -------------------- |
 | 2025.x  | :white_check_mark:   |
 | < 2025  | :x:                  |
 
-## Sicherheitslücken melden
+## Reporting Vulnerabilities
 
-Wenn Sie eine Sicherheitslücke entdecken, melden Sie diese bitte verantwortungsvoll:
+If you discover a security vulnerability, please report it responsibly:
 
-1. **NICHT** öffentlich über GitHub Issues melden
-2. Kontaktieren Sie uns privat über Discord: cyberseall
-3. Geben Sie eine detaillierte Beschreibung der Sicherheitslücke an
-4. Fügen Sie Schritte zur Reproduktion hinzu, falls möglich
+1. **DO NOT** report publicly via GitHub Issues
+2. Contact us privately via Discord: cyberseall
+3. Provide a detailed description of the vulnerability
+4. Include steps to reproduce if possible
 
-## Was Sie erwarten können
+## What to Expect
 
-- Bestätigung des Eingangs innerhalb von 48 Stunden
-- Regelmäßige Updates zum Status der Untersuchung
-- Anerkennung für verantwortungsvolle Offenlegung (falls gewünscht)
+- Acknowledgment of receipt within 48 hours
+- Regular updates on investigation status
+- Recognition for responsible disclosure (if desired)
 
-## Sicherheitsmaßnahmen
+## Security Measures
 
-Dieses Projekt implementiert folgende Sicherheitsmaßnahmen:
+This project implements the following security measures:
 
-- Rate Limiting zum Schutz vor API-Missbrauch
-- Eingabevalidierung bei allen Benutzereingaben
-- Sichere Token-Handhabung
-- Fehlerbehandlung ohne Preisgabe sensibler Informationen
+- Rate limiting to protect against API abuse
+- Input validation on all user inputs
+- Secure token handling
+- Error handling without exposing sensitive information
 
-## Haftungsausschluss
+## Disclaimer
 
-Dieses Tool ist ausschließlich für Bildungszwecke bestimmt. Benutzer sind dafür verantwortlich, alle geltenden Gesetze und Nutzungsbedingungen einzuhalten.
+This tool is intended for educational purposes only. Users are responsible for complying with all applicable laws and terms of service.
