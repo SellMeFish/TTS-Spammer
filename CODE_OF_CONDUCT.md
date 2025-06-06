@@ -1,35 +1,35 @@
 # Code of Conduct
 
-## Unser Versprechen
+## Our Pledge
 
-Im Interesse einer offenen und einladenden Umgebung verpflichten wir uns als Mitwirkende und Betreuer, die Teilnahme an unserem Projekt und unserer Gemeinschaft zu einer belästigungsfreien Erfahrung für alle zu machen, unabhängig von Alter, Körpergröße, Behinderung, ethnischer Zugehörigkeit, Geschlechtsmerkmalen, Geschlechtsidentität und -ausdruck, Erfahrungsgrad, Bildung, sozioökonomischem Status, Nationalität, persönlichem Aussehen, Rasse, Religion oder sexueller Identität und Orientierung.
+In the interest of fostering an open and welcoming environment, we as contributors and maintainers pledge to making participation in our project and our community a harassment-free experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
 
-## Unsere Standards
+## Our Standards
 
-Beispiele für Verhalten, das zur Schaffung einer positiven Umgebung beiträgt:
+Examples of behavior that contributes to creating a positive environment include:
 
-* Verwendung einer einladenden und inklusiven Sprache
-* Respekt vor unterschiedlichen Standpunkten und Erfahrungen
-* Annahme konstruktiver Kritik
-* Fokus auf das, was für die Gemeinschaft am besten ist
-* Empathie gegenüber anderen Gemeinschaftsmitgliedern
+* Using welcoming and inclusive language
+* Being respectful of differing viewpoints and experiences
+* Gracefully accepting constructive criticism
+* Focusing on what is best for the community
+* Showing empathy towards other community members
 
-Beispiele für inakzeptables Verhalten:
+Examples of unacceptable behavior include:
 
-* Verwendung sexualisierter Sprache oder Bilder
-* Trolling, beleidigende/abwertende Kommentare und persönliche oder politische Angriffe
-* Öffentliche oder private Belästigung
-* Veröffentlichung privater Informationen anderer ohne ausdrückliche Erlaubnis
-* Anderes Verhalten, das in einem professionellen Umfeld als unangemessen angesehen werden könnte
+* The use of sexualized language or imagery
+* Trolling, insulting/derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information without explicit permission
+* Other conduct which could reasonably be considered inappropriate in a professional setting
 
-## Unsere Verantwortlichkeiten
+## Our Responsibilities
 
-Die Projektbetreuer sind dafür verantwortlich, die Standards für akzeptables Verhalten zu klären und angemessene und faire Korrekturmaßnahmen als Reaktion auf inakzeptables Verhalten zu ergreifen.
+Project maintainers are responsible for clarifying the standards of acceptable behavior and are expected to take appropriate and fair corrective action in response to any instances of unacceptable behavior.
 
-## Durchsetzung
+## Enforcement
 
-Dieses Code of Conduct gilt sowohl in Projektbereichen als auch in öffentlichen Bereichen, wenn eine Person das Projekt oder seine Gemeinschaft repräsentiert.
+This Code of Conduct applies both within project spaces and in public spaces when an individual is representing the project or its community.
 
-Fälle von missbräuchlichem, belästigendem oder anderweitig inakzeptablem Verhalten können über Discord an cyberseall gemeldet werden.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting cyberseall on Discord.
 
-Alle Beschwerden werden überprüft und untersucht und führen zu einer Antwort, die als notwendig und angemessen für die Umstände erachtet wird.
+All complaints will be reviewed and investigated and will result in a response that is deemed necessary and appropriate to the circumstances.
