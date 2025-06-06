@@ -545,15 +545,17 @@ def main_menu():
             inquirer.List('choice',
                          message="Choose a category:",
                          choices=[
-                             ' Spam Tools',
-                             ' Discord Tools', 
-                             ' Token Tools',
-                             ' Server Tools',
-                             ' User Tools',
-                             ' Settings Tools',
-                             ' Generators',
-                             ' Grabber',
-                             ' Exit'
+                             '💣 Spam Tools',
+                             '🔧 Discord Tools', 
+                             '🎫 Token Tools',
+                             '🖥️ Server Tools',
+                             '👤 User Tools',
+                             '⚙️ Settings Tools',
+                             '🎲 Generators',
+                             '🌐 Non-Discord Tools',
+                             '📡 Advanced Destruction Tools',
+                             '🔍 Grabber',
+                             '❌ Exit'
                          ]),
         ]
         answers = inquirer.prompt(questions)
@@ -562,21 +564,25 @@ def main_menu():
             pretty_print("See you later!   <3👋", (255,32,32))
             break
             
-        if answers['choice'] == 'Spam Tools':
+        if answers['choice'] == '💣 Spam Tools':
             spam_tools_menu()
-        elif answers['choice'] == 'Discord Tools':
+        elif answers['choice'] == '🔧 Discord Tools':
             discord_tools_menu()
-        elif answers['choice'] == 'Token Tools':
+        elif answers['choice'] == '🎫 Token Tools':
             token_tools_menu()
-        elif answers['choice'] == 'Server Tools':
+        elif answers['choice'] == '🖥️ Server Tools':
             server_tools_menu()
-        elif answers['choice'] == 'User Tools':
+        elif answers['choice'] == '👤 User Tools':
             user_tools_menu()
-        elif answers['choice'] == 'Settings Tools':
+        elif answers['choice'] == '⚙️ Settings Tools':
             settings_tools_menu()
-        elif answers['choice'] == 'Generators':
+        elif answers['choice'] == '🎲 Generators':
             generators_menu()
-        elif answers['choice'] == 'Grabber':
+        elif answers['choice'] == '🌐 Non-Discord Tools':
+            non_discord_tools_menu()
+        elif answers['choice'] == '📡 Advanced Destruction Tools':
+            advanced_destruction_menu()
+        elif answers['choice'] == '🔍 Grabber':
             grabber_menu()
 
 def spam_tools_menu():
@@ -864,6 +870,84 @@ def generators_menu():
         questions = [
             inquirer.List('continue',
                          message="Back to Generators menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def non_discord_tools_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Non-Discord Tools - Choose an option:",
+                         choices=[
+                             '💣 Email Bomber',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == '💣 Email Bomber':
+            from utils.email_bomber import run_email_bomber
+            run_email_bomber()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Non-Discord Tools menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
+
+def advanced_destruction_menu():
+    while True:
+        print_banner(show_webhook=True)
+        questions = [
+            inquirer.List('choice',
+                         message="Advanced Destruction Tools - Choose an option:",
+                         choices=[
+                             '💥 Server Nuke',
+                             '🔨 Mass Ban/Kick Manager',
+                             '🎭 Permission Chaos',
+                             '🌊 Channel Flood',
+                             '🎨 Role Spam',
+                             '🕷️ Webhook Bomb',
+                             '← Back to main menu'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to main menu':
+            break
+            
+        if answers['choice'] == '💥 Server Nuke':
+            from utils.server_nuke import run_server_nuke
+            run_server_nuke()
+        elif answers['choice'] == '🔨 Mass Ban/Kick Manager':
+            from utils.mass_ban_kick import run_mass_ban_kick
+            run_mass_ban_kick()
+        elif answers['choice'] == '🎭 Permission Chaos':
+            from utils.permission_chaos import run_permission_chaos
+            run_permission_chaos()
+        elif answers['choice'] == '🌊 Channel Flood':
+            from utils.channel_flood import run_channel_flood
+            run_channel_flood()
+        elif answers['choice'] == '🎨 Role Spam':
+            from utils.role_spam import run_role_spam
+            run_role_spam()
+        elif answers['choice'] == '🕷️ Webhook Bomb':
+            from utils.webhook_bomb import run_webhook_bomb
+            run_webhook_bomb()
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Advanced Destruction Tools menu?",
                          choices=['Yes', 'No'],
                          ),
         ]
