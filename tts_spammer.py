@@ -188,7 +188,6 @@ def debug_json(data, indent=6, color=(180,180,180)):
         print(ansi + prefix + data + RESET)
 
 def loading_spinner():
-    # Entfernt - keine Animation mehr
     pass
 
 def get_multiline_input(prompt):
@@ -546,15 +545,15 @@ def main_menu():
             inquirer.List('choice',
                          message="Choose a category:",
                          choices=[
-                             '🔥 Spam Tools',
-                             '🎮 Discord Tools', 
-                             '🔐 Token Tools',
-                             '🛠️ Server Tools',
-                             '👤 User Tools',
-                             '⚙️ Settings Tools',
-                             '💎 Generators',
-                             '🕵️ Grabber',
-                             '❌ Exit'
+                             ' Spam Tools',
+                             ' Discord Tools', 
+                             ' Token Tools',
+                             ' Server Tools',
+                             ' User Tools',
+                             ' Settings Tools',
+                             ' Generators',
+                             ' Grabber',
+                             ' Exit'
                          ]),
         ]
         answers = inquirer.prompt(questions)
@@ -563,21 +562,21 @@ def main_menu():
             pretty_print("See you later!   <3👋", (255,32,32))
             break
             
-        if answers['choice'] == '🔥 Spam Tools':
+        if answers['choice'] == 'Spam Tools':
             spam_tools_menu()
-        elif answers['choice'] == '🎮 Discord Tools':
+        elif answers['choice'] == 'Discord Tools':
             discord_tools_menu()
-        elif answers['choice'] == '🔐 Token Tools':
+        elif answers['choice'] == 'Token Tools':
             token_tools_menu()
-        elif answers['choice'] == '🛠️ Server Tools':
+        elif answers['choice'] == 'Server Tools':
             server_tools_menu()
-        elif answers['choice'] == '👤 User Tools':
+        elif answers['choice'] == 'User Tools':
             user_tools_menu()
-        elif answers['choice'] == '⚙️ Settings Tools':
+        elif answers['choice'] == 'Settings Tools':
             settings_tools_menu()
-        elif answers['choice'] == '💎 Generators':
+        elif answers['choice'] == 'Generators':
             generators_menu()
-        elif answers['choice'] == '🕵️ Grabber':
+        elif answers['choice'] == 'Grabber':
             grabber_menu()
 
 def spam_tools_menu():
