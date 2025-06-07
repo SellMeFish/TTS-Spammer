@@ -42,3 +42,4 @@ def run_payload_generator():
     pretty_print("⚠️ This function has been removed!", (255, 128, 0))
     pretty_print("Use the Mini Payload Generator instead!", (255, 128, 0))
     input(rgb(255, 32, 32) + center("Press Enter to continue...") + '\033[0m') 
+# update
