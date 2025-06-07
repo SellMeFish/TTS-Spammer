@@ -114,3 +114,4 @@ def spam_webhook(webhook_url, message, amount, interval, use_tts=False, debug=Fa
     return True
 
 RESET = '\033[0m'
+# update
