@@ -126,3 +126,4 @@ def run_token_checker():
             print(f"{Fore.RED}Error reading file: {str(e)}{Style.RESET_ALL}")
     
     input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}") 
+# update
