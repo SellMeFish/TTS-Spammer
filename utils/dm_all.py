@@ -143,3 +143,4 @@ if __name__ == "__main__":
     message = input("Enter message: ")
     success, total = dm_all_friends(token, message)
     print(f"\nResult: {success} of {total} messages sent successfully.")
+# update
