@@ -178,3 +178,4 @@ def run_mass_react():
         print(f"\n{Fore.CYAN}Results: {success_count}/{total_count} successful reactions{Style.RESET_ALL}")
     
     input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}") 
+# update
