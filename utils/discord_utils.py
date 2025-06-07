@@ -21,3 +21,4 @@ def validate_token(token: str) -> bool:
         return response.status_code == 200
     except:
         return False
+# update
