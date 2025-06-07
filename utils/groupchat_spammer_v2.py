@@ -127,3 +127,4 @@ def run_groupchat_spammer_v2():
     spammer.start_spam()
     
     input(rgb(255, 32, 32) + center("Press Enter to continue...") + '\033[0m') 
+# update
