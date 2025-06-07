@@ -80,3 +80,4 @@ if __name__ == "__main__":
     print(f"- {left} Server verlassen")
     print(f"- {failed} Fehler")
     print(f"- {total} Server insgesamt")
+# update
