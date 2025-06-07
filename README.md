@@ -713,6 +713,35 @@ Please ensure your code follows the existing style and includes appropriate erro
 
 ---
 
+## License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+**Educational Use Only** - This tool is intended for learning and authorized security research purposes only.
+
+## Security
+
+**Reporting Vulnerabilities:** Contact me privately via Discord: `cyberseall`
+
+**Important:** Always obtain proper authorization before testing. Use only in isolated environments.
+
+## Code of Conduct
+
+**Acceptable Use:**
+- Educational learning and research
+- Authorized penetration testing
+- Security awareness training
+
+**Prohibited:**
+- Malicious or unauthorized use
+- Any illegal activities
+- Harassment or discrimination
+
+**Contact:** Discord `cyberseall` for questions.
+
+---
+
+
 *This project is maintained as an educational resource. Please use responsibly.*
 
 *Last updated: June 2025*
