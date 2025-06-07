@@ -226,3 +226,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}Returning to main menu...{Style.RESET_ALL}")
+# update
