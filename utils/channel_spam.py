@@ -202,3 +202,4 @@ def run_channel_spam():
         print(f"\n{Fore.CYAN}Results: {success_count}/{total_count} successful random messages{Style.RESET_ALL}")
     
     input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}") 
+# update
