@@ -117,3 +117,4 @@ if __name__ == "__main__":
         print(f"\n{Fore.RED}An unexpected error occurred: {str(e)}{Style.RESET_ALL}")
     finally:
         input(f"\n{Fore.CYAN}Press Enter to exit...{Style.RESET_ALL}")
+# update
