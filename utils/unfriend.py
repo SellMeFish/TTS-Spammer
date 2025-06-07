@@ -54,3 +54,4 @@ if __name__ == "__main__":
     token = input("Discord Token eingeben: ")
     success, total = unfriend_all(token)
     print(f"\nErgebnis: {success} von {total} Freunden wurden entfernt.")
+# update
