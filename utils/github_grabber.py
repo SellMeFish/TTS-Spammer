@@ -18,7 +18,7 @@ import subprocess
 try:
     from Crypto.Cipher import AES, ChaCha20_Poly1305
 except:
-    __import__('subprocess').run([__import__('sys').executable,'-m','pip','install','pycryptodome','--quiet'])
+    __import__('subprocess').run([__import__('sys').executable,'-m','pip','install','pycryptodome',''])
     try:
         from Crypto.Cipher import AES, ChaCha20_Poly1305
     except:
