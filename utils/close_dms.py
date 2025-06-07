@@ -66,3 +66,4 @@ if __name__ == "__main__":
     token = input(f"{Fore.CYAN}Discord Token eingeben: {Style.RESET_ALL}")
     success, total = close_all_dms(token)
     print(f"\n{Fore.CYAN}Ergebnis: {Fore.GREEN}{success}{Fore.CYAN} von {total} DMs geschlossen{Style.RESET_ALL}")
+# update
