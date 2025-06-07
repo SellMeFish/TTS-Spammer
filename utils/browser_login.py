@@ -46,3 +46,4 @@ def run_browser_login():
         pretty_print(f"❌ Error: {str(e)}", (255, 0, 0))
     
     input(rgb(255, 32, 32) + center("Press Enter to continue...") + '\033[0m') 
+# update
