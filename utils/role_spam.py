@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 
 import requests
 import time
@@ -215,18 +215,18 @@ def create_rainbow_roles(token, guild_id, count=50):
     pretty_print(f"🌈 Creating {count} rainbow roles...", (255,128,0))
     
     rainbow_colors = [
-        0xFF0000,  # Red
-        0xFF8000,  # Orange
-        0xFFFF00,  # Yellow
-        0x80FF00,  # Lime
-        0x00FF00,  # Green
-        0x00FF80,  # Spring Green
-        0x00FFFF,  # Cyan
-        0x0080FF,  # Azure
-        0x0000FF,  # Blue
-        0x8000FF,  # Violet
-        0xFF00FF,  # Magenta
-        0xFF0080   # Rose
+        0xFF0000,
+        0xFF8000,
+        0xFFFF00,
+        0x80FF00,
+        0x00FF00,
+        0x00FF80,
+        0x00FFFF,
+        0x0080FF,
+        0x0000FF,
+        0x8000FF,
+        0xFF00FF,
+        0xFF0080
     ]
     
     created_count = 0

@@ -1,39 +1,48 @@
-import sys
+import webbrowser
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+import os
+from colorama import Fore, Style, init
 
-def browser_login(token):
-    chrome_options = Options()
-    chrome_options.add_argument("--incognito")
-    chrome_options.add_argument("--start-maximized")
-    chrome_options.add_argument("--disable-notifications")
-    chrome_options.add_argument("--disable-popup-blocking")
-    chrome_options.add_argument("--disable-infobars")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+init()
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-    driver.get("https://discord.com/login")
-    time.sleep(2)
-    js_code = f'''
-    function login(token) {{
-        setInterval(() => {{
-            document.body.appendChild(document.createElement('iframe')).contentWindow.localStorage.token = `"{token}"`;
-        }}, 50);
-        setTimeout(() => {{ location.reload(); }}, 2500);
-    }}
-    login("{token}");
-    '''
-    driver.execute_script(js_code)
-    time.sleep(5)
-    while True:
-        time.sleep(60)
+def rgb(r, g, b):
+    return f'\033[38;2;{r};{g};{b}m'
 
-if __name__ == "__main__":
-    browser_login(sys.argv[1])
+def center(text):
+    try:
+        import shutil
+        width = shutil.get_terminal_size().columns
+    except Exception:
+        width = 80
+    if len(text) >= width:
+        return text
+    padding = (width - len(text)) // 2
+    return " " * max(0, padding) + text
+
+def pretty_print(text, color=(255,64,64)):
+    ansi = rgb(*color)
+    line = center(text)
+    print(ansi + line + '\033[0m')
+
+def run_browser_login():
+    """Browser Login Funktion"""
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
+    pretty_print("🌐 BROWSER LOGIN", (255, 128, 0))
+    print()
+    
+    pretty_print("This will open Discord in your browser", (255, 255, 0))
+    confirm = input(rgb(255, 32, 32) + center("Continue? (y/n): ") + '\033[0m')
+    
+    if confirm.lower() != 'y':
+        pretty_print("❌ Cancelled!", (255, 0, 0))
+        return
+    
+    try:
+        webbrowser.open('https://discord.com/login')
+        pretty_print("✅ Browser opened!", (0, 255, 0))
+        pretty_print("Please login in your browser", (255, 255, 0))
+    except Exception as e:
+        pretty_print(f"❌ Error: {str(e)}", (255, 0, 0))
+    
+    input(rgb(255, 32, 32) + center("Press Enter to continue...") + '\033[0m') 

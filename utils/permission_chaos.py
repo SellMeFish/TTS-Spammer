@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 
 import requests
 import time
@@ -140,7 +140,7 @@ def chaos_channel_permissions(token, guild_id, channel, roles):
         
         permission_overwrites.append({
             'id': role['id'],
-            'type': 0,  # Role
+            'type': 0,
             'allow': str(allow_perms),
             'deny': str(deny_perms)
         })
@@ -353,7 +353,7 @@ def run_permission_chaos():
     except Exception as e:
         pretty_print(f"❌ Critical error during chaos: {str(e)}", (255,0,0))
     
-    # Final results
+
     print()
     pretty_print("🔒 PERMISSION CHAOS COMPLETED 🔒", (255,0,0))
     pretty_print("=" * 50, (255,0,0))
