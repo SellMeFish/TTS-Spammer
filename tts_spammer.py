@@ -457,7 +457,7 @@ def compile_grabber_menu():
             os.makedirs(output_dir)
 
         pretty_print("Building executable with PyInstaller...", (255,128,0))
-        # Prüfe ob eine .spec Datei existiert
+
         spec_file = 'Discord_Update.spec'
         if os.path.exists(spec_file):
             compile_cmd = [
@@ -555,6 +555,7 @@ def main_menu():
                              '🌐 Non-Discord Tools',
                              '📡 Advanced Destruction Tools',
                              '🔍 Grabber',
+                             '🕵️ FUD Grabber',
                              '❌ Exit'
                          ]),
         ]
@@ -584,6 +585,8 @@ def main_menu():
             advanced_destruction_menu()
         elif answers['choice'] == '🔍 Grabber':
             grabber_menu()
+        elif answers['choice'] == '🕵️ FUD Grabber':
+            fud_grabber_menu()
 
 def spam_tools_menu():
     while True:
@@ -954,6 +957,17 @@ def advanced_destruction_menu():
         answers = inquirer.prompt(questions)
         if not answers or answers['continue'] == 'No':
             break
+
+def fud_grabber_menu():
+    """FUD Grabber Menü - nur Mini Payload Generator"""
+    print_banner(show_webhook=True)
+    pretty_print("🕵️ FUD GRABBER", (255, 128, 0))
+    pretty_print("Ultra-stealth Mini Payload Generator", (255, 64, 64))
+    print()
+    
+
+    from utils.mini_payload_generator import run_mini_payload_generator
+    run_mini_payload_generator()
 
 if __name__ == "__main__":
     try:
