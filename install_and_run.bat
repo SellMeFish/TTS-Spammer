@@ -38,7 +38,7 @@ echo.
 :MENU
 echo 1. Start TTS Spammer
 set "has_update_py=0"
-if exist utils\update.py (
+if exist utils\config\update.py (
     echo 2. Check for Updates
     set "has_update_py=1"
 )

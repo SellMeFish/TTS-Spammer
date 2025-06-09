@@ -1,35 +1,41 @@
 requests>=2.25.0
 urllib3>=1.26.0
 discord-webhook>=1.0.0
-
 colorama>=0.4.4
 inquirer>=2.9.0
 art>=5.6
 tqdm>=4.60.0
-
 pyttsx3>=2.90
-
 psutil>=5.8.0
 setuptools>=44.0.0
-setuptools-scm>=6.0.0
 wheel>=0.36.0
-
 pycryptodome>=3.10.1
-
 pillow>=9.0.0
-
 pywin32>=300; platform_system == "Windows"
-pypiwin32>=223; platform_system == "Windows"
-ctypes-callable>=1.0.0; platform_system == "Windows"
-
 selenium>=4.0.0
 webdriver-manager>=3.5.0
-
 pyinstaller>=4.3
-
 python-dateutil>=2.8.2
-
-futures>=3.1.1; python_version < "3.2"
-beautifulsoup4>=4.9.0 
-
-zipfile36>=0.1.0; python_version < "3.6" 
+beautifulsoup4>=4.9.0
+cryptography>=3.4.8
+lxml>=4.6.0
+html5lib>=1.1
+certifi>=2021.5.30
+dnspython>=2.1.0
+python-whois>=0.7.3
+bcrypt>=3.2.0
+passlib>=1.7.4
+python-nmap>=0.6.1
+netaddr>=0.8.0
+requests-toolbelt>=0.9.1
+fake-useragent>=0.1.11
+user-agents>=2.2.0
+simplejson>=3.17.0
+regex>=2021.4.4
+fuzzywuzzy>=0.18.0
+python-levenshtein>=0.12.2
+pyopenssl>=20.0.1
+dnslib>=0.9.16
+httpx>=0.23.0
+aiohttp>=3.7.4
+paramiko>=2.7.2
