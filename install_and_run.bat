@@ -55,6 +55,6 @@ pause
 goto MENU
 
 :UPDATE
-python utils\update.py
+python utils\config\update.py
 pause
 goto MENU 
