@@ -1,1 +1,0 @@
-If you want the .exe to have a different Icon just simply replace the one thats inside now and make sure it has the same Name!
