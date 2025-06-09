@@ -385,11 +385,11 @@ def token_login_menu():
         if not token:
             continue
             
-        if answers['choice'] == 'Selenium Login (Chrome)':
+        if answers['choice'] == 'Selenium Login (Reccomended)':
             debug = input(rgb(255,32,32) + "Enable debug mode? (y/n): " + RESET).lower() == 'y'
             from utils.token_login import login_with_token
             login_with_token(token, debug)
-        elif answers['choice'] == 'Browser Login (New Window)':
+        elif answers['choice'] == 'Browser Login (Not Recoomended)':
             from utils.browser_login import run_browser_login_new_window
             run_browser_login_new_window(token)
             
@@ -591,7 +591,7 @@ def main_menu():
                          ]),
         ]
         answers = inquirer.prompt(questions)
-        if not answers or answers['choice'] == '❌ Exit':
+        if not answers or answers['choice'] == ' Exit':
             print_banner()
             pretty_print("See you later!   <3👋", (255,32,32))
             break
