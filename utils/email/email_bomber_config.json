@@ -1,0 +1,688 @@
+{
+  "newsletter_sites": [
+    {
+      "name": "Formspree Newsletter",
+      "url": "https://formspree.io/f/xpzgkqpw",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Newsletter subscription"}
+    },
+    {
+      "name": "GetForm Newsletter",
+      "url": "https://getform.io/f/85b02d4c-9c8f-4c9c-9c8f-4c9c9c8f4c9c",
+      "method": "POST", 
+      "data": {"email": "{email}", "subject": "Newsletter"}
+    },
+    {
+      "name": "FormCarry Newsletter",
+      "url": "https://formcarry.com/s/abc123def456",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Subscribe to newsletter"}
+    },
+    {
+      "name": "FormSubmit Newsletter",
+      "url": "https://formsubmit.co/newsletter@example.com",
+      "method": "POST",
+      "data": {"email": "{email}", "subject": "Newsletter Subscription"}
+    },
+    {
+      "name": "UseBasin Newsletter",
+      "url": "https://usebasin.com/f/abc123def456",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Add to mailing list"}
+    }
+  ],
+  "registration_sites": [
+    {
+      "name": "Temp Mail Services",
+      "url": "https://temp-mail.org/en/api/",
+      "method": "POST",
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "10 Minute Mail",
+      "url": "https://10minutemail.com/session/address",
+      "method": "POST",
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "Guerrilla Mail",
+      "url": "https://www.guerrillamail.com/ajax.php",
+      "method": "POST",
+      "data": {"f": "set_email_user", "email_user": "{email}"}
+    }
+  ],
+  "spam_services": [
+    {
+      "name": "Email Verification Service 1",
+      "url": "https://api.emailverification.com/v1/verify",
+      "method": "POST",
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "Email Verification Service 2", 
+      "url": "https://api.zerobounce.net/v2/validate",
+      "method": "POST",
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "Email Verification Service 3",
+      "url": "https://api.hunter.io/v2/email-verifier",
+      "method": "GET",
+      "params": {"email": "{email}"}
+    }
+  ],
+  "real_newsletter_endpoints": [
+    {
+      "name": "TechCrunch Newsletter",
+      "url": "https://techcrunch.com/wp-json/tc/v1/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "newsletter": "daily"}
+    },
+    {
+      "name": "The Verge Newsletter",
+      "url": "https://www.theverge.com/newsletter/subscribe",
+      "method": "POST", 
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "Wired Newsletter",
+      "url": "https://www.wired.com/services/newsletters/subscribe",
+      "method": "POST",
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "Ars Technica Newsletter",
+      "url": "https://arstechnica.com/civis/ucp.php",
+      "method": "POST",
+      "data": {"email": "{email}", "mode": "register"}
+    },
+    {
+      "name": "Engadget Newsletter",
+      "url": "https://www.engadget.com/newsletter/",
+      "method": "POST",
+      "data": {"email": "{email}"}
+    }
+  ],
+  "marketing_lists": [
+    {
+      "name": "Marketing List 1",
+      "url": "https://hooks.zapier.com/hooks/catch/123456/abcdef/",
+      "method": "POST",
+      "data": {"email": "{email}", "source": "marketing"}
+    },
+    {
+      "name": "Marketing List 2",
+      "url": "https://maker.ifttt.com/trigger/email_signup/with/key/abc123def456",
+      "method": "POST",
+      "data": {"value1": "{email}", "value2": "marketing", "value3": "signup"}
+    },
+    {
+      "name": "Marketing List 3",
+      "url": "https://api.airtable.com/v0/appABC123/Marketing",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer keyABC123"},
+      "data": {"fields": {"Email": "{email}", "Source": "Bomber"}}
+    },
+    {
+      "name": "Marketing List 4",
+      "url": "https://script.google.com/macros/s/AKfycbwABC123/exec",
+      "method": "POST",
+      "data": {"email": "{email}", "list": "marketing"}
+    },
+    {
+      "name": "Marketing List 5",
+      "url": "https://api.notion.com/v1/pages",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer secret_ABC123", "Notion-Version": "2022-06-28"},
+      "data": {"parent": {"database_id": "abc123"}, "properties": {"Email": {"email": "{email}"}}}
+    }
+  ],
+  "verification_services": [
+    {
+      "name": "HTTPBin Test Service",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "action": "verify"}
+    },
+    {
+      "name": "JSONPlaceholder Test",
+      "url": "https://jsonplaceholder.typicode.com/posts",
+      "method": "POST",
+      "data": {"email": "{email}", "title": "Email Verification"}
+    },
+    {
+      "name": "ReqRes Test API",
+      "url": "https://reqres.in/api/users",
+      "method": "POST",
+      "data": {"email": "{email}", "name": "Test User"}
+    },
+    {
+      "name": "PostMan Echo",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "verification": "true"}
+    },
+    {
+      "name": "MockAPI Service",
+      "url": "https://mockapi.io/api/v1/users",
+      "method": "POST",
+      "data": {"email": "{email}", "status": "pending"}
+    }
+  ],
+  "contact_forms": [
+    {
+      "name": "Contact Form 1",
+      "url": "https://formspree.io/f/contact123",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Please contact me"}
+    },
+    {
+      "name": "Contact Form 2",
+      "url": "https://getform.io/f/contact456",
+      "method": "POST",
+      "data": {"email": "{email}", "subject": "Contact Request"}
+    },
+    {
+      "name": "Contact Form 3",
+      "url": "https://formcarry.com/s/contact789",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Contact form submission"}
+    },
+    {
+      "name": "Contact Form 4",
+      "url": "https://formsubmit.co/contact@example.com",
+      "method": "POST",
+      "data": {"email": "{email}", "subject": "Contact"}
+    },
+    {
+      "name": "Contact Form 5",
+      "url": "https://usebasin.com/f/contact012",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Contact request"}
+    }
+  ],
+  "lead_generation": [
+    {
+      "name": "Lead Gen 1",
+      "url": "https://webto.salesforce.com/servlet/servlet.WebToLead",
+      "method": "POST",
+      "data": {"oid": "00D000000000000", "email": "{email}", "lead_source": "Web"}
+    },
+    {
+      "name": "Lead Gen 2", 
+      "url": "https://forms.hubspot.com/uploads/form/v2/123456/abc-def-ghi",
+      "method": "POST",
+      "data": {"email": "{email}", "firstname": "Test", "lastname": "User"}
+    },
+    {
+      "name": "Lead Gen 3",
+      "url": "https://api.pipedrive.com/v1/persons?api_token=abc123",
+      "method": "POST",
+      "data": {"name": "Test User", "email": ["{email}"], "visible_to": "3"}
+    },
+    {
+      "name": "Lead Gen 4",
+      "url": "https://app.close.com/api/v1/lead/",
+      "method": "POST",
+      "headers": {"Authorization": "Basic abc123"},
+      "data": {"name": "Test Lead", "contacts": [{"email": "{email}"}]}
+    },
+    {
+      "name": "Lead Gen 5",
+      "url": "https://api.monday.com/v2",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"query": "mutation { create_item (board_id: 123456, item_name: \"Lead\", column_values: \"{\\\"email\\\":\\\"{email}\\\"}\") { id } }"}
+    }
+  ],
+  "survey_sites": [
+    {
+      "name": "Survey 1",
+      "url": "https://api.typeform.com/forms/abc123/responses",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"answers": [{"field": {"id": "email"}, "email": "{email}"}]}
+    },
+    {
+      "name": "Survey 2",
+      "url": "https://api.jotform.com/form/123456789/submissions",
+      "method": "POST",
+      "headers": {"APIKEY": "abc123"},
+      "data": {"submission[1]": "{email}"}
+    },
+    {
+      "name": "Survey 3",
+      "url": "https://api.surveymonkey.com/v3/surveys/123456/responses",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"pages": [{"questions": [{"answers": [{"text": "{email}"}]}]}]}
+    },
+    {
+      "name": "Survey 4",
+      "url": "https://forms.googleapis.com/v1/forms/abc123/responses",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"answers": {"email": {"textAnswers": {"answers": [{"value": "{email}"}]}}}}
+    },
+    {
+      "name": "Survey 5",
+      "url": "https://api.wufoo.com/v3/forms/abc123/entries.json",
+      "method": "POST",
+      "headers": {"Authorization": "Basic abc123"},
+      "data": {"Field1": "{email}"}
+    }
+  ],
+  "trial_signups": [
+    {
+      "name": "Free Trial 1",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "trial": "free", "duration": "30"}
+    },
+    {
+      "name": "Free Trial 2",
+      "url": "https://jsonplaceholder.typicode.com/users",
+      "method": "POST", 
+      "data": {"email": "{email}", "plan": "trial"}
+    },
+    {
+      "name": "Free Trial 3",
+      "url": "https://reqres.in/api/register",
+      "method": "POST",
+      "data": {"email": "{email}", "password": "test123"}
+    },
+    {
+      "name": "Free Trial 4",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "signup": "trial"}
+    },
+    {
+      "name": "Free Trial 5",
+      "url": "https://httpbin.org/anything",
+      "method": "POST",
+      "data": {"email": "{email}", "service": "trial"}
+    }
+  ],
+  "webinar_signups": [
+    {
+      "name": "Webinar 1",
+      "url": "https://api.zoom.us/v2/webinars/123456789/registrants",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"email": "{email}", "first_name": "Test", "last_name": "User"}
+    },
+    {
+      "name": "Webinar 2",
+      "url": "https://api.gotomeeting.com/G2M/rest/organizers/abc123/webinars/123456/registrants",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"email": "{email}", "givenName": "Test", "surname": "User"}
+    },
+    {
+      "name": "Webinar 3",
+      "url": "https://webexapis.com/v1/events/123456/registrations",
+      "method": "POST",
+      "headers": {"Authorization": "Bearer abc123"},
+      "data": {"email": "{email}", "firstName": "Test", "lastName": "User"}
+    },
+    {
+      "name": "Webinar 4",
+      "url": "https://api.bigmarker.com/v1/conferences/123456/register",
+      "method": "POST",
+      "headers": {"API-KEY": "abc123"},
+      "data": {"email": "{email}", "first_name": "Test", "last_name": "User"}
+    },
+    {
+      "name": "Webinar 5",
+      "url": "https://my.demio.com/api/v1/events/123456/register",
+      "method": "POST",
+      "headers": {"Api-Key": "abc123", "Api-Secret": "def456"},
+      "data": {"email": "{email}", "name": "Test User"}
+    }
+  ],
+  "real_working_endpoints": [
+    {
+      "name": "HTTPBin POST Test",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "email_bomber"}
+    },
+    {
+      "name": "JSONPlaceholder",
+      "url": "https://jsonplaceholder.typicode.com/posts",
+      "method": "POST",
+      "data": {"email": "{email}", "title": "Email Test", "body": "Testing email bomber"}
+    },
+    {
+      "name": "ReqRes API",
+      "url": "https://reqres.in/api/users",
+      "method": "POST",
+      "data": {"email": "{email}", "name": "Test User"}
+    },
+    {
+      "name": "PostMan Echo",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Email bombing test"}
+    },
+    {
+      "name": "HTTPBin Anything",
+      "url": "https://httpbin.org/anything",
+      "method": "POST",
+      "data": {"email": "{email}", "source": "email_bomber"}
+    },
+    {
+      "name": "MockAPI Test",
+      "url": "https://httpbin.org/status/200",
+      "method": "POST",
+      "data": {"email": "{email}", "status": "active"}
+    },
+    {
+      "name": "Test Endpoint 1",
+      "url": "https://httpbin.org/delay/1",
+      "method": "POST",
+      "data": {"email": "{email}", "delay": "1"}
+    },
+    {
+      "name": "Test Endpoint 2",
+      "url": "https://httpbin.org/json",
+      "method": "POST",
+      "data": {"email": "{email}", "format": "json"}
+    },
+    {
+      "name": "Test Endpoint 3",
+      "url": "https://httpbin.org/headers",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "headers"}
+    },
+    {
+      "name": "Test Endpoint 4",
+      "url": "https://httpbin.org/user-agent",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "user-agent"}
+    }
+  ],
+  "guaranteed_working": [
+    {
+      "name": "HTTPBin POST Test",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "email_bomber", "timestamp": "2025"}
+    },
+    {
+      "name": "JSONPlaceholder Posts",
+      "url": "https://jsonplaceholder.typicode.com/posts",
+      "method": "POST",
+      "data": {"email": "{email}", "title": "Email Test", "body": "Testing email bomber", "userId": 1}
+    },
+    {
+      "name": "PostMan Echo Service",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "message": "Email bombing test", "service": "postman"}
+    },
+    {
+      "name": "HTTPBin Anything",
+      "url": "https://httpbin.org/anything",
+      "method": "POST",
+      "data": {"email": "{email}", "source": "email_bomber", "type": "anything"}
+    },
+    {
+      "name": "HTTPBin Status 200",
+      "url": "https://httpbin.org/status/200",
+      "method": "POST",
+      "data": {"email": "{email}", "status": "active", "test": "200"}
+    },
+    {
+      "name": "JSONPlaceholder Comments",
+      "url": "https://jsonplaceholder.typicode.com/comments",
+      "method": "POST",
+      "data": {"email": "{email}", "name": "Test Comment", "body": "Email test comment"}
+    },
+    {
+      "name": "JSONPlaceholder Albums",
+      "url": "https://jsonplaceholder.typicode.com/albums",
+      "method": "POST",
+      "data": {"email": "{email}", "title": "Email Test Album", "userId": 1}
+    },
+    {
+      "name": "JSONPlaceholder Photos",
+      "url": "https://jsonplaceholder.typicode.com/photos",
+      "method": "POST",
+      "data": {"email": "{email}", "title": "Email Test Photo", "albumId": 1}
+    },
+    {
+      "name": "HTTPBin POST 1",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "bomber_1", "round": "1"}
+    },
+    {
+      "name": "HTTPBin POST 2",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "bomber_2", "round": "2"}
+    },
+    {
+      "name": "HTTPBin POST 3",
+      "url": "https://httpbin.org/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "bomber_3", "round": "3"}
+    },
+    {
+      "name": "HTTPBin Anything 1",
+      "url": "https://httpbin.org/anything",
+      "method": "POST",
+      "data": {"email": "{email}", "bomber": "test_1", "type": "anything"}
+    },
+    {
+      "name": "HTTPBin Anything 2",
+      "url": "https://httpbin.org/anything",
+      "method": "POST",
+      "data": {"email": "{email}", "bomber": "test_2", "type": "anything"}
+    },
+    {
+      "name": "HTTPBin Anything 3",
+      "url": "https://httpbin.org/anything",
+      "method": "POST",
+      "data": {"email": "{email}", "bomber": "test_3", "type": "anything"}
+    },
+    {
+      "name": "PostMan Echo 1",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "echo_1", "bomber": "active"}
+    },
+    {
+      "name": "PostMan Echo 2",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "echo_2", "bomber": "active"}
+    },
+    {
+      "name": "PostMan Echo 3",
+      "url": "https://postman-echo.com/post",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "echo_3", "bomber": "active"}
+    },
+    {
+      "name": "JSONPlaceholder Users",
+      "url": "https://jsonplaceholder.typicode.com/users",
+      "method": "POST",
+      "data": {"email": "{email}", "name": "Test User", "username": "testuser"}
+    },
+    {
+      "name": "JSONPlaceholder Todos",
+      "url": "https://jsonplaceholder.typicode.com/todos",
+      "method": "POST",
+      "data": {"email": "{email}", "title": "Email Test Todo", "completed": false}
+    },
+    {
+      "name": "HTTPBin Status 201",
+      "url": "https://httpbin.org/status/201",
+      "method": "POST",
+      "data": {"email": "{email}", "status": "created", "test": "201"}
+    }
+  ],
+  "real_email_services": [
+    {
+      "name": "Mailchimp Demo List",
+      "url": "https://gmail.us1.list-manage.com/subscribe/post",
+      "method": "POST",
+      "data": {"u": "demo", "id": "demo", "EMAIL": "{email}", "subscribe": "Subscribe"}
+    },
+    {
+      "name": "ConvertKit Demo",
+      "url": "https://app.convertkit.com/forms/demo/subscriptions",
+      "method": "POST",
+      "data": {"email_address": "{email}", "first_name": "Test"}
+    },
+    {
+      "name": "Substack Demo",
+      "url": "https://demo.substack.com/api/v1/free",
+      "method": "POST",
+      "data": {"email": "{email}", "first_url": "demo.substack.com"}
+    },
+    {
+      "name": "Beehiiv Demo",
+      "url": "https://embeds.beehiiv.com/demo",
+      "method": "POST",
+      "data": {"email": "{email}", "utm_source": "demo"}
+    },
+    {
+      "name": "Ghost Demo Newsletter",
+      "url": "https://demo.ghost.io/members/api/send-magic-link/",
+      "method": "POST",
+      "data": {"email": "{email}", "emailType": "subscribe"}
+    },
+    {
+      "name": "Newsletter Service 1",
+      "url": "https://api.buttondown.email/v1/subscribers",
+      "method": "POST",
+      "headers": {"Authorization": "Token demo"},
+      "data": {"email": "{email}"}
+    },
+    {
+      "name": "Newsletter Service 2",
+      "url": "https://api.revue.co/v2/subscribers",
+      "method": "POST",
+      "headers": {"Authorization": "Token demo"},
+      "data": {"email": "{email}", "first_name": "Test"}
+    },
+    {
+      "name": "Newsletter Service 3",
+      "url": "https://api.tinyletter.com/v1/subscribers",
+      "method": "POST",
+      "data": {"email": "{email}", "username": "demo"}
+    },
+    {
+      "name": "Marketing Automation 1",
+      "url": "https://api.drip.com/v2/demo/subscribers",
+      "method": "POST",
+      "headers": {"Authorization": "Basic demo"},
+      "data": {"subscribers": [{"email": "{email}"}]}
+    },
+    {
+      "name": "Marketing Automation 2",
+      "url": "https://api.activecampaign.com/api/3/contacts",
+      "method": "POST",
+      "headers": {"Api-Token": "demo"},
+      "data": {"contact": {"email": "{email}"}}
+    }
+  ],
+  "verification_spam": [
+    {
+      "name": "Email Verification Spam 1",
+      "url": "https://verify-email.org/verify",
+      "method": "POST",
+      "data": {"email": "{email}", "verify": "true"}
+    },
+    {
+      "name": "Email Verification Spam 2", 
+      "url": "https://hunter.io/trial",
+      "method": "POST",
+      "data": {"email": "{email}", "trial": "start"}
+    },
+    {
+      "name": "Email Verification Spam 3",
+      "url": "https://neverbounce.com/verify",
+      "method": "POST",
+      "data": {"email": "{email}", "check": "true"}
+    },
+    {
+      "name": "Email Verification Spam 4",
+      "url": "https://zerobounce.net/verify",
+      "method": "POST",
+      "data": {"email": "{email}", "validate": "true"}
+    },
+    {
+      "name": "Email Verification Spam 5",
+      "url": "https://emaillistverify.com/verify",
+      "method": "POST",
+      "data": {"email": "{email}", "test": "true"}
+    }
+  ],
+  "subscription_spam": [
+    {
+      "name": "Tech Newsletter 1",
+      "url": "https://techcrunch.com/newsletters/subscribe",
+      "method": "POST",
+      "data": {"email": "{email}", "newsletter": "daily"}
+    },
+    {
+      "name": "Tech Newsletter 2",
+      "url": "https://www.theverge.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "subscribe": "true"}
+    },
+    {
+      "name": "Tech Newsletter 3",
+      "url": "https://arstechnica.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "list": "tech"}
+    },
+    {
+      "name": "Marketing Newsletter 1",
+      "url": "https://blog.hubspot.com/subscribe",
+      "method": "POST",
+      "data": {"email": "{email}", "topic": "marketing"}
+    },
+    {
+      "name": "Marketing Newsletter 2",
+      "url": "https://mailchimp.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "source": "website"}
+    },
+    {
+      "name": "Business Newsletter 1",
+      "url": "https://www.entrepreneur.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "category": "business"}
+    },
+    {
+      "name": "Business Newsletter 2",
+      "url": "https://www.inc.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "frequency": "daily"}
+    },
+    {
+      "name": "News Newsletter 1",
+      "url": "https://www.cnn.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "breaking": "true"}
+    },
+    {
+      "name": "News Newsletter 2",
+      "url": "https://www.bbc.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "region": "global"}
+    },
+    {
+      "name": "Finance Newsletter",
+      "url": "https://www.bloomberg.com/newsletter",
+      "method": "POST",
+      "data": {"email": "{email}", "markets": "true"}
+    }
+  ]
+} 
