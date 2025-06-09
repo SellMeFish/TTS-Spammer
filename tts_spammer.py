@@ -366,11 +366,42 @@ def ask_token(prompt="Enter Discord Token: "):
         pretty_print("No token entered! Please try again or press Ctrl+C to cancel.", (255,64,64))
 
 def token_login_menu():
-    print_banner()
-    token = ask_token()
-    debug = input(rgb(255,32,32) + "Enable debug mode? (y/n): " + RESET).lower() == 'y'
-    from utils.token_login import login_with_token
-    login_with_token(token, debug)
+    while True:
+        print_banner()
+        questions = [
+            inquirer.List('choice',
+                         message="Token Login - Choose login method:",
+                         choices=[
+                             'Selenium Login (Reccomended)',
+                             'Browser Login (Not Recoomended)',
+                             '← Back to Token Tools'
+                         ]),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['choice'] == '← Back to Token Tools':
+            break
+            
+        token = ask_token()
+        if not token:
+            continue
+            
+        if answers['choice'] == 'Selenium Login (Chrome)':
+            debug = input(rgb(255,32,32) + "Enable debug mode? (y/n): " + RESET).lower() == 'y'
+            from utils.token_login import login_with_token
+            login_with_token(token, debug)
+        elif answers['choice'] == 'Browser Login (New Window)':
+            from utils.browser_login import run_browser_login_new_window
+            run_browser_login_new_window(token)
+            
+        questions = [
+            inquirer.List('continue',
+                         message="Back to Token Login menu?",
+                         choices=['Yes', 'No'],
+                         ),
+        ]
+        answers = inquirer.prompt(questions)
+        if not answers or answers['continue'] == 'No':
+            break
 
 def server_cloner_menu():
     subprocess.run([sys.executable, 'utils/server_cloner.py'])
