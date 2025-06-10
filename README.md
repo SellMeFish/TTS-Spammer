@@ -7,7 +7,7 @@
 
 <div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
 [![Discord](https://img.shields.io/badge/Discord-API-7289da.svg)](https://discord.com)
 [![License](https://img.shields.io/badge/License-Educational-green.svg)](#)
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)](#)
