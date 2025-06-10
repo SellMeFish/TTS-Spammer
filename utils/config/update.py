@@ -15,6 +15,15 @@ RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version
 ZIP_URL = f"https://github.com/{GITHUB_REPO}/archive/refs/heads/main.zip"
 LOCAL_VERSION_FILE = "version.txt"
 
+PRESERVE_FILES = [
+    "update.py",
+    "config.json",
+    "tokens.txt",
+    "proxies.txt",
+    "user_data.json",
+    "settings.json"
+]
+
 def print_banner():
     banner = f"""{Fore.CYAN}{r'''
    __  __          __      __       __
@@ -51,6 +60,73 @@ def get_remote_version():
         print(f"{Fore.RED}Error fetching remote version: {str(e)}{Style.RESET_ALL}")
     return None
 
+def backup_important_files():
+    backup_dir = "_backup_temp"
+    if os.path.exists(backup_dir):
+        shutil.rmtree(backup_dir)
+    os.makedirs(backup_dir)
+    
+    backed_up = []
+    for file in PRESERVE_FILES:
+        if os.path.exists(file):
+            try:
+                shutil.copy2(file, os.path.join(backup_dir, file))
+                backed_up.append(file)
+            except Exception as e:
+                print(f"{Fore.YELLOW}Warning: Could not backup {file}: {str(e)}{Style.RESET_ALL}")
+    
+    return backed_up
+
+def restore_important_files(backed_up_files):
+    backup_dir = "_backup_temp"
+    restored = []
+    
+    for file in backed_up_files:
+        backup_path = os.path.join(backup_dir, file)
+        if os.path.exists(backup_path):
+            try:
+                shutil.copy2(backup_path, file)
+                restored.append(file)
+            except Exception as e:
+                print(f"{Fore.YELLOW}Warning: Could not restore {file}: {str(e)}{Style.RESET_ALL}")
+    
+    if os.path.exists(backup_dir):
+        shutil.rmtree(backup_dir)
+    
+    return restored
+
+def cleanup_old_files():
+    print(f"\n{Fore.CYAN}Cleaning up old files...{Style.RESET_ALL}")
+    
+    backed_up = backup_important_files()
+    if backed_up:
+        print(f"{Fore.GREEN}Backed up: {', '.join(backed_up)}{Style.RESET_ALL}")
+    
+    current_dir = os.getcwd()
+    files_deleted = 0
+    dirs_deleted = 0
+    
+    for item in os.listdir(current_dir):
+        if item in ["update.py", "_backup_temp", "_update_temp", "_update.zip"]:
+            continue
+            
+        item_path = os.path.join(current_dir, item)
+        try:
+            if os.path.isfile(item_path):
+                os.remove(item_path)
+                files_deleted += 1
+            elif os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+                dirs_deleted += 1
+            
+            sys.stdout.write(f"\r{Fore.RED}Deleted: {files_deleted} files, {dirs_deleted} directories{Style.RESET_ALL}")
+            sys.stdout.flush()
+        except Exception as e:
+            print(f"\n{Fore.YELLOW}Warning: Could not delete {item}: {str(e)}{Style.RESET_ALL}")
+    
+    print(f"\n{Fore.GREEN}✓ Cleanup complete: {files_deleted} files and {dirs_deleted} directories removed{Style.RESET_ALL}")
+    return backed_up
+
 def download_with_progress(url, filename):
     response = requests.get(url, stream=True)
     total_size = int(response.headers.get('content-length', 0))
@@ -83,7 +159,7 @@ def download_and_extract_zip():
         extracted = [d for d in os.listdir("_update_temp") if os.path.isdir(os.path.join("_update_temp", d))][0]
         src_path = os.path.join("_update_temp", extracted)
 
-        print(f"\n{Fore.CYAN}Copying files...{Style.RESET_ALL}")
+        print(f"\n{Fore.CYAN}Installing new files...{Style.RESET_ALL}")
         files_copied = 0
         for root, dirs, files in os.walk(src_path):
             rel_path = os.path.relpath(root, src_path)
@@ -94,7 +170,7 @@ def download_and_extract_zip():
                 os.makedirs(os.path.dirname(dst_file), exist_ok=True)
                 shutil.copy2(src_file, dst_file)
                 files_copied += 1
-                sys.stdout.write(f"\r{Fore.GREEN}Files copied: {files_copied}{Style.RESET_ALL}")
+                sys.stdout.write(f"\r{Fore.GREEN}Files installed: {files_copied}{Style.RESET_ALL}")
                 sys.stdout.flush()
 
         print("\n")
@@ -130,17 +206,27 @@ def main():
         return
 
     print(f"{Fore.YELLOW}A new version is available!{Style.RESET_ALL}")
-    choice = input(f"{Fore.CYAN}Do you want to update now? (y/n): {Style.RESET_ALL}").lower()
+    print(f"{Fore.RED}WARNING: This will completely remove all old files and install fresh!{Style.RESET_ALL}")
+    choice = input(f"{Fore.CYAN}Do you want to continue with the clean update? (y/n): {Style.RESET_ALL}").lower()
 
     if choice != 'y':
         print(f"{Fore.YELLOW}Update cancelled.{Style.RESET_ALL}")
         return
 
+    backed_up_files = cleanup_old_files()
+
     if download_and_extract_zip():
-        print(f"\n{Fore.GREEN}✓ Update successful!{Style.RESET_ALL}")
+        restored_files = restore_important_files(backed_up_files)
+        if restored_files:
+            print(f"{Fore.GREEN}Restored: {', '.join(restored_files)}{Style.RESET_ALL}")
+        
+        print(f"\n{Fore.GREEN}✓ Clean update successful!{Style.RESET_ALL}")
         print(f"{Fore.YELLOW}Please restart the tool.{Style.RESET_ALL}")
     else:
         print(f"\n{Fore.RED}✗ Update failed.{Style.RESET_ALL}")
+        if backed_up_files:
+            print(f"{Fore.CYAN}Attempting to restore backup...{Style.RESET_ALL}")
+            restore_important_files(backed_up_files)
 
 if __name__ == "__main__":
     try:
