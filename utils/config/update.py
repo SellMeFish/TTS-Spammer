@@ -106,8 +106,14 @@ def cleanup_old_files():
     files_deleted = 0
     dirs_deleted = 0
     
+    current_script = os.path.abspath(__file__)
+    
     for item in os.listdir(current_dir):
         if item in ["update.py", "_backup_temp", "_update_temp", "_update.zip"]:
+            continue
+        
+        item_path = os.path.join(current_dir, item)
+        if current_script.startswith(item_path):
             continue
             
         item_path = os.path.join(current_dir, item)
