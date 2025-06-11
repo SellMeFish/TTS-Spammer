@@ -56,9 +56,9 @@ def check_for_update():
         if answer == "y":
             print("Starting updater...")
             if os.name == 'nt':
-                subprocess.call([sys.executable, 'utils/update.py'])
+                subprocess.call([sys.executable, 'utils/config/update.py'])
             else:
-                os.system(f'{sys.executable} utils/update.py')
+                os.system(f'{sys.executable} utils/config/update.py')
             print("Update finished. Please restart the tool.")
             sys.exit(0)
         else:
