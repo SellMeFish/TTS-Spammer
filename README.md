@@ -14,7 +14,7 @@
 
 **A comprehensive Discord automation toolkit designed for educational purposes**
 
-*Features 28+ tools for Discord automation, token management, and server utilities*
+*Features 30+ tools for Discord automation, token management, and server utilities*
 
 </div>
 
