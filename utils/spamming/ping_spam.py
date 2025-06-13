@@ -4,9 +4,15 @@ import json
 from colorama import Fore, Style
 
 def send_ping_message(token, channel_id, user_ids, message="", interval=1, debug=False):
+    if not token.startswith('Bot ') and not token.startswith('Bearer '):
+        auth_token = token.strip()
+    else:
+        auth_token = token.strip()
+    
     headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json'
+        'Authorization': auth_token,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
     
     ping_text = " ".join([f"<@{user_id}>" for user_id in user_ids])
@@ -40,9 +46,15 @@ def send_ping_message(token, channel_id, user_ids, message="", interval=1, debug
         return {'success': False, 'reason': f'Error: {str(e)}'}
 
 def get_server_members(token, server_id, limit=100, debug=False):
+    if not token.startswith('Bot ') and not token.startswith('Bearer '):
+        auth_token = token.strip()
+    else:
+        auth_token = token.strip()
+    
     headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json'
+        'Authorization': auth_token,
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
     }
     
     url = f'https://discord.com/api/v9/guilds/{server_id}/members?limit={limit}'
@@ -93,9 +105,16 @@ def ping_spam_everyone(tokens, channel_id, message="", amount=10, interval=1, de
         for token_idx, token in enumerate(tokens, 1):
             print(f"{Fore.YELLOW}Message {i+1}/{amount} - Token {token_idx}/{len(tokens)}...{Style.RESET_ALL}")
             
+            token_clean = token.strip()
+            if not token_clean.startswith('Bot ') and not token_clean.startswith('Bearer '):
+                auth_token = token_clean
+            else:
+                auth_token = token_clean
+            
             headers = {
-                'Authorization': tokens[token_idx-1].strip(),
-                'Content-Type': 'application/json'
+                'Authorization': auth_token,
+                'Content-Type': 'application/json',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
             
             full_message = f"@everyone {message}".strip()
@@ -103,10 +122,12 @@ def ping_spam_everyone(tokens, channel_id, message="", amount=10, interval=1, de
             url = f'https://discord.com/api/v9/channels/{channel_id}/messages'
             
             try:
-                response = requests.post(url, headers=headers, json=payload)
+                response = requests.post(url, headers=headers, json=payload, timeout=10)
                 
                 if debug:
                     print(f"{Fore.CYAN}[DEBUG] Everyone Status: {response.status_code}{Style.RESET_ALL}")
+                    if response.status_code != 200:
+                        print(f"{Fore.CYAN}[DEBUG] Response: {response.text[:200]}{Style.RESET_ALL}")
                 
                 if response.status_code == 200:
                     result = {'success': True, 'message_id': response.json().get('id')}
@@ -121,6 +142,15 @@ def ping_spam_everyone(tokens, channel_id, message="", amount=10, interval=1, de
                     result = {'success': False, 'reason': f'Rate limited - wait {retry_after}s', 'retry_after': retry_after}
                     print(f"{Fore.RED}  ✗ Rate limited: {retry_after}s{Style.RESET_ALL}")
                     time.sleep(retry_after)
+                elif response.status_code == 401:
+                    result = {'success': False, 'reason': 'Invalid token or unauthorized'}
+                    print(f"{Fore.RED}  ✗ Invalid token or unauthorized{Style.RESET_ALL}")
+                elif response.status_code == 403:
+                    result = {'success': False, 'reason': 'No permission to send messages'}
+                    print(f"{Fore.RED}  ✗ No permission to send messages{Style.RESET_ALL}")
+                elif response.status_code == 404:
+                    result = {'success': False, 'reason': 'Channel not found'}
+                    print(f"{Fore.RED}  ✗ Channel not found{Style.RESET_ALL}")
                 else:
                     result = {'success': False, 'reason': f'HTTP {response.status_code}'}
                     print(f"{Fore.RED}  ✗ Failed: HTTP {response.status_code}{Style.RESET_ALL}")
@@ -129,6 +159,10 @@ def ping_spam_everyone(tokens, channel_id, message="", amount=10, interval=1, de
                 result['token_index'] = token_idx
                 results.append(result)
                 
+            except requests.exceptions.Timeout:
+                result = {'success': False, 'reason': 'Request timeout', 'message_number': i + 1, 'token_index': token_idx}
+                results.append(result)
+                print(f"{Fore.RED}  ✗ Request timeout{Style.RESET_ALL}")
             except Exception as e:
                 result = {'success': False, 'reason': f'Error: {str(e)}', 'message_number': i + 1, 'token_index': token_idx}
                 results.append(result)
