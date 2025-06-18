@@ -737,7 +737,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - Any illegal activities
 - Harassment or discrimination
 
-**Contact:** Discord `cyberseall` for questions.
+**Contact:** Discord `cyberseall` for questions
 
 ---
 
