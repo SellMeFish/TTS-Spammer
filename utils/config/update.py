@@ -25,14 +25,15 @@ PRESERVE_FILES = [
 ]
 
 def print_banner():
-    banner = f"""{Fore.CYAN}{r'''
+    ascii_art = r'''
    __  __          __      __       __
   / / / /___  ____/ /___ _/ /____  / /
  / / / / __ \/ __  / __ `/ __/ _ \/ /
 / /_/ / /_/ / /_/ / /_/ / /_/  __/_/
 \____/ .___/\__,_/\__,_/\__/\___(_)
     /_/
-'''}{Style.RESET_ALL}"""
+'''
+    banner = f"{Fore.CYAN}{ascii_art}{Style.RESET_ALL}"
     print(banner)
     print(f"{Fore.YELLOW}=== Discord Tool Updater ==={Style.RESET_ALL}\n")
 
