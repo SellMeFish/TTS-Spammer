@@ -531,7 +531,7 @@ def compile_grabber_menu():
                 sys.executable, '-m', 'PyInstaller',
                 '--onefile',
                 '--noconsole',
-                '--icon=utils/icon.ico',
+                '--icon=utils/config/icon.ico',
                 '--name=Discord_Update',
                 '--distpath=' + output_dir,
                 '--hidden-import=PIL._tkinter_finder',
@@ -540,8 +540,8 @@ def compile_grabber_menu():
                 '--hidden-import=psutil',
                 '--hidden-import=sqlite3',
                 '--hidden-import=utils.config',
-                '--add-data=utils/config.py;.',
-                'utils/grabber.py'
+                '--add-data=utils/config/config.py;utils/config',
+                'utils/grabbers/grabber.py'
             ]
 
         subprocess.run(compile_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
