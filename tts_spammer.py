@@ -1114,9 +1114,48 @@ def print_changelog_block():
 
 
 
+def discord_server_prompt():
+    """Ask user if they want to join the Discord server"""
+    print_banner()
+    pretty_print("🎮 JOIN OUR DISCORD SERVER", (255, 128, 0))
+    print()
+    pretty_print("Get updates, support, and connect with other users!", (200, 200, 200))
+    print()
+    
+    questions = [
+        inquirer.List('join_server',
+                     message="Do you want to join our Discord server?",
+                     choices=['Yes', 'No'],
+                     ),
+    ]
+    answers = inquirer.prompt(questions)
+    
+    if answers and answers['join_server'] == 'Yes':
+        pretty_print("Opening Discord server invite...", (0, 255, 128))
+        try:
+            import webbrowser
+            webbrowser.open("https://discord.gg/q3TkBrRcVX")
+            pretty_print("✓ Discord server opened in your browser!", (0, 255, 128))
+        except Exception:
+            pretty_print("Could not open browser automatically.", (255, 128, 0))
+            pretty_print("Please visit: https://discord.gg/q3TkBrRcVX", (255, 128, 0))
+    else:
+        pretty_print("I don't give a fuck, you join anyways! 😈", (255, 64, 64))
+        try:
+            import webbrowser
+            webbrowser.open("https://discord.gg/q3TkBrRcVX")
+            pretty_print("Discord server opened anyway! 😏", (255, 128, 0))
+        except Exception:
+            pretty_print("Could not open browser automatically.", (255, 128, 0))
+            pretty_print("Please visit: https://discord.gg/q3TkBrRcVX", (255, 128, 0))
+    
+    print()
+    input(rgb(255,32,32) + "Press enter to continue to the main menu..." + RESET)
+
 if __name__ == "__main__":
     try:
         check_for_update()
+        discord_server_prompt()
         main_menu()
     except KeyboardInterrupt:
         print(f"\n\n{Fore.YELLOW}Goodbye!{Style.RESET_ALL}")
