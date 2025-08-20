@@ -176,7 +176,7 @@ def print_banner(show_webhook=False, show_changelog=False):
     print(rgb(255,32,64) + center("Made by cyberseall") + RESET)
     print(rgb(255,0,64) + center("=" * get_terminal_width()) + RESET)
     print(rgb(255,64,64) + center("Discord AIO Tool 2025") + RESET)
-    print(rgb(255,128,128) + center("Discord Server: https://discord.gg/ZgwVCdxH9Y | Discord/Dev: cyberseall") + RESET)
+    print(rgb(255,128,128) + center("Discord Server: https://discord.gg/q3TkBrRcVX | Discord/Dev: cyberseall") + RESET)
     print()
     show_status()
     if show_webhook:
