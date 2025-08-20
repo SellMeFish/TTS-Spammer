@@ -218,7 +218,7 @@ Please ensure your code follows the existing style and includes appropriate erro
 
 - **Discord**: cyberseall
 - **GitHub**: [SellMeFish](https://github.com/SellMeFish)
-- **Discord Server**: [https://discord.gg/ZgwVCdxH9Y](https://discord.gg/ZgwVCdxH9Y)
+- **Discord Server**: [https://discord.gg/q3TkBrRcVX](https://discord.gg/q3TkBrRcVX)
 
 ---
 
@@ -267,4 +267,5 @@ The author is not responsible for any misuse of this software. Users are expecte
 *This project is maintained as an educational resource. Please use responsibly.*
 
 *Last updated: January 2025*
+
 
