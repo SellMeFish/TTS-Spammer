@@ -17,7 +17,7 @@
 
 </div>
 
----
+--
 
 ## 🎯 Complete Feature Overview
 
@@ -530,5 +530,6 @@ The author is not responsible for any misuse of this software. Users are expecte
 *This project is maintained as an educational resource. Please use responsibly.*
 
 *Last updated: January 2025*
+
 
 
