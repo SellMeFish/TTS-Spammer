@@ -205,7 +205,7 @@ class EmailBomber:
                     self.bomb_email_category(email, category, max_workers=8)
                     time.sleep(0.5)
             
-            print(f"✅ Successful: {self.successful}")
+            print(f" Successful: {self.successful}")
             print(f"❌ Failed: {self.failed}")
             print(f"📧 Total attempts: {self.successful + self.failed}")
             print("-" * 50)
@@ -351,3 +351,4 @@ def run_email_bomber():
 if __name__ == "__main__":
     email_bomber_menu() 
 # update
+
