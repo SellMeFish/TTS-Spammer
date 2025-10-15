@@ -1,4 +1,4 @@
-# Discord AIO Tool 2025 🚀
+# Discord AIO Tool 2025
 
 ![Preview](spammer1.png)
 ![Preview](spammer.png)
@@ -530,6 +530,7 @@ The author is not responsible for any misuse of this software. Users are expecte
 *This project is maintained as an educational resource. Please use responsibly.*
 
 *Last updated: January 2025*
+
 
 
 
